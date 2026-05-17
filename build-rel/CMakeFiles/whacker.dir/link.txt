@@ -1,0 +1,1 @@
+/usr/bin/c++ -O2 -g -DNDEBUG -Wl,--dependency-file=CMakeFiles/whacker.dir/link.d CMakeFiles/whacker.dir/app/main.cpp.o -o whacker  libwhacker_core.a /usr/lib/x86_64-linux-gnu/libglfw.so.3.4 /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libOpenGL.so

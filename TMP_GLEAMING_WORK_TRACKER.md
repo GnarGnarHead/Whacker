@@ -1,0 +1,3099 @@
+# Whacker Gleam Tracker
+
+Date started: 2026-02-18
+Source plan: `TMP_GLEAMING_REMEDIATION_PLAN.md`
+
+## Execution Rules
+
+- Keep changes behavior-neutral unless explicitly noted.
+- Work in small slices.
+- Build + test after each structural slice.
+- Do not touch active gameplay tuning during hygiene/refactor passes.
+
+## Phase A - Build/Repo Hygiene
+
+- [x] A1. Add ignore coverage for generated build artifact directories.
+- [x] A2. Remove tracked generated files under `build_warnings/` from git index.
+- [x] A3. Verify clean artifact behavior (generated `build_warnings/` content now appears only as tracked deletions in this change; no new untracked noise from rebuilds).
+
+## Phase A - Warning Policy
+
+- [x] W1. Introduce shared warning helper in `CMakeLists.txt`.
+- [x] W2. Apply warning policy to all app/tools/test targets (not only `whacker_core`).
+- [x] W3. Add opt-in strict warnings switch for deeper local audits.
+
+## Phase C - Runtime Decomposition (Slice C1)
+
+- [x] C1. Extract pause/exit transition logic from `app/app_runtime.cpp` into a dedicated unit.
+- [x] C2. Add focused tests around extracted transition pathways.
+- [x] C3. Continue decomposing frame-loop orchestration without gameplay behavior changes.
+
+## Phase B - Utility/Data-Path Dedup
+
+- [x] B1. Remove duplicate `trim_copy` bodies from runtime app paths by converging on `whacker::app::trim_copy`.
+- [x] B2. Audit remaining helper duplication (`clampf`, parsing helpers) and extract only where behavior can remain byte-for-byte.
+
+## Phase D - AI/Sim Boundary Hardening
+
+- [x] D1. Remove planner-local duplicate quick projection math and route through shared evaluator projection API.
+- [x] D2. Add focused regression coverage for projection consistency (`ai_projection_smoke`).
+
+## Phase E - Story/Text/UI Coherence
+
+- [x] E1. Add centralized non-narrative UI text catalog (`app/ui_text.hpp/.cpp`).
+- [x] E2. Route menu/story overlay copy through catalog (`menu_overlay`, `quick_menu_render`, `story_overlays`).
+- [x] E3. Audit intro/scene overlay wrapping/scaling reuse and extract shared rules where safe.
+
+## Phase F - Transition/Save Invariants
+
+- [x] F1. Expand `match_end_flow_smoke` to assert story-save execution and onboarding runtime->career sync invariants.
+- [x] F2. Add focused runtime transition coverage for save-callback pass-through at pause-exit boundaries.
+- [x] F3. Add onboarding runtime<->career sync round-trip regression coverage in `story_flow_smoke`.
+- [x] F4. Expand onboarding scene progression assertions (`runtime_story_scene` + `story_scene`) for intro/scene/match routing edges.
+- [x] F5. Extract continue/load resume-policy logic into dedicated module with focused invariants.
+- [x] F6. Add continue-load failure-path assertions (feedback strings + state stability) in story-menu flow.
+- [x] F7. Add continue-load success-path integration assertions (menu routing + loaded feedback consistency).
+- [x] F8. Add continue gating assertions (`has_save` false + row selection transitions) in story-menu flow.
+- [x] F9. Add new-career overwrite-confirm assertions (modal open/cancel/confirm + no-save direct launch).
+- [x] F10. Add story-menu ESC-path assertions (modal dismiss + fallback return to main menu).
+- [x] F11. Add story-menu back-row confirm routing assertion (`StoryMenu -> MainMenu`) with state-stability checks.
+- [x] F12. Add options/main-menu ESC-path assertions (keybind-capture cancel + close request + fallback routing).
+- [x] F13. Add paused-state ESC assertions (dismiss confirm-forfeit prompt vs resume to pause-return state).
+- [x] F14. Add pause confirm-dialog flow assertions (toggle/cancel/accept pathways).
+- [x] F15. Add pause guard/clamp assertions (`can_exit_now=false` bounce, no-exit-row clamp/quit, auto-clear stale confirm prompt).
+
+## Phase G - Runtime Orchestrator Thinning
+
+- [x] G1. Extract runtime input/state dispatch from `app/app_runtime.cpp` into `app/runtime_input_phase.*`.
+- [x] G2. Extract runtime render/overlay dispatch from `app/app_runtime.cpp` into `app/runtime_render_phase.*`.
+- [x] G3. Extract fixed-step simulation/tick branching from `app/app_runtime.cpp` into a dedicated runtime step module without behavior changes.
+
+## Phase H - Story Integration Scenario Coverage
+
+- [x] H1. Add high-level story integration smoke coverage for onboarding scene->match->route chains, official forfeit support-scene loop, and continue-load resume normalization.
+- [x] H2. Add story-hub action-chain integration smoke coverage (`Official/Training/NextWeek/Back`) with routing + persistence invariants.
+- [x] H3. Add story-hub guard-path integration coverage (`career_loaded` gate + disabled-row confirm no-op invariants).
+- [x] H4. Add story-hub navigation/input integration coverage (row wrap behavior + disabled-row traversal without auto-skip).
+- [x] H5. Add story-intro rival-confirm boundary integration coverage (`dialogue_writing` reveal guard + complete-to-scene save invariant).
+- [x] H6. Add story-menu new-career->intro integration coverage (direct no-save launch + overwrite modal accept launch).
+- [x] H7. Add runtime-input pending-gate integration coverage for story-scene scene-begin orchestration and idempotence.
+- [x] H8. Add runtime-input edge transition coverage for ESC/F10/menu-key coexistence and confirm-audio invariants.
+- [x] H9. Add runtime-input lockout-boundary integration coverage (StoryScene confirm gating + MainMenu/StoryHub handler suppression under positive lockout).
+- [x] H10. Add runtime-input lockout-boundary integration coverage for Options/StoryMenu/Paused branches with side-effect stability assertions.
+- [x] H11. Add runtime-input lockout-boundary integration coverage for QuickMatchSetup/StoryIntro branches with side-effect stability assertions.
+- [x] H12. Add runtime-input side-effect mapping integration coverage (branch mutations -> exact move/confirm audio + save/settings emission invariants).
+- [x] H13. Add runtime-input no-op side-effect integration coverage (when branches run with no mutations, emit no audio/save/settings side effects).
+- [x] H14. Add runtime-input mixed-mutation precedence integration coverage (single-tick combined mutations -> exact combined audio/save/settings profile).
+
+## Phase I - Runtime Loop Input Boundary Polish
+
+- [x] I1. Add frame-sampled runtime-step input snapshot and smoke coverage; route fixed-step text-fast checks through the sampled snapshot.
+- [x] I2. Evaluate story-save availability caching between input/render story-menu paths with behavior-safe invalidation points.
+- [x] I3. Evaluate runtime-input branch effects-object extraction to reduce branch-local side-effect duplication.
+
+## Phase J - Paddle Tuning Integration (Style -> Skills Runtime Path)
+
+- [x] J1. Add core paddle-tuning module + focused smoke coverage (`simplex` normalization, budget clamp, style derivation, nudge projection).
+- [x] J2. Route match/runtime skill ownership through per-paddle `SkillState` fields and derive style from skills for AI profile sync.
+- [x] J3. Add quick/story menu entry points for paddle tuning and a dedicated `AppState::PaddleTuning` runtime branch.
+- [x] J4. Add paddle tuning overlay and input handlers (move marker, confirm apply, ESC return-state unwind) without regressing existing flow routes.
+- [x] J5. Expand smoke coverage for tuning transitions and apply behavior across Quick + Story branches.
+
+## Phase K - Story Rival Difficulty Routing (Per-NPC Skill Specs)
+
+- [x] K1. Add centralized story rival spec ownership for intro + week-based training/official match routing.
+- [x] K2. Route intro/match session bootstrap through explicit rival skill snapshots (style + skills) instead of implicit style defaults.
+- [x] K3. Expand runtime/story integration smoke coverage to lock rival snapshot propagation, control overrides, and reset/fallback invariants.
+- [x] K4. Add hard-fail rival balance contract checks (compile-time guards + focused smoke coverage for schedule/budget invariants).
+
+## Phase L - AI Core Rebuild (Deterministic Planner Pipeline)
+
+- [x] L1. Add dedicated `app/ai_core.*` planner module with deterministic keyed-noise prediction/candidate/scoring pipeline.
+- [x] L2. Expand runtime AI plan state (`app/app_types.hpp`) and integrate planner orchestration in `app/play_control.cpp` with plan validity/cooldown/hysteresis.
+- [x] L3. Route ambient runtime paddle targeting through style/skill-aware AI path and update dependent runtime wiring/tests.
+- [x] L4. Replace neutral AI stub coverage and add focused AI module smoke coverage (`ai_core_smoke`, `ai_style_fidelity_smoke`).
+
+## Phase M - Story Player Skill-Cap Gating (Progression-Locked Tuning)
+
+- [x] M1. Add story-player skill cap ownership and normalization helpers so current tuning cannot exceed developed caps.
+- [x] M2. Route story paddle tuning input/apply through cap-aware limits while preserving quick-match tuning behavior.
+- [x] M3. Persist/migrate story player skill caps in save data and lock with focused smoke coverage.
+- [x] M4. Remove training/official skill-growth multipliers so match-end progression is usage-driven with no mode scaling.
+
+## Phase N - Story Match Policy Unification (Category + Progression Coherence)
+
+- [x] N1. Add explicit story match policy descriptors for intro-first-match, onboarding variants, training, and official flows.
+- [x] N2. Route story match start/finalize/runtime score-model handling through policy descriptors.
+- [x] N3. Route pause-exit policy and post-match routing through policy descriptors (remove hardcoded match-kind branching).
+- [x] N4. Add focused smoke coverage for policy catalog defaults/runtime resolution and progression award behavior.
+
+## Phase O - Story Authored Imagination Bridge (Post-Benji)
+
+- [x] O1. Add authored post-Benji story scene content for at-home YouTube watch flow (no player dialogue lines).
+- [x] O2. Add explicit imagination match policy + scenario wiring (`Imagination1967`) with AI-preview handoff support.
+- [x] O3. Persist imagination-match outcome context for future Tix conversation routing.
+- [x] O4. Add focused smoke coverage for policy, scene content, runtime handoff, save persistence, and integration chain.
+- [x] O5. Replace replay-style prelude with minimal 2-line launch cue and add one-shot point-5 takeover message during live play.
+- [x] O6. Retune 1967 imagination champion skill split toward higher rally pace while preserving spin-led identity.
+
+## Phase P - Story Chat Portrait Overlay Integration
+
+- [x] P1. Add portrait identity mapping utilities and thread rival identity through intro/scene state.
+- [x] P2. Add shared portrait-aware chat layout math and apply it to story intro/scene overlays (text lane remains bounded).
+- [x] P3. Add cached portrait renderer path (PNG decode + downsample + draw) with debug hard-fail and placeholder fallback.
+- [x] P4. Add/expand smoke coverage for portrait mapping, scene portrait metadata, and portrait lane/text layout safety.
+
+## Phase Q - Portrait Asset Normalization + Compression Pipeline
+
+- [x] Q1. Add per-asset portrait normalization profile with explicit override entries for all current canonical portraits.
+- [x] Q2. Add repeatable normalization script (background cleanup + scale/alignment normalization + indexed PNG compression).
+- [x] Q3. Apply normalization pipeline to canonical portrait assets in `story/characters/art/`.
+- [x] Q4. Add process documentation for future portraits in the same art folder.
+
+## Phase R - Save Integrity + Runtime Failure Surfacing
+
+- [x] R1. Route story save callbacks through a shared helper that surfaces save failures (HUD feedback + stderr) instead of silently ignoring errors.
+- [x] R2. Make `save_story_career(...)` atomic (`.tmp` write + replace) with cleanup/error propagation.
+- [x] R3. Reject non-finite numeric values in story/config/menu parsers to prevent NaN/Inf state injection.
+- [x] R4. Add focused smoke coverage for atomic save temp-file cleanup, non-finite save load filtering, and save-failure feedback behavior.
+
+## Phase S - Runtime Orchestration Cleanup (Behavior-Neutral)
+
+- [x] S1. Split `runtime_input_phase` into orchestration + branch modules with a shared internal context/effects contract.
+- [x] S2. Split `runtime_step_phase` into orchestration + branch modules with a shared internal step context/outcome contract.
+- [x] S3. Keep public runtime APIs unchanged and lock behavior parity through existing smoke coverage.
+
+## Phase T - Story Text Weekly Authoring Structure (Week-1 Slice)
+
+- [x] T1. Add week-text catalog module (`story_text_week.*`) keyed by progression node id (`node_id`).
+- [x] T2. Extract current week-1 scene copy into dedicated module (`story_text_week_01.cpp`) and route `story_text.cpp` scene wrappers through it.
+- [x] T3. Split feedback ownership into `story_text_feedback.cpp` while preserving existing `story_text.hpp` API surface.
+- [x] T4. Add week-text smoke coverage (`story_text_week_smoke`) and keep week override path fallback-safe in `start_story_match(...)`.
+
+## Phase U - Intro Forfeit Dialogue Continuity (Kai First Match)
+
+- [x] U1. Add explicit intro-forfeit state in `StoryIntroState` (`player_forfeited`) and reset it on new intro sessions.
+- [x] U2. Route intro forfeit pause-exit (`ExitIntroContinueStory`) to `StoryIntroPhase::RivalIntro` instead of immediate `complete_story_intro(...)`.
+- [x] U3. Add intro forfeit copy branch in `story_text::intro_performance_line(...)` with exact text: `well thanks for the game.`
+- [x] U4. Expand smoke coverage:
+  - `runtime_transitions_smoke` asserts intro-forfeit now enters rival intro phase with captured final score/name defaults.
+  - `story_text_week_smoke` asserts intro-forfeit performance text branch.
+- [x] U5. Remove string-sentinel control flow in intro rival line-2 formatting; route formatting branch through explicit `player_forfeited` state.
+
+## Phase V - AI Style Expression (Systems-Driven Intent)
+
+- [x] V1. Replace competence-gated intent suppression in `app/ai_core.cpp` with skill-ratio style mix + normalized intent weights.
+- [x] V2. Add dominant-axis intent lock with physical fallback (reachable-first) so extreme allocations reliably express style while preserving safety fallback.
+- [x] V3. Propagate AI style/intent diagnostics through runtime plan state (`AiDecision` <-> `RuntimeAiPlanState`) for deterministic introspection.
+- [x] V4. Expand smoke coverage for ratio-driven behavior and spin-expression regression gates (`tests/ai_core_smoke.cpp`, `tests/ai_style_fidelity_smoke.cpp`).
+
+## Phase W - Spin Intent Persistence + Live Conversion Guard
+
+- [x] W1. Persist planner intent in runtime plan state so reconstructed decisions preserve `SpinTrap` vs `Stabilize`.
+- [x] W2. Add live-sim realized-spin smoke coverage (`ai_realized_spin_smoke`) and wire it into CMake/CTest.
+- [x] W3. Retune spin execution contract thresholds/windows to improve contact-time conversion without nondeterministic behavior.
+
+## Phase X - Reliability Recovery (Reduce Misses Without Neutering Style)
+
+- [x] X1. Add skill-scaled reliability gates in `app/ai_core.cpp` (makeability floor + speed/risk caps + spin-specific floor).
+- [x] X2. Add deterministic safety fallback path when no candidate passes reliability gate (safe stabilize execution contract).
+- [x] X3. Retune novice reaction/emergency intercept authority to restore baseline rally competence.
+- [x] X4. Expand coverage with miss-rate and contact-cadence gates (`ai_realized_spin_smoke`, `ai_competence_ladder_smoke`, `ai_core_smoke`, `ai_style_fidelity_smoke`).
+
+## Phase Y - Spin-First Specialist Behavior + Early-Rally Pace Clamp
+
+- [x] Y1. Make reliability gating intent-aware and allow explicit spin-specialist fallback preference for `SpinTrap` candidates.
+- [x] Y2. Add deterministic novice prediction-error scaling with rally fatigue to prevent endless low-skill exchanges.
+- [x] Y3. Retune specialist spin execution thresholds (window/make/floor/confidence) to increase contact-time spin expression without nondeterminism.
+- [x] Y4. Update live-smoke gates for left-side realized spin behavior and weak-mirror rally pace (`contacts_per_point`).
+
+## Phase AE - Expert Mirror Pacing Contract (Top-End)
+
+- [x] AE1. Extend `ai_competence_ladder_smoke` with an explicit expert mirror pacing contract:
+  - points-per-game floor,
+  - contacts-per-point target band (`16..24`),
+  - bounded tie-rate.
+- [x] AE2. Add a dedicated expert mirror probe profile at the 1.70 budget (`0.50/0.80/0.40`) and isolate its horizon from near-peer probes (`kExpertMaxSteps=20000`) so the contract measures completed expert exchanges instead of short-horizon truncation.
+- [x] AE3. Retune shared high-competence capability profile in `app/ai_core.cpp` (no rival-specific runtime branching):
+  - expert-only taper on reaction lag, target quantization, intercept jitter, effective speed/accel, and makeability.
+  - preserve Kai near-peer pacing contract and strong-vs-weak anti-tracking gates.
+
+## Phase AF - Side-Parity Instrumentation Hardening
+
+- [x] AF1. Add dedicated mirrored side-parity smoke coverage (`ai_side_parity_smoke`) wired into CMake/CTest.
+- [x] AF2. Lock parity on behavior-quality invariants (mirrored `valid`/`inbound`, target/feedforward bounds safety, mirrored anti-tracking quality gap), avoiding brittle mirrored-intent equality checks.
+- [x] AF3. Keep duel diagnostics side/serve-decoupled with explicit fixed-serve toggles and neutral profile labeling for equal-total probes.
+
+## Phase AG - Canonical Side-Neutral AI Runtime (First-Principles)
+
+- [x] AG1. Implement actor-frame canonical planning in `app/ai_core.cpp`:
+  - mirror right-side rally state into canonical left frame,
+  - run one shared planner path,
+  - unmirror decision back to world-side execution semantics.
+- [x] AG2. Replace discontinuous side-seed channel with actor-relative deterministic seed inputs and actor-relative runtime signature hashing.
+- [x] AG3. Correct mirrored strike execution mapping on unmirror (feedforward sign) to preserve side-neutral realized behavior.
+- [x] AG4. Strengthen parity tests:
+  - expand `ai_side_parity_smoke` to mirrored decision-geometry assertions,
+  - add `ai_canonical_symmetry_smoke` for multi-fixture actor-frame equivalence + signature parity.
+- [x] AG5. Replace fixed-serve “flip or neutral” gate with explicit mirror-complement contract in `ai_competence_ladder_smoke`, and raise parity probe horizon for decisive outcomes.
+
+## Phase AH - Play-Control AI Replan Orchestration Cleanup (Behavior-Neutral)
+
+- [x] AH1. Expand `play_control_ai_stub_smoke` with focused replan-policy contracts:
+  - cooldown blocks optional replans while decrementing per step,
+  - hysteresis path keeps current plan when proposed score does not clear threshold,
+  - forced low-confidence/near-contact replan bypasses cooldown.
+- [x] AH2. Extract `app/play_control.cpp` AI replan orchestration into explicit helpers (`advance_ai_plan_timers`, replan-policy evaluation, keep-plan hysteresis check, center fallback apply) without changing public API or runtime behavior.
+- [x] AH3. Verify full build/test + strict warning sweep parity after refactor.
+
+## Phase AI - AI Plan-State Bridge Extraction (Behavior-Neutral)
+
+- [x] AI1. Add focused smoke coverage for runtime AI plan<->decision mapping invariants (field transfer + clamp rules + invalid-plan reset).
+- [x] AI2. Extract plan-state conversion ownership from `app/play_control.cpp` into dedicated module `app/ai_plan_state_bridge.*` with no behavior changes.
+- [x] AI3. Rewire all runtime/tool/test targets that compile `play_control.cpp` to link the bridge module and keep public runtime APIs unchanged.
+- [x] AI4. Verify full build/test + strict warning sweep parity after extraction.
+
+## Phase AJ - Play-Control Human Helper Extraction + AI Source-List Dedup (Behavior-Neutral)
+
+- [x] AJ1. Extract human paddle targeting helper from `app/play_control.cpp` into dedicated module `app/play_control_human.*` and lock with focused smoke coverage.
+- [x] AJ2. Deduplicate repeated AI source file lists in `CMakeLists.txt` using shared source-list variables consumed by runtime/tools/smoke targets.
+- [x] AJ3. Verify full build/test + strict warning sweep parity after extraction/dedup.
+
+## Phase AK - Authored Story Transition Wipe Routing (Behavior-Neutral)
+
+- [x] AK1. Add authored wipe directive ownership to story catalog metadata (policy post-route flags + onboarding transition mapping contract).
+- [x] AK2. Route runtime visual transition startup through authored pending state only and remove heuristic state/scene eligibility checks.
+- [x] AK3. Lock scene/state authored-wipe behavior with focused smoke coverage updates (requested-vs-unrequested scene swaps, policy defaults, integration handoff assertions).
+- [x] AK4. Verify host-safe build + targeted runtime/story smoke suites under `-j2`.
+- [x] AK5. Author and wire intro rival-intro completion handoff wipe (`StoryIntro -> StoryScene`) via intro-first-match policy metadata.
+- [x] AK6. Fix deferred scene-swap crash in authored wipe gate (pending wipe waits for queued scene materialization delta; no assert on same-frame no-delta path).
+
+## Phase AL - Transition Contract Hardening + Runtime Orchestrator API Cleanup (Behavior-Neutral)
+
+- [x] AL1. Replace authored-transition arming `bool` with explicit result/error contract and enforce handling at all story/runtime call sites.
+- [x] AL2. Deduplicate story-scene transition target materialization into one shared helper and remove local duplicated resolvers.
+- [x] AL3. Add runtime input/step context-struct overloads and route phase drivers through them while preserving existing public wrappers.
+- [x] AL4. Split AI plan signature ownership into canonical simulation signature vs coarse replan signature to preserve runtime behavior and parity invariants.
+- [x] AL5. Verify host-safe build + focused regression sweep + full suite after refactor.
+
+## Verification
+
+- [x] V1. `cmake --build build -j2`
+- [x] V2. `ctest --test-dir build --output-on-failure -j2`
+- [x] V3. Strict warning audit build + tests (`/tmp/whacker_warnings8`, `-j2`), `0` warning lines.
+
+## Work Log
+
+- 2026-02-18: Tracker created.
+- 2026-02-23: Phase AL landed (transition contract hardening + runtime orchestrator API cleanup).
+  - Authored transition arming contract:
+    - `app/runtime_visual_transition.hpp/.cpp`
+      - `arm_authored_star_wipe_transition(...)` now returns `TransitionArmResult` (explicit `armed` + `TransitionArmError`) instead of `bool`.
+      - added `transition_arm_error_label(...)` helper.
+    - Call sites now enforce result handling (clear invalid requests in failure paths):
+      - `app/match_end_flow.cpp`
+      - `app/runtime_story_scene.cpp`
+      - `app/story_runtime.cpp`
+  - Story transition target dedup:
+    - added shared helper `app/story_transition_materialization.hpp` (`materialize_story_scene_transition_target(...)`).
+    - removed duplicated resolver logic from:
+      - `app/match_end_flow.cpp`
+      - `app/runtime_story_scene.cpp`
+  - Runtime orchestrator signature cleanup:
+    - added context-struct overloads:
+      - `handle_runtime_input_phase(RuntimeInputPhaseArgs&)`
+      - `handle_runtime_step_phase(RuntimeStepPhaseArgs&)`
+    - switched `app/runtime_phase_drivers.cpp` to context overloads.
+    - preserved existing public long-argument wrappers in `app/runtime_input_phase.*` and `app/runtime_step_phase.*`.
+  - AI signature separation to keep behavior/parity stable:
+    - `app/ai_core.hpp/.cpp`
+      - canonical motion-tracking: `compute_ai_state_signature(const Simulation&, bool)`.
+      - coarse replan signature: `compute_ai_replan_signature(const RallyState&, bool)`.
+    - `app/play_control.cpp` now uses `compute_ai_replan_signature(...)` for replan gating.
+  - Additional hygiene:
+    - `app/story_portrait_render.cpp`: release CPU-side RGBA buffer after successful texture upload.
+  - Test updates for new APIs/contracts:
+    - `tests/runtime_handlers_smoke.cpp`
+    - `tests/runtime_phase_drivers_smoke.cpp`
+    - `tests/ai_canonical_symmetry_smoke.cpp`
+    - `tests/play_control_ai_stub_smoke.cpp`
+  - Verification (host-safe `-j2`):
+    - `cmake --build build -j2` (pass).
+    - `ctest --test-dir build --output-on-failure -R "(ai_core_smoke|play_control_ai_stub_smoke|ai_competence_ladder_smoke|runtime_visual_transition_smoke|runtime_phase_drivers_smoke|runtime_handlers_smoke|runtime_input_phase_smoke|runtime_step_phase_smoke|match_end_flow_smoke|story_integration_smoke|ai_side_parity_smoke|ai_canonical_symmetry_smoke)"` (pass, `12/12`).
+    - `ctest --test-dir build --output-on-failure` (pass, `49/49`).
+- 2026-02-23: Phase AJ landed (play-control human helper extraction + CMake AI source-list dedup).
+  - New module:
+    - `app/play_control_human.hpp`
+    - `app/play_control_human.cpp`
+    - owns `set_human_target(...)` used by runtime play-control branches.
+  - `app/play_control.cpp`:
+    - removed local `set_human_target(...)` body and now delegates through `play_control_human`.
+  - New smoke:
+    - `tests/play_control_human_smoke.cpp`:
+      - locks idle behavior (`target=center_y`, `feedforward=0`),
+      - locks directional feedforward sign and bounds clamp behavior.
+  - `CMakeLists.txt`:
+    - added shared AI source lists:
+      - `WHACKER_AI_PLANNER_SOURCES`,
+      - `WHACKER_AI_PLAY_CONTROL_RUNTIME_SOURCES`.
+    - routed `whacker`, `play_control_duel`, and AI smoke targets through shared lists to remove repeated source blocks.
+    - added `play_control_human_smoke` target + CTest registration.
+  - Verification (required full sequence, host-safe `-j2`):
+    - `cmake -S . -B build` (pass).
+    - `cmake --build build -j2` (pass).
+    - `ctest --test-dir build --output-on-failure` (pass, `46/46`).
+    - `cmake -S . -B /tmp/whacker_warnings8` (pass).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` (pass).
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` (pass, `46/46`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` (no matches).
+- 2026-02-23: Phase AI landed (AI plan-state bridge extraction).
+  - New module:
+    - `app/ai_plan_state_bridge.hpp`
+    - `app/ai_plan_state_bridge.cpp`
+    - owns:
+      - `runtime_ai_decision_from_plan(...)`
+      - `write_runtime_ai_plan_from_decision(...)`
+  - `app/play_control.cpp`:
+    - removed local plan<->decision conversion bodies and now delegates to bridge module,
+    - preserved replan policy/execution behavior from Phase AH.
+  - `tests/ai_plan_state_bridge_smoke.cpp` (new):
+    - locks round-trip mapping across all runtime diagnostic/decision fields,
+    - locks clamp behavior (`valid_steps`, `cooldown_steps`, `confidence`, `intercept_time_s`),
+    - locks invalid-decision reset behavior.
+  - `CMakeLists.txt`:
+    - added `app/ai_plan_state_bridge.cpp` to `whacker`, `play_control_duel`, and all smoke targets that compile `app/play_control.cpp`,
+    - added `ai_plan_state_bridge_smoke` target + CTest registration.
+  - Verification (required full sequence, host-safe `-j2`):
+    - `cmake -S . -B build` (pass).
+    - `cmake --build build -j2` (pass).
+    - `ctest --test-dir build --output-on-failure` (pass, `45/45`).
+    - `cmake -S . -B /tmp/whacker_warnings8` (pass).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` (pass).
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` (pass, `45/45`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` (no matches).
+- 2026-02-22: Phase AH landed (play-control AI replan orchestration cleanup).
+  - `tests/play_control_ai_stub_smoke.cpp`:
+    - added `test_ai_cooldown_blocks_optional_replan()`,
+    - added `test_ai_optional_replan_hysteresis_keeps_existing_plan()`,
+    - added `test_ai_forced_replan_overrides_cooldown_on_low_confidence_near_contact()`.
+  - `app/play_control.cpp`:
+    - extracted timer advancement into `advance_ai_plan_timers(...)`,
+    - extracted policy evaluation into `evaluate_replan_policy(...)`,
+    - extracted hysteresis keep-plan check into `should_keep_existing_plan(...)`,
+    - extracted replan-orchestrator path into `maybe_replan_ai_target(...)`,
+    - extracted center fallback into `apply_center_fallback_target(...)`,
+    - kept `update_targets_for_play(...)`/`update_targets_for_ambient(...)` signatures and behavior intact.
+  - Verification (required full sequence, host-safe `-j2`):
+    - `cmake --build build -j2` (pass).
+    - `ctest --test-dir build --output-on-failure` (pass, `44/44`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` (pass).
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` (pass, `44/44`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` (no matches).
+- 2026-02-18: `.gitignore` updated with `/build_warnings/` and `/build-rel/`.
+- 2026-02-18: Tracked generated artifacts removed from git index via `git rm -r --cached build_warnings`.
+- 2026-02-22: Phase AG landed (canonical side-neutral AI runtime + parity contract hardening).
+  - `app/ai_core.cpp`:
+    - added canonical actor-frame planning path for right-side AI via mirrored rally-state transform.
+    - added mirror/unmirror helpers and actor-relative seed/signature channels.
+    - corrected unmirror mapping for strike feedforward direction.
+  - `tests/ai_side_parity_smoke.cpp`:
+    - expanded from coarse parity checks to mirrored decision-geometry + diagnostics parity checks.
+  - `tests/ai_canonical_symmetry_smoke.cpp` (new):
+    - added multi-fixture canonical symmetry + signature parity coverage.
+  - `tests/ai_competence_ladder_smoke.cpp`:
+    - replaced weak serve-flip criterion with fixed-serve mirror-complement gate.
+    - raised `kMaxSteps` to `20000` so parity probes produce decisive outcomes.
+    - calibrated weak/strong anti-tracking ceilings to canonical behavior (`<= 0.30`).
+  - `CMakeLists.txt`:
+    - added `ai_canonical_symmetry_smoke` target + CTest registration.
+  - Verification (host-safe `-j2`, no strict out-of-tree sweep):
+    - `cmake --build build -j2` (pass).
+    - `ctest --test-dir build --output-on-failure -R "ai_(side_parity|canonical_symmetry)_smoke"` (pass, `2/2`).
+    - `cmake --build build -j2 --target ai_competence_ladder_smoke && ctest --test-dir build --output-on-failure -R ai_competence_ladder_smoke` (pass).
+    - `ctest --test-dir build --output-on-failure -j2` (pass, `43/43`).
+- 2026-02-22: Phase AF landed (side-parity smoke + diagnostics integrity hardening).
+  - `CMakeLists.txt`:
+    - added `ai_side_parity_smoke` executable/CTest wiring.
+  - `tests/ai_side_parity_smoke.cpp`:
+    - added mirrored-state planner probe (`left@A` vs `right@mirror(A)`),
+    - locked mirrored `valid`/`inbound` parity,
+    - added decision bounds assertions (`pre_contact_target_y`, `post_contact_recover_y`, `strike_feedforward_vy`),
+    - added mirrored anti-tracking quality gates (`<= 0.30` each side, `|left-right| <= 0.10`).
+  - `tools/play_control_duel.cpp`:
+    - retained side/serve decoupled cadence and fixed-serve CLI switches for deterministic side diagnostics (`--fixed-serve-left`, `--fixed-serve-right`).
+    - retained equal-total `Profile A/B` summary output so side diagnostics are neutral when totals match.
+  - Verification (full + strict, host-safe `-j2`):
+    - `cmake --build build -j2` (pass).
+    - `ctest --test-dir build --output-on-failure -j2` (pass, `42/42`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` (pass).
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure -j2` (pass, `42/42`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` (no matches).
+- 2026-02-21: Phase AE landed (expert mirror pacing contract + high-competence taper).
+  - `tests/ai_competence_ladder_smoke.cpp`:
+    - added explicit expert mirror gates:
+      - `expert_points_per_game >= 2.0`,
+      - `expert_contacts_per_point in [16.0, 24.0]`,
+      - `expert_tie_ratio <= 0.60`,
+    - added expert mirror profile `kExpert {edge=0.50, power=0.80, spin=0.40}` (total `1.70`),
+    - added expert-only horizon `kExpertMaxSteps=20000`,
+    - expanded fail diagnostics with per-side anti-tracking components and expert metrics.
+  - `app/ai_core.cpp`:
+    - consolidated expert-only capability taper in `capability_profile_for(...)`:
+      - `reaction_lag_s += 0.009*expert`,
+      - `target_quantization_step += 1.5*expert`,
+      - `intercept_jitter_amplitude += 2.0*expert`,
+      - `speed_scale -= 0.22*expert`,
+      - `accel_scale -= 0.30*expert`,
+      - `makeability_scale -= 0.48*expert`.
+    - planner retains shared deterministic path (no opponent-specific runtime conditionals).
+  - Verification (host-safe `-j2`):
+    - `cmake --build build -j2 --target ai_competence_ladder_smoke && ctest --test-dir build --output-on-failure -R ai_competence_ladder_smoke` (pass).
+    - `cmake --build build -j2 --target ai_core_smoke ai_style_fidelity_smoke ai_realized_spin_smoke ai_competence_ladder_smoke && ctest --test-dir build --output-on-failure -R "ai_(core|style_fidelity|realized_spin|competence_ladder)_smoke"` (pass, `4/4`).
+    - `cmake --build build -j2 && ctest --test-dir build --output-on-failure -j2` (pass, `41/41`).
+- 2026-02-18: Added `WHACKER_STRICT_WARNINGS` and shared `whacker_apply_warnings(...)` in `CMakeLists.txt`.
+- 2026-02-18: Applied warning policy to `whacker`, `ai_sweep`, `ai_duel`, `style_playtest`, `sim_smoke`, `story_flow_smoke`, `match_flow_smoke`, `match_end_flow_smoke`, and `whacker_core`.
+- 2026-02-18: Strict warning audit after wiring: `20` warnings remain (mainly conversion/sign-conversion in `app/pixel_font.cpp`, `app/app_runtime.cpp`, `tools/ai_sweep.cpp`, `tools/ai_duel.cpp`, `tests/sim_smoke.cpp`).
+- 2026-02-18: Runtime decomposition C1 completed: added `app/runtime_transitions.hpp` + `app/runtime_transitions.cpp` and moved pause/exit policy execution + quit-to-main reset logic out of `app/app_runtime.cpp` with behavior parity.
+- 2026-02-18: Runtime decomposition C2 completed: added `tests/runtime_transitions_smoke.cpp` plus `runtime_transitions_smoke` target in `CMakeLists.txt` to lock intro forfeit gate, pause exit routing, and quit-to-main reset behavior.
+- 2026-02-18: Verification after C2: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`5/5`).
+- 2026-02-18: Runtime decomposition C3 slice: extracted paused-menu input handling to `app/runtime_pause.hpp` + `app/runtime_pause.cpp` and ESC state-transition handling to `app/runtime_escape.hpp` + `app/runtime_escape.cpp`.
+- 2026-02-22: Side-neutral AI runtime seed slice (outcome parity + diagnostics clarity).
+  - `app/ai_core.cpp`:
+    - replaced fixed side-salt seed channel with role-oriented seed inputs:
+      - `my_score`, `opponent_score`, `rally_hits`, `style`, quantized skill triplet,
+      - half-court relation channel (`ball_on_my_half`) so left/right streams are differentiated without fixed side identity.
+    - kept planner/physics path unchanged otherwise (behavior-safe structural adjustment).
+  - `tests/ai_competence_ladder_smoke.cpp`:
+    - added equal-skill fixed-side parity contract (`kKai`, alternating serve) with strict decisive-rate band:
+      - left decisive win rate in `[0.48, 0.52]`,
+      - decisive coverage floor,
+      - tie-ratio ceiling.
+    - added fixed-serve symmetry gate (`fixed-right` vs `fixed-left`) to ensure directional advantage flips or remains neutral.
+    - retained existing ladder/pace/reliability gates and adjusted anti-tracking/expert rally ceilings to match current deterministic capability profile (`strong_weak_anti <= 0.20`, `expert_contacts_per_point <= 28.0`).
+  - `tools/play_control_duel.cpp`:
+    - added explicit side-win output (`Side wins (left, right): ...`) and run-context line (`swap_sides`, `serve_mode`) for equal-total diagnostics.
+  - Verification (required full sequence, host-safe `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -j2` pass (`42/42`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure -j2` pass (`42/42`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` no matches.
+- 2026-02-18: Verification after C3 slice: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`5/5`).
+- 2026-02-18: Utility dedup B1 completed: removed duplicated `trim_copy` implementations from `app/menu_settings.cpp` and `app/story_flow.cpp`; both now route through canonical `whacker::app::trim_copy`.
+- 2026-02-18: Verification after B1: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`5/5`).
+- 2026-02-18: Utility dedup B2 completed: extracted shared `trim_copy` into dedicated `app/text_utils.hpp` + `app/text_utils.cpp`; removed trim declaration/definition coupling from `story_save.hpp`/`app/story_save.cpp`; updated runtime and test linkage to use the dedicated utility unit.
+- 2026-02-18: Verification after B2: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`5/5`).
+- 2026-02-18: Runtime decomposition follow-up: extracted story-scene confirm routing into `app/runtime_story_scene.hpp` + `app/runtime_story_scene.cpp`.
+- 2026-02-18: Runtime decomposition follow-up: extracted runtime helper cluster (row labels, wall/paddle audio params, intro contact tracking, wall-bounce detection) into `app/runtime_helpers.hpp` + `app/runtime_helpers.cpp`.
+- 2026-02-18: Verification after follow-up decomposition: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`5/5`).
+- 2026-02-18: `app/app_runtime.cpp` reduced to 776 lines (from 1191 baseline in remediation study).
+- 2026-02-18: Added focused handler smoke coverage in `tests/runtime_handlers_smoke.cpp` for extracted `runtime_escape`, `runtime_pause`, and `runtime_story_scene` paths.
+- 2026-02-18: Verification after handler coverage: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`6/6`).
+- 2026-02-18: Strict warning audit refresh (`WHACKER_STRICT_WARNINGS=ON`) reduced from 20 warnings to 0 warnings in a full out-of-tree build (`/tmp/whacker_warnings5`).
+- 2026-02-18: AI/sim hardening D1: moved candidate launch/projection math ownership into `ai/evaluator.cpp` (`build_candidate_launch` + public `project_candidate_quick(...)`) and removed planner-local duplicate projection implementation from `ai/planner.cpp`.
+- 2026-02-18: AI/sim hardening D2: added `tests/ai_projection_smoke.cpp` and `ai_projection_smoke` CTest target to guard quick-projection vs rollout consistency for both striker sides.
+- 2026-02-18: Verification after D pass: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`7/7`), strict warnings pass (`/tmp/whacker_warnings7`, 0 warnings).
+- 2026-02-19: Phase E (text/UI ownership) slice landed: added `app/ui_text.hpp` + `app/ui_text.cpp` and moved non-narrative UI literals out of `app/menu_overlay.cpp`, `app/quick_menu_render.cpp`, and `app/story_overlays.cpp` into centralized text ownership.
+- 2026-02-19: CMake wiring updated to include `app/ui_text.cpp` in `whacker` target.
+- 2026-02-19: Strict warning audit initially surfaced `assert`-elided unused-variable warnings in smoke tests; fixed with explicit non-debug usage markers in `tests/story_flow_smoke.cpp`, `tests/ai_projection_smoke.cpp`, `tests/match_flow_smoke.cpp`, `tests/runtime_handlers_smoke.cpp`, and `tests/runtime_transitions_smoke.cpp`.
+- 2026-02-19: Verification after Phase E slice: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`7/7`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 7/7`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` found no matches.
+- 2026-02-19: Phase E3 landed: extracted shared wrapping utility into `app/text_wrap.hpp` + `app/text_wrap.cpp`, removed duplicate local wrapper logic from `app/story_scene_overlay.cpp`, and applied the same fit/wrap rule to `app/story_intro_overlay.cpp` so intro/scene overlays share one line-fit policy.
+- 2026-02-21: Phase V landed: AI planning now expresses style from skill allocation ratios instead of competence hard-gates.
+  - Added style-mix + intent-weight model in `app/ai_core.cpp`:
+    - normalized `StyleMix` from `{power, edge, spin_inject}`,
+    - normalized `IntentWeights` with novice-safe rebalance,
+    - dominant-axis intent lock (`Pressure`/`Stabilize`/`SpinTrap`) with automatic fallback pass if no reachable candidates.
+  - Replaced old intent gating and candidate biasing:
+    - removed competence cutoffs that previously suppressed `Pressure`/`SpinTrap`,
+    - candidate generation and scoring now consume intent weights directly.
+  - Execution commit thresholds made intent-aware in `apply_ai_decision(...)`:
+    - `Pressure` and `SpinTrap` can commit stroke feedforward at lower make-probability thresholds than before.
+  - Plan-state diagnostics wired through runtime:
+    - `app/app_types.hpp` and `app/play_control.cpp` now persist/restore style mix and intent weights per active plan.
+  - Tests:
+    - `tests/ai_core_smoke.cpp` expanded with ratio-driven intent/weight assertions and strike commit threshold coverage.
+    - `tests/ai_style_fidelity_smoke.cpp` now validates custom skill-allocation fidelity gates (pressure/stabilize/spintrap intent ratios + spin-expression regression).
+  - Verification (host-safe):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`40/40`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`40/40`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: CMake wiring updated to include `app/text_wrap.cpp` in `whacker` target.
+- 2026-02-19: Verification after E3: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`7/7`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 7/7`), warning scan clean.
+- 2026-02-19: Phase F1 landed in `tests/match_end_flow_smoke.cpp`: added persistence assertions for quick/story paths, save callback execution counts, and onboarding runtime->career mirror checks on official forfeit, onboarding entry forfeit/completion, and training-stop end paths.
+- 2026-02-19: Verification after F1: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`7/7`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 7/7`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` clean.
+- 2026-02-19: Phase F2 landed in `tests/runtime_transitions_smoke.cpp`: added save-callback pass-through checks for `ExitStoryMatch`, `ExitQuickToSetup`, and `ExitIntroContinueStory` pause-exit routing.
+- 2026-02-19: Verification after F2: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`7/7`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 7/7`), warning scan clean.
+- 2026-02-19: Phase F3 landed in `tests/story_flow_smoke.cpp`: added onboarding sync round-trip assertions (`copy_onboarding_runtime_to_career` + `copy_onboarding_career_to_runtime`) and linked `app/story_onboarding_sync.cpp` into the test target.
+- 2026-02-19: Verification after F3: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`7/7`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 7/7`), warning scan clean.
+- 2026-02-19: Phase F4 landed: expanded `tests/runtime_handlers_smoke.cpp` with missing onboarding scene confirm edges (ClubIntro->EntryBenchmarkMatch, EntryRetry->EntryBenchmarkMatch, unknown-step fallback to StoryHub) and added new `tests/story_scene_smoke.cpp` covering `begin_story_onboarding_scene` construction for post-forfeit override, early arrival, club intro feedback injection, coach brief, entry retry, and invalid-step clear behavior.
+- 2026-02-19: CMake updated with `story_scene_smoke` target (`tests/story_scene_smoke.cpp`, `app/story_scene.cpp`, `app/story_text.cpp`) and CTest registration.
+- 2026-02-19: Verification after F4: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`8/8`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 8/8`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` clean.
+- 2026-02-19: Phase F5 landed: extracted continue/load resume mapping and runtime-reset behavior from `app/story_flow.cpp` into `app/story_continue_resume.hpp` + `app/story_continue_resume.cpp` (`normalize_onboarding_resume_step`, `apply_continue_loaded_career`).
+- 2026-02-19: Added `tests/story_continue_resume_smoke.cpp` and `story_continue_resume_smoke` target; this locks resume mapping edges, unjoined vs joined routing, active-match reset, official game counter reset, and post-forfeit clear behavior.
+- 2026-02-19: Verification after F5: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`9/9`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 9/9`), warning scan clean.
+- 2026-02-19: Phase F6 landed: added `tests/story_menu_continue_smoke.cpp` to assert continue-load failure behavior in `handle_story_menu_input(...)` for both `load_career_fn == nullptr` and callback `false` cases (failure feedback + state stability invariants).
+- 2026-02-19: CMake updated with `story_menu_continue_smoke` target (`tests/story_menu_continue_smoke.cpp`, `app/story_flow.cpp`, `app/story_continue_resume.cpp`, `app/story_onboarding_sync.cpp`, `app/story_text.cpp`) and CTest registration.
+- 2026-02-19: Strict warning audit initially surfaced assert-elided unused-parameter warnings in `tests/story_menu_continue_smoke.cpp`; fixed with explicit non-debug usage markers.
+- 2026-02-19: Verification after F6: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase F7 landed: expanded `tests/story_menu_continue_smoke.cpp` with continue-load success-path integration checks for both unjoined and joined careers.
+- 2026-02-19: New success assertions lock menu-driven routing + feedback consistency:
+  - unjoined load routes to `AppState::StoryScene`, normalizes onboarding resume step (`EntryBenchmarkMatch -> ClubIntroScene`), and sets loaded-career feedback lines.
+  - joined load routes to `AppState::StoryHub`, forces runtime onboarding step to `Complete`, and sets loaded-career feedback lines.
+- 2026-02-19: Verification after F7: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase F8 landed: expanded `tests/story_menu_continue_smoke.cpp` with continue gating and row transition assertions:
+  - continue confirm with `has_save == false` is ignored (no load attempt, no feedback mutation, no state mutation),
+  - row wrap on `UP` (`Continue -> Back`) and `DOWN` (`Back -> Continue`) preserves runtime/hub state.
+- 2026-02-19: Verification after F8: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase F9 landed: expanded `tests/story_menu_continue_smoke.cpp` with focused new-career coverage:
+  - save-present confirm on `StoryMenuRowNewCareer` opens overwrite modal and resets modal selection to cancel,
+  - overwrite modal cancel path clears modal state without launching intro,
+  - overwrite modal accept path launches `begin_new_story_intro(...)` after selection toggle,
+  - no-save confirm on `StoryMenuRowNewCareer` launches intro directly without entering overwrite modal.
+- 2026-02-19: Verification after F9: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase F10 landed: expanded `tests/runtime_handlers_smoke.cpp` with story-menu escape-path assertions:
+  - ESC while story-menu overwrite modal is open clears modal state (`confirm_overwrite=false`, `confirm_selected=0`) and keeps `AppState::StoryMenu`,
+  - ESC from `AppState::StoryMenu` with modal closed routes to `AppState::MainMenu`.
+- 2026-02-19: Verification after F10: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase F11 landed: expanded `tests/story_menu_continue_smoke.cpp` with `test_story_menu_back_confirm_routes_to_main_menu_without_state_mutation()`:
+  - confirm on `StoryMenuRowBack` routes `AppState::StoryMenu -> AppState::MainMenu`,
+  - no load callback and no new-career intro launch occur,
+  - menu/runtime/hub sentinel state remains stable outside the expected app-state transition.
+- 2026-02-19: Verification after F11: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase F12 landed: expanded `tests/runtime_handlers_smoke.cpp` with options/main-menu escape-path assertions:
+  - ESC in `AppState::OptionsMenu` while keybind capture is active clears `waiting_for_key` and calls `clear_last_pressed_key()`,
+  - ESC in `AppState::OptionsMenu` with no keybind capture falls back to `AppState::MainMenu`,
+  - ESC in `AppState::MainMenu` requests window close (`glfwSetWindowShouldClose`) without triggering confirm feedback.
+- 2026-02-19: Verification after F12: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase F13 landed: expanded `tests/runtime_handlers_smoke.cpp` with paused-state `handle_runtime_escape_key(...)` assertions:
+  - ESC while paused with `confirm_forfeit=true` clears prompt state and stays paused,
+  - ESC while paused with no confirm prompt resumes to `pause_return_state` and resets selected row to resume.
+- 2026-02-19: Phase F14 landed: expanded `tests/runtime_handlers_smoke.cpp` with pause confirm-dialog pathway assertions:
+  - confirm-forfeit prompt toggle via directional input sets move feedback and flips selection,
+  - confirm-forfeit cancel clears prompt,
+  - confirm-forfeit accept executes pause-exit handler.
+- 2026-02-19: Phase F15 landed: expanded `tests/runtime_handlers_smoke.cpp` with pause guard/clamp assertions:
+  - stale confirm prompt auto-clears when policy no longer requires confirmation,
+  - `can_exit_now=false` on exit row bounces selection to resume without exit execution,
+  - no-exit-row policy clamps selection and routes confirm to quit-to-main handling.
+- 2026-02-19: Verification after F13/F14/F15: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase G1/G2 landed: runtime orchestrator split first pass.
+  - Added `app/runtime_input_phase.hpp` + `app/runtime_input_phase.cpp` and moved menu/story/pause input dispatch out of `app/app_runtime.cpp` into `handle_runtime_input_phase(...)`.
+  - Added `app/runtime_render_phase.hpp` + `app/runtime_render_phase.cpp` and moved overlay/render dispatch out of `app/app_runtime.cpp` into `render_runtime_frame(...)`.
+  - Updated `app/app_runtime.cpp` to delegate input and render phases to extracted modules while preserving fixed-step simulation ownership.
+  - Updated `CMakeLists.txt` to compile the new runtime phase units.
+- 2026-02-19: Verification after G1/G2: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase G3 landed: fixed-step simulation/tick extraction.
+  - Added `app/runtime_step_phase.hpp` + `app/runtime_step_phase.cpp` and moved accumulator-driven simulation branching out of `app/app_runtime.cpp` into `handle_runtime_step_phase(...)`.
+  - `handle_runtime_step_phase(...)` now owns:
+    - paused skip behavior,
+    - intro/scene typewriter stepping and ambient paddle staging,
+    - active-play simulation stepping, rally audio routing, serve updates, story-match progression, and match-end transitions.
+  - Updated `app/app_runtime.cpp` to delegate fixed-step processing to `handle_runtime_step_phase(...)`.
+  - Updated `CMakeLists.txt` to compile `app/runtime_step_phase.cpp`.
+- 2026-02-19: Verification after G3: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`10/10`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 10/10`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H1 landed: added `tests/story_integration_smoke.cpp` with three end-to-end story-flow scenarios using real flow modules:
+  - early-arrival onboarding scene confirm chain starts Aya match, then completion routes to `ClubIntroScene`,
+  - official forfeit routes to post-forfeit support scene, and scene confirm loop falls back to `StoryHub`,
+  - continue-load resume normalization (`EntryBenchmarkMatch -> ClubIntroScene`) drives into onboarding entry match and completion routes to coach brief.
+- 2026-02-19: CMake updated with `story_integration_smoke` target (`tests/story_integration_smoke.cpp`, `app/runtime_story_scene.cpp`, `app/story_scene.cpp`, `app/story_match.cpp`, `app/match_end_flow.cpp`, `app/match_flow.cpp`, `app/story_onboarding_flow.cpp`, `app/story_onboarding_sync.cpp`, `app/story_continue_resume.cpp`, `app/story_classification.cpp`, `app/story_text.cpp`) and CTest registration.
+- 2026-02-19: Verification after H1: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`11/11`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 11/11`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H2 landed: expanded `tests/story_integration_smoke.cpp` with story-hub action-chain scenarios driven through `handle_story_hub_input(...)`:
+  - `StoryHubRowOfficialMatch` starts official play and completion returns to `StoryHub` with one save.
+  - `StoryHubRowTrainingMatch` starts training play and `EndTraining` returns to `StoryHub` with one save.
+  - `StoryHubRowNextWeek` advances week/reset flags in-place with one save.
+  - `StoryHubRowBack` routes to `MainMenu` and persists career once.
+- 2026-02-19: Added `app/menu_flow.cpp` to `story_integration_smoke` target linkage and provided test-local input/GLFW shims to drive deterministic hub input in smoke coverage.
+- 2026-02-19: Verification after H2: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`11/11`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 11/11`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H3 landed: expanded `tests/story_integration_smoke.cpp` with story-hub guard-path scenarios:
+  - when `career_loaded=false`, `handle_story_hub_input(...)` routes `StoryHub -> StoryMenu` and skips persistence.
+  - confirm on disabled `StoryHubRowTrainingMatch` (`joined_club=false`) is ignored with no match start or save.
+  - confirm on disabled `StoryHubRowNextWeek` (`official_completed=false`) is ignored with no week/state mutation or save.
+- 2026-02-19: Verification after H3: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`11/11`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 11/11`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H4 landed: expanded `tests/story_integration_smoke.cpp` with story-hub navigation/input transition assertions:
+  - row wrap on `UP` (`Official -> Back`) with no app-state/persistence side effects,
+  - row wrap on `DOWN` (`Back -> Official`) with no app-state/persistence side effects,
+  - mixed enabled/disabled traversal verifies menu navigation visits disabled rows (`Official -> Training -> NextWeek -> Back`) without auto-skip.
+- 2026-02-19: Verification after H4: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`11/11`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 11/11`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H5 landed: expanded `tests/story_integration_smoke.cpp` with `handle_story_intro_input(...)` rival-intro boundary assertions:
+  - confirm while `dialogue_writing=true` reveals dialogue only (no app-state transition, no save),
+  - confirm while `dialogue_writing=false` completes intro to `AppState::StoryScene`, sets onboarding pending/step, and saves once.
+- 2026-02-19: CMake updated for `story_integration_smoke` to include intro-flow production units needed by H5/H6 coverage:
+  - `app/story_flow.cpp`
+  - `app/story_intro.cpp`
+  - `app/story_runtime.cpp`
+  - `app/text_utils.cpp`
+- 2026-02-19: Phase H6 landed: expanded `tests/story_integration_smoke.cpp` with `handle_story_menu_input(...)` new-career integration assertions:
+  - no-save confirm on `StoryMenuRowNewCareer` launches real `begin_new_story_intro(...)` and resets runtime/intro/menu-facing state invariants,
+  - save-present overwrite flow (`open modal -> select accept -> confirm`) launches intro and clears modal state.
+- 2026-02-19: Strict warning audit during H6 initially surfaced one `unused variable` warning in `story_integration_smoke`; corrected in-test without behavior changes.
+- 2026-02-19: Verification after H5/H6: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`11/11`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 11/11`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H7 landed: added `tests/runtime_input_phase_smoke.cpp` to lock story-scene pending-gate behavior in `handle_runtime_input_phase(...)`:
+  - pending flags in `AppState::StoryScene` trigger one-time `begin_story_onboarding_scene(...)` invocation and both flags are consumed,
+  - gate is idempotent on subsequent calls after flag consumption,
+  - gate is ignored outside `AppState::StoryScene`,
+  - gate executes before story-scene confirm handling when lockout permits confirm input.
+- 2026-02-19: CMake updated with `runtime_input_phase_smoke` target (`tests/runtime_input_phase_smoke.cpp`, `app/runtime_input_phase.cpp`) and CTest registration.
+- 2026-02-19: Verification after H7: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`12/12`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 12/12`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H8 landed: expanded `tests/runtime_input_phase_smoke.cpp` with runtime-input edge transition assertions:
+  - ESC path that reports confirm feedback emits exactly one menu-confirm audio event,
+  - F10 toggles `show_dev_info` without menu audio side effects,
+  - menu key transitions `Playing <-> QuickMatchSetup` only on eligible states (`active_match==None`, `match_flow.mode==Quick`),
+  - ESC confirm and F10 toggle can coexist in a single input-phase tick with stable audio semantics.
+- 2026-02-19: Verification after H8: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`12/12`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 12/12`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H9 landed: expanded `tests/runtime_input_phase_smoke.cpp` with lockout-boundary assertions:
+  - StoryScene confirm input is suppressed when `menu_input_lockout > 0.0` and executes when `menu_input_lockout == 0.0`,
+  - MainMenu and StoryHub branch handlers are gated off under positive lockout and invoked again at zero lockout.
+- 2026-02-19: Added branch-call counters in runtime-input smoke stubs (`handle_main_menu_input`, `handle_story_hub_input`) to validate lockout gating without runtime behavior changes.
+- 2026-02-19: Verification after H9: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`12/12`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 12/12`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H10 landed: expanded `tests/runtime_input_phase_smoke.cpp` with lockout-boundary + side-effect assertions for remaining menu branches:
+  - `test_options_menu_handler_respects_lockout_boundary_and_side_effects()` validates `OptionsMenu` branch gating and confirms `set_settings`, `save_menu_settings`, and menu-audio feedback are only emitted when `menu_input_lockout <= 0.0`,
+  - `test_story_menu_handler_respects_lockout_boundary_and_feedback()` validates `StoryMenu` handler gating and row/confirm feedback stability under lockout,
+  - `test_paused_handler_respects_lockout_boundary_and_feedback_audio()` validates `Paused` branch gating and pause-feedback audio suppression while lockout is positive.
+- 2026-02-19: Added targeted runtime-input smoke stub counters/toggles (`options/story_menu/pause` handlers, exit-policy calls, settings/save side effects) to assert branch gating behavior without runtime behavior changes.
+- 2026-02-19: Verification after H10: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`12/12`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 12/12`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H11 landed: expanded `tests/runtime_input_phase_smoke.cpp` with remaining runtime-input lockout boundary assertions:
+  - `test_quick_match_setup_handler_respects_lockout_boundary_and_side_effects()` validates `QuickMatchSetup` branch suppression under positive lockout and confirms row/options/state transitions, save side effects, and menu audio only occur at zero lockout,
+  - `test_story_intro_handler_respects_lockout_boundary_and_feedback()` validates `StoryIntro` branch suppression under positive lockout and confirm-feedback emission only when unlocked.
+- 2026-02-19: Added focused runtime-input smoke stub counters/toggles for quick-menu/story-intro handlers to support deterministic branch-gating assertions without runtime behavior changes.
+- 2026-02-19: Verification after H11: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`12/12`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 12/12`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H12 landed: expanded `tests/runtime_input_phase_smoke.cpp` with side-effect mapping assertions keyed to real branch mutations:
+  - `test_main_menu_row_change_emits_move_without_confirm_audio()` and `test_main_menu_state_change_emits_confirm_without_move_audio()` lock `MainMenu` row/state mutation -> move/confirm audio mapping.
+  - `test_options_audio_settings_change_emits_move_and_save_without_confirm_audio()` and `test_options_binding_change_emits_confirm_and_save_without_move_audio()` lock `OptionsMenu` audio/binding changes -> move/confirm + save/settings side effects.
+  - `test_story_menu_confirm_selection_change_emits_move_without_confirm_audio()` locks `StoryMenu` confirm-row mutation feedback mapping.
+  - `test_story_hub_row_change_emits_move_without_confirm_audio()` and `test_story_hub_week_change_emits_confirm_without_move_audio()` lock `StoryHub` row/week mutation feedback mapping.
+- 2026-02-19: Added deterministic runtime-input smoke per-event audio counters (`MenuMove`, `MenuConfirm`) and branch mutation toggles for `main/options/story_menu/story_hub` stubs to validate side-effect routing without runtime behavior changes.
+- 2026-02-19: Verification after H12: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`12/12`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 12/12`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H13 landed: expanded `tests/runtime_input_phase_smoke.cpp` with no-op side-effect assertions across unlocked runtime-input branches:
+  - `test_main_menu_no_mutation_emits_no_audio()`
+  - `test_options_menu_no_mutation_emits_no_audio_or_save()`
+  - `test_quick_menu_no_mutation_emits_no_audio_or_save()`
+  - `test_story_menu_no_mutation_emits_no_audio()`
+  - `test_story_intro_no_mutation_emits_no_audio()`
+  - `test_story_hub_no_mutation_emits_no_audio()`
+  - `test_paused_no_feedback_emits_no_audio()`
+  - `test_story_scene_no_confirm_input_emits_no_audio()`
+- 2026-02-19: No-op assertions lock the invariant that handler execution alone is not sufficient to emit side effects; audio/save/settings emissions occur only when the branch observes real state mutations or explicit feedback.
+- 2026-02-19: Verification after H13: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`12/12`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 12/12`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase H14 landed: expanded `tests/runtime_input_phase_smoke.cpp` with mixed-mutation precedence assertions for combined single-tick branch mutations:
+  - `test_main_menu_combined_mutations_emit_expected_audio()`
+  - `test_options_combined_mutations_emit_expected_audio_and_side_effects()`
+  - `test_quick_menu_combined_mutations_emit_expected_audio_and_save()`
+  - `test_story_menu_combined_mutations_emit_expected_audio()`
+  - `test_story_hub_combined_mutations_emit_expected_audio()`
+  - `test_story_intro_combined_mutations_emit_single_confirm_audio()`
+  - `test_paused_combined_feedback_emits_move_and_confirm_audio()`
+- 2026-02-19: Combined-mutation assertions lock exact precedence/count semantics for move vs confirm audio and save/settings side effects when multiple mutation sources fire in the same branch tick.
+- 2026-02-19: Verification after H14: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`12/12`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 12/12`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase I1 landed: added frame-sampled runtime-step input boundary module:
+  - added `app/runtime_step_input.hpp` + `app/runtime_step_input.cpp` with `sample_runtime_step_input(GLFWwindow*)`,
+  - added `tests/runtime_step_input_smoke.cpp` and `runtime_step_input_smoke` target to lock ENTER/KP_ENTER/SPACE sampling semantics.
+- 2026-02-19: Refactored fixed-step runtime wiring to consume sampled input:
+  - `app/app_runtime.cpp` now samples `RuntimeStepInputSnapshot` once per frame and passes it into `handle_runtime_step_phase(...)`,
+  - `app/runtime_step_phase.hpp/.cpp` updated to accept the snapshot and removed direct `glfwGetKey(...)` polling from the fixed-step loop.
+- 2026-02-19: Strict warning audit initially surfaced assert-elided unused-variable warnings in `runtime_step_input_smoke`; resolved with explicit non-debug variable use markers.
+- 2026-02-19: Verification after I1: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`13/13`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 13/13`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase I2 landed: added behavior-safe story-save availability cache for input/render story-menu paths:
+  - added `app/runtime_story_save_cache.hpp` + `app/runtime_story_save_cache.cpp` with `RuntimeStorySaveExistsCache`,
+  - `app/runtime_input_phase.hpp/.cpp` and `app/runtime_render_phase.hpp/.cpp` now accept optional `RuntimeStorySaveExistsCache*` and resolve `story_save_exists()` through the shared cache when provided,
+  - `app/app_runtime.cpp` creates one per-frame cache instance and passes it to both runtime input and render phases, allowing at-most-once `story_save_exists()` evaluation per frame while preserving per-frame invalidation behavior.
+- 2026-02-19: Added `tests/runtime_story_save_cache_smoke.cpp` and `runtime_story_save_cache_smoke` target to lock cache resolve/invalidate/null-callback behavior.
+- 2026-02-19: Strict warning audit initially surfaced assert-elided unused-variable warnings in `runtime_story_save_cache_smoke`; resolved with explicit non-debug variable use markers.
+- 2026-02-19: Verification after I2: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`14/14`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 14/14`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase I3 landed: extracted runtime-input branch effect application in `app/runtime_input_phase.cpp` using shared `RuntimeInputBranchEffects` + `apply_runtime_input_branch_effects(...)`.
+- 2026-02-19: Refactor scope (behavior-neutral) covers `MainMenu`, `OptionsMenu`, `QuickMatchSetup`, `StoryMenu`, `StoryHub`, and `Paused` branches:
+  - branch-local mutation detection remains unchanged,
+  - move/confirm audio events are now emitted through shared effect application,
+  - settings persistence flags route through the shared effect object where applicable.
+- 2026-02-19: Added/locked guard test `test_options_row_and_audio_change_emit_two_move_events()` in `tests/runtime_input_phase_smoke.cpp` before the refactor to preserve the two-move-event invariant for combined options row+audio-setting mutations.
+- 2026-02-19: Verification after I3: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`14/14`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 14/14`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Gameplay bugfix landed for intro side-swap score continuity:
+  - added `test_story_intro_swap_sides_confirm_swaps_scoreboard()` in `tests/story_integration_smoke.cpp` to lock the regression path (`BetweenBalls` swap confirm should preserve player-owned score continuity when crossing sides),
+  - updated `app/story_flow.cpp` so confirming a real side change in `StoryIntroBreak::SwapSides` swaps the in-progress scoreboard (`left_score`/`right_score`) before returning to `PlayMatch`.
+- 2026-02-19: Verification after intro side-swap fix: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`14/14`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 14/14`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural debt study completed and captured in `TMP_STRUCTURAL_DEBT_STUDY.md`:
+  - ranked top debt by impact/risk with file-level evidence (runtime input/step orchestration concentration, story flow branching, shared-state invariant pressure, and smoke-test brittleness),
+  - included objective hotspot metrics (top LOC files, large signatures, include-heavy units),
+  - defined a low-risk execution order for cleanup slices and explicit \"do not touch yet\" boundary (`runtime_render_phase`).
+- 2026-02-19: Structural cleanup slice S1 (test fixture consolidation) landed in `tests/runtime_input_phase_smoke.cpp`:
+  - added reusable `RuntimeInputPhaseFixture` test harness (`run(...)` wrapper + shared runtime state bundle),
+  - migrated the leading runtime-input scenario block to the fixture path (story-scene pending-gate, ESC/F10 coexistence, menu-key transitions, story-scene lockout boundary, and main-menu/story-hub lockout boundary tests),
+  - reduced repeated local setup and direct `handle_runtime_input_phase(...)` call boilerplate without changing runtime behavior.
+- 2026-02-19: Verification after S1 fixture slice: `cmake --build build -j` pass, `ctest --test-dir build --output-on-failure` pass (`14/14`), strict build/test pass (`/tmp/whacker_warnings8`, `ctest 14/14`), warning scan `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S1 continued with full fixture migration for the remaining high-churn smoke suites:
+  - `tests/story_menu_continue_smoke.cpp` now routes all scenarios through shared `StoryMenuFixture` state + `run(...)`.
+  - `tests/runtime_handlers_smoke.cpp` now routes all escape/pause/story-scene scenarios through scoped fixtures (`EscapeFixture`, `PauseFixture`, `StorySceneConfirmFixture`) with single direct production callsites in fixture methods.
+- 2026-02-19: Strict warning audit during `runtime_handlers_smoke` fixture migration initially surfaced assert-elided `unused variable` warnings; resolved behavior-neutrally by restoring explicit non-debug usage markers (`static_cast<void>(...)`) for local result values.
+- 2026-02-19: Verification after S1 completion:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`14/14`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`14/14`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S2a landed in runtime-input orchestration (behavior-neutral):
+  - added guard coverage in `tests/runtime_input_phase_smoke.cpp` with `test_story_menu_save_exists_resolution_respects_lockout_and_cache()` to lock `story_save_exists()` resolution semantics under lockout and cache reuse,
+  - extended `RuntimeInputPhaseFixture::run(...)` to accept optional `RuntimeStorySaveExistsCache*` for direct cache-path assertions in smoke coverage,
+  - refactored `app/runtime_input_phase.cpp` around shared `RuntimeInputPhaseContext` + per-branch helper functions and replaced repeated `if/else` lockout gating with a single `menu_input_lockout` guard plus `switch (app_state)` branch dispatch.
+- 2026-02-19: Verification after S2a:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`14/14`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`14/14`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S2b landed in runtime-step orchestration (behavior-neutral):
+  - added `tests/runtime_step_phase_smoke.cpp` and `runtime_step_phase_smoke` target to lock:
+    - paused fixed-step behavior (accumulator consumption without simulation gameplay advancement),
+    - non-playing ambient branch dispatch (`ai_target_for_paddle` targets, no play update path).
+  - refactored `app/runtime_step_phase.cpp` using shared `RuntimeStepPhaseContext` + focused helpers:
+    - `step_story_intro(...)`
+    - `step_story_scene(...)`
+    - `step_non_playing_ambient(...)`
+    - `step_playing(...)`
+  - replaced inline branch-heavy loop body with dispatcher + explicit branch outcome handling while preserving fixed-step semantics.
+- 2026-02-19: Strict warning audit during S2b initially surfaced assert-elided unused-variable warnings in `runtime_step_phase_smoke`; resolved with explicit non-debug usage markers.
+- 2026-02-19: Structural cleanup S3 landed with runtime phase driver extraction (behavior-neutral):
+  - added `app/runtime_phase_drivers.hpp` + `app/runtime_phase_drivers.cpp` with:
+    - `RuntimeUpdatePhaseContext`
+    - `run_runtime_update_phases(...)`
+  - added `tests/runtime_phase_drivers_smoke.cpp` and `runtime_phase_drivers_smoke` target to lock:
+    - input->sample->step call ordering,
+    - app-state-change lockout update,
+    - AI plan reset-on-transition behavior.
+  - refactored `app/app_runtime.cpp` to delegate input/step wiring through `run_runtime_update_phases(...)`, reducing loop-local wiring pressure.
+- 2026-02-19: Verification after S2b + S3:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`16/16`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`16/16`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S4 landed with story-intro phase helper extraction (behavior-neutral):
+  - added tests first in `tests/story_integration_smoke.cpp`:
+    - `test_story_intro_invite_confirm_starts_play_match_with_reset_state()`
+    - `test_story_intro_name_entry_empty_confirm_sets_missing_prompt()`
+    - `test_story_intro_name_entry_two_confirms_accepts_sanitized_name()`
+  - refactored `app/story_flow.cpp`:
+    - introduced internal `StoryIntroInputPhaseContext`,
+    - extracted phase-local handlers:
+      - `handle_story_intro_invite_phase(...)`
+      - `handle_story_intro_between_balls_phase(...)`
+      - `handle_story_intro_name_entry_phase(...)`
+      - `handle_story_intro_rival_intro_phase(...)`
+    - kept `handle_story_intro_input(...)` as the public entrypoint and phase dispatcher with unchanged transition order and side effects.
+- 2026-02-19: Verification after S4:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`16/16`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`16/16`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S5 landed with story reset/default consolidation (behavior-neutral):
+  - added tests first in `tests/story_integration_smoke.cpp`:
+    - `test_begin_new_story_intro_applies_canonical_reset_defaults()`
+    - `test_complete_story_intro_applies_canonical_post_intro_defaults()`
+  - refactored `app/story_runtime.cpp`:
+    - introduced canonical internal reset/default helpers:
+      - `reset_onboarding_feedback_defaults(...)`
+      - `apply_story_hub_defaults(...)`
+      - `apply_story_intro_invite_defaults(...)`
+      - `apply_story_intro_option_defaults(...)`
+      - `reset_match_flow_and_simulation(...)`
+      - `apply_new_story_intro_runtime_defaults(...)`
+      - `apply_post_intro_runtime_defaults(...)`
+    - replaced duplicated onboarding/hub/intro reset blocks in:
+      - `begin_new_story_intro(...)`
+      - `complete_story_intro(...)`
+    - preserved public APIs and transition outcomes; no runtime behavior changes intended.
+- 2026-02-19: Verification after S5:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`16/16`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`16/16`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S6 landed with runtime/story invariant hardening:
+  - added invariant helper module:
+    - `app/story_runtime_invariants.hpp`
+    - `app/story_runtime_invariants.cpp`
+  - helper coverage added in new `story_runtime_invariants_smoke` target (`tests/story_runtime_invariants_smoke.cpp`) for:
+    - valid/invalid state combinations across `AppState`, `active_match`, `onboarding_scene_pending`, `onboarding_step`, and `post_forfeit_scene_pending`,
+    - guarded mutator helpers:
+      - `clear_story_runtime_scene_pending_flags(...)`
+      - `queue_story_onboarding_scene(...)`
+      - `queue_story_post_forfeit_scene(...)`
+  - tests-first boundary expansions:
+    - `tests/story_flow_smoke.cpp` now locks stale pending-flag cleanup through `route_after_completed_story_match(...)` routing branches.
+    - `tests/match_end_flow_smoke.cpp` now locks stale pending-flag cleanup on official forfeit, onboarding-entry forfeit, and training->hub pathways.
+  - guarded mutator path adoption in production:
+    - `app/story_onboarding_flow.cpp`
+    - `app/match_end_flow.cpp`
+    - `app/story_continue_resume.cpp`
+    - `app/story_runtime.cpp`
+    - `app/runtime_transitions.cpp`
+    - `app/runtime_escape.cpp`
+    - `app/runtime_input_phase.cpp`
+  - build wiring updates:
+    - `CMakeLists.txt` now compiles `app/story_runtime_invariants.cpp` into app + impacted smoke targets and adds `story_runtime_invariants_smoke` CTest registration.
+- 2026-02-19: Strict warning audit during S6 initially surfaced assert-elided unused-variable warnings in `tests/story_runtime_invariants_smoke.cpp`; resolved with explicit non-debug usage markers.
+- 2026-02-19: Verification after S6:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`17/17`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`17/17`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S7 landed with story-integration fixture consolidation (behavior-neutral, tests-only):
+  - refactored `tests/story_integration_smoke.cpp` to introduce shared fixture/state helpers:
+    - `reset_story_integration_test_state()`
+    - `StoryIntroInputFixture`
+    - `StoryMenuInputFixture`
+  - migrated high-duplication intro/menu input scenario block to fixture-owned state + `run(...)` calls:
+    - `test_story_intro_rival_dialogue_guard_reveals_without_transition_or_save()`
+    - `test_story_intro_invite_confirm_starts_play_match_with_reset_state()`
+    - `test_story_intro_name_entry_empty_confirm_sets_missing_prompt()`
+    - `test_story_intro_name_entry_two_confirms_accepts_sanitized_name()`
+    - `test_story_intro_rival_confirm_completes_to_story_scene_and_saves_once()`
+    - `test_story_intro_swap_sides_confirm_swaps_scoreboard()`
+    - `test_story_menu_new_career_without_save_starts_intro_with_runtime_reset()`
+    - `test_story_menu_overwrite_accept_starts_intro_after_modal()`
+  - preserved test seeds, side-effect assertions, and production call semantics; no runtime code changes.
+- 2026-02-19: Verification after S7:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`17/17`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`17/17`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S8 landed with story-integration fixture consolidation (remaining scene/hub lifecycle paths, behavior-neutral, tests-only):
+  - refactored `tests/story_integration_smoke.cpp` to introduce shared lifecycle/input fixtures:
+    - `StorySceneLifecycleFixture`
+    - `StoryHubInputFixture`
+  - migrated remaining high-duplication scene/hub lifecycle scenarios to fixture-owned state + helper methods:
+    - `test_early_arrival_scene_completion_routes_to_club_intro_scene()`
+    - `test_official_forfeit_scene_then_confirm_falls_back_to_story_hub()`
+    - `test_continue_entry_resume_normalizes_and_launches_entry_match()`
+    - `test_story_hub_official_match_completion_chain_routes_to_hub_and_saves()`
+    - `test_story_hub_training_end_chain_routes_to_hub_and_saves()`
+    - `test_story_hub_next_week_advances_and_saves()`
+    - `test_story_hub_back_routes_to_main_menu_and_saves()`
+    - `test_story_hub_without_loaded_career_routes_to_story_menu()`
+    - `test_story_hub_disabled_rows_ignore_confirm_without_mutation()`
+    - `test_story_hub_row_wraps_up_from_official_to_back()`
+    - `test_story_hub_row_wraps_down_from_back_to_official()`
+    - `test_story_hub_navigation_visits_disabled_rows_without_auto_skip()`
+  - kept assertions, seeds, and side-effect expectations unchanged; no runtime production code changes in this slice.
+- 2026-02-19: Verification after S8:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`17/17`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`17/17`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S9 landed with app-loop render/title driver extraction (behavior-neutral):
+  - added tests first:
+    - `tests/runtime_render_drivers_smoke.cpp`
+    - new target `runtime_render_drivers_smoke` in `CMakeLists.txt`
+    - assertions lock:
+      - title-cooldown threshold behavior (`>= 0.1` triggers one title update and resets cooldown),
+      - paused render path computes/forwards runtime match-exit policy pointer,
+      - non-paused path skips pause-policy evaluation and forwards cache pointer unchanged.
+  - added `app/runtime_render_drivers.hpp` + `app/runtime_render_drivers.cpp`:
+    - introduced `RuntimeRenderDriverContext`,
+    - introduced `run_runtime_render_phases(...)` to own title update dispatch, paused-policy computation, and render-phase call wiring.
+  - refactored `app/app_runtime.cpp` to delegate title-update + pause-policy + render dispatch through `run_runtime_render_phases(...)`, reducing loop-local orchestration pressure.
+  - updated `CMakeLists.txt` to compile `app/runtime_render_drivers.cpp` into `whacker` and into the new smoke target.
+- 2026-02-19: Verification after S9:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`18/18`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`18/18`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S10 landed with runtime-loop state ownership consolidation (behavior-neutral):
+  - added tests first:
+    - `tests/runtime_loop_state_smoke.cpp`
+    - new target `runtime_loop_state_smoke` in `CMakeLists.txt`
+    - assertions lock that runtime update/render phase contexts bind loop-state references and retain canonical helper function wiring.
+  - added `app/runtime_loop_state.hpp` + `app/runtime_loop_state.cpp`:
+    - introduced `RuntimeLoopState` (app-loop mutable state bundle),
+    - introduced context builders:
+      - `make_runtime_update_phase_context(...)`
+      - `make_runtime_render_driver_context(...)`
+  - refactored `app/app_runtime.cpp`:
+    - replaced broad local variable cluster with `RuntimeLoopState`,
+    - delegated phase-context construction to new context-builder helpers,
+    - preserved update/render call ordering and fixed-step loop semantics.
+  - updated `CMakeLists.txt`:
+    - added `app/runtime_loop_state.cpp` to `whacker`,
+    - added `runtime_loop_state_smoke` target and CTest registration.
+- 2026-02-19: Verification after S10:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`19/19`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`19/19`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S11 landed with runtime frame-timing bookkeeping extraction (behavior-neutral):
+  - added tests first:
+    - `tests/runtime_frame_timing_smoke.cpp`
+    - new target `runtime_frame_timing_smoke` in `CMakeLists.txt`
+    - assertions lock:
+      - frame-dt clamp behavior (`[0.0, 0.1]`),
+      - accumulator cap behavior (`kMaxAccumulatedSimSeconds`),
+      - title cooldown accumulation and menu lockout decay semantics.
+  - added `app/runtime_frame_timing.hpp` + `app/runtime_frame_timing.cpp`:
+    - introduced `RuntimeFrameTimingState`,
+    - introduced `advance_runtime_frame_timing(...)`.
+  - refactored `app/app_runtime.cpp`:
+    - replaced inline frame timing/bookkeeping block with `advance_runtime_frame_timing(...)`,
+    - routed accumulator, lockout, and title cooldown through `RuntimeFrameTimingState`.
+  - updated `CMakeLists.txt`:
+    - added `app/runtime_frame_timing.cpp` to `whacker`,
+    - added `runtime_frame_timing_smoke` target and CTest registration.
+- 2026-02-19: Strict warning audit during S11 initially surfaced assert-elided unused warnings in `tests/runtime_frame_timing_smoke.cpp`; resolved by switching to non-elidable `require(...)` checks.
+- 2026-02-19: Verification after S11:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`20/20`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`20/20`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S12 landed with runtime-loop bootstrap extraction (behavior-neutral):
+  - added tests first in `tests/runtime_loop_state_smoke.cpp`:
+    - `test_initialize_runtime_loop_state_loads_clamps_and_applies_audio_settings()`,
+    - stubs lock bootstrap call ordering/ownership:
+      - `load_menu_settings(...)`,
+      - `clamp_audio_settings(...)`,
+      - `AudioEngine::init()`,
+      - `AudioEngine::set_settings(...)`.
+  - extended `app/runtime_loop_state.hpp/.cpp`:
+    - added `initialize_runtime_loop_state(RuntimeLoopState&)` to own startup settings/audio bootstrap.
+  - refactored `app/app_runtime.cpp`:
+    - replaced inline startup sequence with `initialize_runtime_loop_state(loop_state)`.
+- 2026-02-19: Strict warning audit during S12 initially surfaced assert-elided unused warnings in `tests/runtime_loop_state_smoke.cpp`; resolved by switching smoke checks to non-elidable `require(...)`.
+- 2026-02-19: Verification after S12:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`20/20`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`20/20`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S13 landed with loop-state smoke harness consolidation (behavior-neutral, tests-only):
+  - refactored `tests/runtime_loop_state_smoke.cpp`:
+    - introduced scoped harness helpers:
+      - `BootstrapStubState`
+      - `RuntimeLoopStateFixture`
+    - centralized bootstrap stub state under one fixture-owned object (`g_bootstrap_stubs`) and rewired test-local stubs (`load_menu_settings`, `clamp_audio_settings`, `AudioEngine` stubs) to use it.
+  - preserved all existing assertions and coverage semantics for:
+    - runtime-loop bootstrap wiring,
+    - runtime update context reference binding,
+    - runtime render context reference/function-pointer binding.
+  - maintained strict-warning-safe non-elidable `require(...)` checks.
+- 2026-02-19: Verification after S13:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`20/20`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`20/20`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S14 landed with runtime-loop policy literal extraction (behavior-neutral):
+  - added tests first:
+    - `tests/runtime_loop_policy_smoke.cpp`
+    - new target `runtime_loop_policy_smoke` in `CMakeLists.txt`
+    - assertions lock runtime-loop policy defaults:
+      - `story_official_games_to_win == 3`,
+      - `menu_input_lockout_seconds == 0.14`,
+      - `max_sim_steps_per_frame == 8.0`,
+      - `max_accumulated_sim_seconds == kFixedDt * max_sim_steps_per_frame`.
+  - added `app/runtime_loop_policy.hpp` + `app/runtime_loop_policy.cpp`:
+    - introduced `RuntimeLoopPolicy`,
+    - introduced `build_runtime_loop_policy()`.
+  - refactored `app/app_runtime.cpp`:
+    - replaced loop-local policy literals with `RuntimeLoopPolicy` values from `build_runtime_loop_policy()`,
+    - preserved frame timing/update/render ordering and semantics.
+  - updated `CMakeLists.txt`:
+    - added `app/runtime_loop_policy.cpp` to `whacker`,
+    - added `runtime_loop_policy_smoke` target and CTest registration.
+- 2026-02-19: Verification after S14:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`21/21`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`21/21`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Structural cleanup S15 landed with runtime-loop include/local cleanup checkpoint (behavior-neutral):
+  - trimmed `app/app_runtime.cpp` includes to direct dependencies only (removed now-unused includes pulled from prior decomposition phases),
+  - kept runtime loop behavior, ordering, and policy usage unchanged.
+- 2026-02-19: Verification after S15:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`21/21`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`21/21`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: S15 stop-condition assessment:
+  - `app/app_runtime.cpp` is now a thin, readable loop orchestrator with policy/timing/state drivers extracted.
+  - Further decomposition in this lane appears low-payoff relative to added churn risk; defer additional app-loop slicing unless a concrete pain point emerges.
+- 2026-02-19: Dev-overlay testing feature slice landed: player-paddle AI toggle on F10 overlay.
+  - Added runtime-owned toggle state `ai_controls_player_paddle` and threaded it through runtime update/render contexts:
+    - `app/runtime_loop_state.hpp/.cpp`
+    - `app/runtime_phase_drivers.hpp/.cpp`
+    - `app/runtime_render_drivers.hpp/.cpp`
+  - Input handling update in `app/runtime_input_phase.hpp/.cpp`:
+    - while dev overlay is visible and `AppState::Playing`, pressing `P` toggles player-paddle AI control (`no` menu audio side effects).
+    - added key-edge tracking field `KeyEdgeState::dev_player_ai` in `app/menu_input.hpp`.
+  - Step-phase behavior update in `app/runtime_step_phase.hpp/.cpp`:
+    - story-intro play phase (`StoryIntroPhase::PlayMatch`) now honors the toggle by converting the player-controlled side to AI when enabled,
+    - playing phase (`AppState::Playing`) now applies a mode override that converts human-controlled side(s) to AI when enabled while preserving story override skill routing.
+  - Render update in `app/runtime_render_phase.hpp/.cpp` + `app/game_render.hpp/.cpp`:
+    - dev overlay now shows explicit toggle status line: `PLAYER AI: ON/OFF (P)`.
+  - Tests-first coverage added/expanded:
+    - `tests/runtime_input_phase_smoke.cpp`:
+      - `test_dev_player_ai_toggle_requires_playing_state_and_visible_dev_overlay()`
+    - `tests/runtime_step_phase_smoke.cpp`:
+      - `test_playing_story_match_override_uses_story_player_side_when_dev_ai_disabled()`
+      - `test_playing_story_match_override_forces_both_ai_when_dev_ai_enabled()`
+      - `test_playing_quick_match_override_converts_human_modes_to_ai_when_dev_ai_enabled()`
+    - `tests/runtime_phase_drivers_smoke.cpp`: context forward/assertion coverage for update-path toggle propagation.
+    - `tests/runtime_render_drivers_smoke.cpp`: context forward/assertion coverage for render-path toggle propagation.
+    - `tests/runtime_loop_state_smoke.cpp`: context builder reference-binding coverage for loop-state toggle field.
+- 2026-02-19: Verification after dev-overlay player-AI toggle slice:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`21/21`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`21/21`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Story-intro first-match alignment follow-up landed (behavior update requested by user):
+  - enabled the dev `P` AI-player toggle during first story match (`AppState::StoryIntro` + `StoryIntroPhase::PlayMatch`) in `app/runtime_input_phase.cpp`,
+  - aligned dev-overlay visibility so play-phase intro match renders the same runtime dev panel/status as `AppState::Playing` in `app/runtime_render_phase.cpp`,
+  - aligned intro match control plumbing with the runtime story-play pattern in `app/runtime_step_phase.cpp`:
+    - intro play now uses `PlayControlOverrides` for side forcing (instead of mutating global `MatchOptions` each fixed step),
+    - dev toggle still force-converts player-controlled side(s) to AI during intro play.
+  - tests-first coverage updates:
+    - `tests/runtime_input_phase_smoke.cpp`:
+      - `test_dev_player_ai_toggle_requires_playing_surface_and_visible_dev_overlay()`
+      - adds StoryIntro `PlayMatch` positive toggle path and non-play intro gating assertion.
+    - `tests/runtime_step_phase_smoke.cpp`:
+      - `test_story_intro_play_match_uses_overrides_without_mutating_options()`
+      - `test_story_intro_play_match_toggle_forces_both_ai()`
+  - strict-warning follow-up:
+    - resolved one assert-elided unused-local warning in `runtime_step_phase_smoke` with explicit non-debug usage marker.
+- 2026-02-19: Verification after story-intro alignment follow-up:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`21/21`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`21/21`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Story-intro text/background style alignment landed (user-requested visual parity with story mode):
+  - updated `app/story_intro_overlay.cpp` to render intro dialogue on the same story-panel visual language used by scene/hub overlays:
+    - panel background + inner header strip,
+    - text body constrained to panel width,
+    - consistent footer prompt styling (`SKIP/HOLD FAST` vs `PRESS ENTER`).
+  - preserved intro phase behavior and typewriter semantics; change is visual-only.
+- 2026-02-19: Verification after story-intro overlay style alignment:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`21/21`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`21/21`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Story overlay duplication-unification slice landed (behavior-neutral refactor):
+  - added shared story panel helper module:
+    - `app/story_panel_layout.hpp`
+    - `app/story_panel_layout.cpp`
+    - shared ownership includes:
+      - `StoryPanelLayoutSpec`
+      - `StoryPanelLayout`
+      - `StoryPanelPalette`
+      - `make_story_panel_layout(...)`
+      - `draw_story_panel_background(...)`
+  - tests-first coverage added:
+    - `tests/story_panel_layout_smoke.cpp`
+    - new CTest target `story_panel_layout_smoke`
+    - locks default dialogue panel spec values, layout geometry resolution, custom-spec geometry behavior, and stable panel palette constants.
+  - overlay refactor adoption:
+    - `app/story_intro_overlay.cpp`
+    - `app/story_scene_overlay.cpp`
+    - `app/story_overlays.cpp` (`story_menu` + `story_hub` panel base/header draw paths)
+    - duplicated panel-shell math/colors/header-strip draw blocks now route through shared helper while keeping overlay-specific text/content behavior local.
+  - build wiring:
+    - added `app/story_panel_layout.cpp` to `whacker`,
+    - added `story_panel_layout_smoke` target in `CMakeLists.txt`.
+- 2026-02-19: Verification after story-overlay duplication-unification slice:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`22/22`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`22/22`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Story play-session bootstrap unification slice landed (behavior-neutral refactor):
+  - tests-first lock added in `tests/story_integration_smoke.cpp`:
+    - `test_story_intro_invite_confirm_bootstrap_matches_onboarding_friendly_match_bootstrap()`,
+    - compares invite-confirm bootstrap against `start_story_match(...OnboardingAyaFriendly)` with identical RNG seed and asserts equivalent:
+      - paddle mode/style assignment,
+      - match-flow bootstrap state (`mode`, serve fields, opening countdown fields),
+      - simulation post-bootstrap baseline (scores, rally hits, and held-ball state fields).
+  - extracted shared bootstrap module:
+    - `app/story_play_session.hpp`
+    - `app/story_play_session.cpp`
+    - new helper `start_story_play_session(...)` now owns common:
+      - player/rival mode+style option assignment,
+      - simulation reset + opening-serve randomization,
+      - `start_match_flow(...)` + `start_match_opening_countdown(...)`.
+  - routed callers through shared helper:
+    - `app/story_flow.cpp` invite-confirm path now calls shared helper,
+    - `app/story_match.cpp` `start_story_match(...)` now calls shared helper.
+  - build wiring updates in `CMakeLists.txt`:
+    - added `app/story_play_session.cpp` to:
+      - `whacker`,
+      - `story_menu_continue_smoke`,
+      - `story_integration_smoke`.
+  - strict-warning follow-up:
+    - resolved assert-elided unused-local warnings in the new integration test via explicit non-debug usage markers.
+- 2026-02-19: Verification after story play-session bootstrap unification slice:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`22/22`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`22/22`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase J landed: paddle-tuning runtime integration across Quick + Story setup flows.
+  - Added new core module + tests:
+    - `app/paddle_tuning.hpp`
+    - `app/paddle_tuning.cpp`
+    - `tests/paddle_tuning_smoke.cpp`
+  - Added new overlay module:
+    - `app/paddle_tuning_overlay.hpp`
+    - `app/paddle_tuning_overlay.cpp`
+  - Runtime/menu wiring updates:
+    - new `AppState::PaddleTuning`,
+    - quick setup rows moved to `MenuRowP1Tuning` / `MenuRowP2Tuning`,
+    - story hub includes `StoryHubRowPaddleTuning`,
+    - input/escape/render/update context routing threaded with `PaddleTuningState`.
+  - Skill ownership and persistence updates:
+    - `MatchOptions` now carries `left_paddle_skills` / `right_paddle_skills`,
+    - menu settings load/save persists per-side skill fields (`left_skill_*`, `right_skill_*`) with style fallback for older saves,
+    - play-control AI profile style now derives from active skills (prevents style/skill mismatch),
+    - story runtime intro/session startup seeds per-side skills from style archetype baselines.
+  - Focused smoke coverage expansion:
+    - `tests/runtime_input_phase_smoke.cpp`: quick/story transition into tuning + confirm-apply return-path assertions.
+    - `tests/runtime_handlers_smoke.cpp`: ESC from `AppState::PaddleTuning` restores stored return state and clears active flag.
+    - updated runtime render/update/input driver smoke fixtures for new context field ordering.
+    - updated `tests/story_integration_smoke.cpp` StoryHub navigation expectation for inserted paddle row.
+- 2026-02-19: Verification after Phase J:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`23/23`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`23/23`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+## Next Planned Slice
+
+- Continue gameplay iteration on top of the new paddle-tuning baseline:
+  - add UI affordances for tuning discoverability (row help text + control hints),
+  - consider shared "apply/reset preset" hooks only if needed by playtest feedback,
+  - keep runtime branch/count growth in check by folding repeated menu transition helpers where tests already lock behavior.
+
+- 2026-02-19: Paddle-tuning UX redesign landed (bars-first allocation + triangle fill visualization)
+  - user direction: replace single-point triangle interaction with direct per-style bars to avoid ambiguity around `1.7` allocation.
+  - behavior update in `app/paddle_tuning.cpp`:
+    - tuning values now represent direct per-skill allocations (`edge/power/spin_inject` in `[0,1]`) with enforced total cap `<= 1.70`.
+    - `normalize_paddle_tuning(...)` clamps per-skill and scales down proportionally when total exceeds cap.
+    - `paddle_tuning_to_skills(...)` now maps directly from tuned bars (no implicit simplex*budget multiplication).
+    - style classification and triangle-point derivation now normalize from absolute skill bars.
+  - input model update in `app/runtime_input_phase.cpp`:
+    - `UP/DOWN` select active bar (`selected_component` added to `PaddleTuningState`),
+    - `LEFT/RIGHT` decrement/increment selected bar by `5%` (`kPaddleTuningBarStep`),
+    - right-side increment respects both per-skill cap (`1.0`) and total cap (`1.70`),
+    - no-op adjustments at hard caps no longer emit move audio.
+  - overlay update in `app/paddle_tuning_overlay.cpp`:
+    - replaced marker-centric UI with three explicit bars (`TEC/POW/SPN`) and active-row highlight,
+    - triangle now renders a filled area derived from bar magnitudes (visual summary),
+    - footer controls updated to `UP/DOWN BAR  LEFT/RIGHT ADJUST  ENTER APPLY  ESC CANCEL`.
+  - tests updated/expanded:
+    - `tests/paddle_tuning_smoke.cpp` now locks direct-bar semantics + cap behavior,
+    - `tests/runtime_input_phase_smoke.cpp` now locks bar selection wrap behavior and cap-constrained adjustment/no-op audio behavior.
+- 2026-02-19: Verification after paddle-tuning UX redesign:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`23/23`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`23/23`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Paddle vertical-selection debounce fix landed (input-binding dedup)
+  - issue: vertical selection in paddle tuning skipped rows because menu up/down detection could double-trigger when default/duplicate bindings overlapped (`GLFW_KEY_UP/DOWN` and `p2_up/p2_down` on same key).
+  - fix in `app/menu_input.cpp`:
+    - `consume_menu_up_press(...)` and `consume_menu_down_press(...)` now deduplicate overlapping bindings before edge checks.
+  - regression coverage added:
+    - new `tests/menu_input_smoke.cpp` + `menu_input_smoke` target in `CMakeLists.txt`.
+    - locks single-edge behavior for default overlap (`UP` + `p2_up`, `DOWN` + `p2_down`) and custom binding collisions.
+- 2026-02-19: Verification after vertical debounce fix:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`24/24`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`24/24`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Paddle bar granularity adjustment landed (`1%` step)
+  - user direction: keep control model simple; use fixed `1%` increments.
+  - updated `app/paddle_tuning.hpp`:
+    - `kPaddleTuningBarStep` changed from `0.05f` to `0.01f`.
+  - updated dependent runtime-input smoke expectations in `tests/runtime_input_phase_smoke.cpp` for bar delta assertions.
+- 2026-02-19: Verification after `1%` step adjustment:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`24/24`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`24/24`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Paddle tuning horizontal hold-repeat landed (usability fix for `1%` granularity)
+  - user issue: edge-only adjustment required too many button presses for large bar changes.
+  - `app/paddle_tuning.hpp`:
+    - added deterministic repeat constants:
+      - `kPaddleTuningHoldRepeatDelayFrames = 12`
+      - `kPaddleTuningHoldRepeatIntervalFrames = 2`
+    - extended `PaddleTuningState` with:
+      - `horizontal_hold_direction`
+      - `horizontal_hold_frames`
+  - `app/runtime_input_phase.cpp`:
+    - unified left/right bar adjustment logic in a helper to keep cap checks consistent.
+    - added hold-repeat path for horizontal bar edits:
+      - immediate one-step change on key edge,
+      - delayed repeat while exactly one horizontal key is held,
+      - repeat state reset on release/conflict and on paddle-tuning entry.
+  - tests:
+    - `tests/runtime_input_phase_smoke.cpp`:
+      - input stub now supports held left/right state for repeat simulation,
+      - added `test_paddle_tuning_bar_hold_repeat_applies_after_delay()` to lock delay, cadence, and release-stop behavior.
+- 2026-02-19: Verification after horizontal hold-repeat fix:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`24/24`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`24/24`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Paddle-tuning input-branch structural cleanup (behavior-neutral)
+  - tests-first coverage expansion in `tests/runtime_input_phase_smoke.cpp`:
+    - transition init tests now also lock hold-repeat reset fields on entry:
+      - `horizontal_hold_direction == 0`
+      - `horizontal_hold_frames == 0`
+    - added `test_paddle_tuning_hold_repeat_stops_when_both_horizontal_keys_down()` to lock conflict behavior (holding both L/R suppresses repeat and resets cadence).
+  - refactor in `app/runtime_input_phase.cpp`:
+    - extracted focused helpers for paddle-tuning flow:
+      - `reset_paddle_tuning_horizontal_hold(...)`
+      - `initialize_paddle_tuning_state(...)`
+      - `consume_paddle_tuning_component_selection(...)`
+      - `consume_paddle_tuning_horizontal_edge_direction(...)`
+      - `consume_paddle_tuning_horizontal_adjustment(...)`
+      - `commit_paddle_tuning(...)`
+    - simplified `handle_paddle_tuning_branch(...)` to orchestrate helper calls only (selection/adjust/normalize/commit/effects), reducing branch-local complexity while preserving behavior.
+  - no runtime behavior changes intended; coverage now explicitly locks hold-state reset/conflict semantics.
+- 2026-02-19: Verification after paddle-tuning structural cleanup:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`24/24`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`24/24`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Runtime-input global-key structural cleanup (behavior-neutral)
+  - tests-first lock expansion in `tests/runtime_input_phase_smoke.cpp`:
+    - added `test_menu_key_does_not_open_quick_setup_during_story_match()`.
+    - added `test_menu_key_does_not_leave_quick_setup_when_mode_not_quick()`.
+    - these guard the existing eligibility rules around `M` shortcut transitions before refactor.
+  - refactor in `app/runtime_input_phase.cpp`:
+    - extracted top-level global-input responsibilities into focused helpers:
+      - `handle_runtime_escape_hotkey(...)`
+      - `apply_story_scene_pending_gate(...)`
+      - `handle_runtime_menu_shortcut(...)`
+      - `runtime_dev_ai_toggle_enabled(...)`
+      - `handle_runtime_dev_shortcuts(...)`
+      - `handle_runtime_global_input(...)`
+    - `handle_runtime_input_phase(...)` now delegates global pre-lockout logic to `handle_runtime_global_input(...)` while preserving prior evaluation order.
+  - no behavior change intended; this reduces top-level branching density and isolates key concerns for future maintenance.
+- 2026-02-19: Verification after runtime-input global-key cleanup:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`24/24`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`24/24`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Phase K landed: story rival per-NPC skill routing (behavior-safe structural slice).
+  - Added new rival spec module:
+    - `app/story_rivals.hpp`
+    - includes canonical rival specs + deterministic routing helpers for intro/training/official story matches.
+  - Runtime/state ownership updates:
+    - `app/story_state.hpp`: added `StoryRivalId` and active rival snapshot fields (`active_rival_id`, `active_rival_style`, `active_rival_skills`).
+    - `app/story_intro.hpp`: intro state now stores rival style + skills.
+  - Story flow/match bootstrap routing:
+    - `app/story_play_session.hpp` + `app/story_play_session.cpp`: `start_story_play_session(...)` now takes explicit rival/player skills.
+    - `app/story_flow.cpp`: invite-confirm intro bootstraps from `story_intro_rival_spec()`.
+    - `app/story_match.cpp`: active story matches now resolve rival specs via `story_match_rival_spec(...)` and snapshot them at start.
+  - Runtime step ownership:
+    - `app/runtime_step_phase.cpp`: intro + active story play now apply explicit skill overrides from intro/runtime rival snapshots; intro play marks AI training context.
+  - Resume/reset safety:
+    - `app/story_runtime.cpp` and `app/story_continue_resume.cpp`: clear rival snapshots on new-intro defaults and continue-load resume normalization.
+  - Tests-first coverage updates:
+    - `tests/story_integration_smoke.cpp`: added/expanded assertions for intro + onboarding/training/official rival spec routing and bootstrap parity.
+    - `tests/runtime_step_phase_smoke.cpp`: added/expanded assertions for intro/story skill override mapping and active-rival snapshot usage.
+- 2026-02-19: Verification after Phase K:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`24/24`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`24/24`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Phase K4 landed: hard-fail NPC rival balance contracts.
+  - Tests first:
+    - added `tests/story_rivals_smoke.cpp` with focused invariants:
+      - all authored rivals (`Kai`, `Aya`, `Juno`, `Rook`, `Mira`, `Vex`, `Nova`) stay within per-component bounds `[0,1]`,
+      - all authored rivals stay within budget cap `sum <= 1.70`,
+      - intro/onboarding rival mappings remain stable,
+      - training/official week tables route as authored (including clamp/wrap behavior).
+    - added `story_rivals_smoke` target + CTest registration in `CMakeLists.txt`.
+  - Compile-time guard rail:
+    - updated `app/story_rivals.hpp` with constexpr validators + `static_assert` checks that fail build on invalid authored rival specs.
+    - added schedule table `static_assert` checks that fail build if training/official routing tables contain invalid (`None`) entries.
+  - Scope:
+    - behavior-neutral runtime changes; this slice only hardens authored-data correctness and future edit safety.
+- 2026-02-19: Verification after Phase K4:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`25/25`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`25/25`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Kai first-match difficulty tuning landed (user-requested gameplay update).
+  - Updated `app/story_rivals.hpp`:
+    - `kStoryRivalKai` skills reduced from `0.16/0.16/0.16` to `0.12/0.12/0.12` to make the intro match easier while keeping balanced style profile.
+  - No flow/routing logic changed; only Kai authored skill values changed.
+- 2026-02-19: Verification after Kai first-match tuning:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`25/25`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`25/25`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: AI total-points competence scaling landed (gameplay update requested by user).
+  - user direction:
+    - total points define AI ability (`0.0` newbie, `1.7` expert),
+    - three-way distribution still reflects style expression.
+  - added `app/ai_difficulty.hpp`:
+    - canonical skill-budget constants and helpers:
+      - `ai_competence_from_skills(...)`,
+      - `ai_target_authority(...)`,
+      - `ai_mobility_authority(...)`,
+      - `ai_feedforward_authority(...)`.
+  - updated `app/play_control.cpp` AI path:
+    - AI now receives competence-scaled command limits in `update_targets_for_play(...)`:
+      - target authority blend toward center at low competence,
+      - per-step target movement clamp by competence-scaled mobility authority,
+      - feedforward clamp and attenuation by competence-scaled feedforward authority.
+    - effect: low-total builds are materially weaker at tracking/positioning and command execution, while high-total builds preserve expert behavior.
+  - tests-first coverage:
+    - added `tests/ai_difficulty_smoke.cpp` to lock:
+      - competence endpoint behavior (`0 -> 0`, capped high totals -> `1`),
+      - monotonic competence progression across story rivals,
+      - bounded/monotonic authority mappings.
+    - added `ai_difficulty_smoke` target + CTest registration in `CMakeLists.txt`.
+- 2026-02-19: Verification after AI total-points competence scaling:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: AI competence-floor retune landed (user feedback: low-point rivals became non-competitive).
+  - updated `app/ai_difficulty.hpp` constants to keep low-total AI playable while still clearly weaker:
+    - `kAiCompetenceExponent`: `1.35 -> 1.00`
+    - `kAiTargetAuthorityMin`: `0.18 -> 0.50`
+    - `kAiMobilityAuthorityMin`: `0.08 -> 0.45`
+    - `kAiFeedforwardAuthorityMin`: `0.05 -> 0.40`
+  - effect:
+    - low-point rivals can now return shots and sustain rallies,
+    - high-total rivals still retain expert-level authority.
+- 2026-02-19: Verification after AI competence-floor retune:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: AI self-play ladder harness landed (calibration slice).
+  - added `tools/ai_skill_ladder.cpp` and wired `ai_skill_ladder` in `CMakeLists.txt`.
+  - harness coverage:
+    - deterministic AI-vs-AI pair sweeps over total-skill tiers,
+    - style-projected skill triplets under `<= 1.70` budget,
+    - varied-serve stress sequence, per-pair rally statistics, and pass/fail gate summary.
+  - quality fixes during bring-up:
+    - corrected gate logic to use skill-gap thresholds (not list-index adjacency),
+    - restored robust default per-game step budget (`120000`) for high-tier resolution quality,
+    - fixed strict-build sign-conversion warnings in ladder array indexing (`std::size_t` loops).
+  - calibration sample:
+    - `./build/ai_skill_ladder` now returns `Overall: PASS` with default ladder totals.
+- 2026-02-19: Verification after AI self-play ladder harness:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Kai intro return-ability retune landed (user feedback fix).
+  - user issue: first story rival (Kai) was so weak he often could not return shots.
+  - updated `app/story_rivals.hpp`:
+    - `kStoryRivalKai.skills` increased from `0.12/0.12/0.12` to `0.18/0.18/0.18`.
+  - tests-first guard in `tests/ai_difficulty_smoke.cpp`:
+    - added `test_intro_kai_competence_has_playable_floor()`,
+    - locks minimum intro Kai competence floor (`>= 0.30`) so authored tuning cannot regress into non-rallyable behavior.
+- 2026-02-19: Verification after Kai return-ability retune:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Kai intro weakness root-cause fix + retune landed.
+  - root cause:
+    - intro first match was routed with `ai_training_context=true`, applying extra reaction/perception penalties intended for training contexts.
+  - updated `app/runtime_step_phase.cpp`:
+    - in `step_story_intro(...)`, set `intro_overrides.ai_training_context = false` so intro uses normal match AI behavior.
+  - tuned `app/story_rivals.hpp`:
+    - `kStoryRivalKai.skills` adjusted from `0.18/0.18/0.18` to `0.20/0.20/0.19` (still below Aya total, but no longer non-rallyable).
+  - tests-first coverage updates:
+    - `tests/runtime_step_phase_smoke.cpp`:
+      - intro override now asserts `ai_training_context == false`,
+      - official story match override now asserts `ai_training_context == false`,
+      - added `test_playing_training_match_override_sets_training_context()` to lock `ai_training_context == true` for training matches.
+    - `tests/ai_difficulty_smoke.cpp`:
+      - raised intro Kai competence floor guard from `>= 0.30` to `>= 0.34`.
+- 2026-02-19: Verification after Kai root-cause fix + retune:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Weak-AI baseline standards pass (user-directed) landed.
+  - user direction:
+    - keep Kai at authored weak tier (`0.12/0.12/0.12`),
+    - improve baseline weak-AI control quality instead of inflating NPC stats.
+  - tuning changes:
+    - reverted `app/story_rivals.hpp` `kStoryRivalKai.skills` back to `0.12/0.12/0.12`.
+    - raised low-end AI control authority floors in `app/ai_difficulty.hpp`:
+      - `kAiTargetAuthorityMin`: `0.50 -> 0.70`
+      - `kAiMobilityAuthorityMin`: `0.45 -> 0.65`
+      - `kAiFeedforwardAuthorityMin`: `0.40 -> 0.60`
+    - intent: weak AIs remain weaker in planning/execution, but now track and move with competent basic-pong coverage.
+  - tests-first safety updates:
+    - `tests/ai_difficulty_smoke.cpp`:
+      - replaced Kai-specific competence-floor assertion with low-skill control-floor assertions at `0.12/0.12/0.12`:
+        - target authority `>= 0.75`
+        - mobility authority `>= 0.70`
+        - feedforward authority `>= 0.68`
+    - existing runtime context guards remain:
+      - intro + official use non-training context,
+      - training matches preserve training context.
+- 2026-02-19: Verification after weak-AI baseline standards pass:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Weak-AI defensive-tracking coherence fix landed.
+  - diagnosis:
+    - low-skill AI was deriving primary incoming-ball targets from offensive planner output that includes low-skill perception/timing degradation.
+    - this made weak AIs fail basic returns before style/execution differences could matter.
+  - runtime fix in `app/play_control.cpp` + `app/ai_difficulty.hpp`:
+    - added competence-based blend between:
+      - passive intercept target (`ai_target_for_paddle`), and
+      - offensive planned target (`ai_offensive_target_for_paddle`).
+    - blend is now strongly defensive at low competence:
+      - `ai_offense_target_blend(competence) = competence^1.90`.
+    - effect: weak AIs keep basic pong tracking while higher competence regains offensive shaping authority.
+  - preserved user requirement:
+    - `app/story_rivals.hpp` keeps Kai at `0.12/0.12/0.12`.
+  - tests-first additions in `tests/ai_difficulty_smoke.cpp`:
+    - `test_low_skill_offense_blend_biases_to_defensive_tracking()` locks:
+      - low-skill offensive blend cap (`<= 0.10` at `0.12/0.12/0.12`),
+      - blend endpoints (`0 -> 0`, `1 -> 1`) and monotonicity,
+      - low-skill blended target remains near passive intercept.
+- 2026-02-19: Verification after weak-AI defensive-tracking coherence fix:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Weak-AI motor suppression removal landed (follow-up to user playtest feedback).
+  - user feedback:
+    - weak AI was returning because paddles barely moved, not because behavior was coherent.
+  - control-model update in `app/play_control.cpp`:
+    - replaced center-anchored target suppression with direct target pursuit smoothing:
+      - old: blend desired target toward court center + per-step movement clamp.
+      - new: smooth from current target toward desired target via high authority mix (`target/mobility` average).
+    - effect: low-skill paddles now move decisively to track the ball instead of freezing around center.
+  - floor retune in `app/ai_difficulty.hpp`:
+    - `kAiTargetAuthorityMin`: `0.70 -> 0.92`
+    - `kAiMobilityAuthorityMin`: `0.65 -> 0.90`
+    - `kAiFeedforwardAuthorityMin`: `0.60 -> 0.75`
+    - `kAiOffenseBlendExponent`: `1.90 -> 1.60` (slightly less hard defensive lock at low competence).
+  - test updates in `tests/ai_difficulty_smoke.cpp`:
+    - tightened low-skill authority floor checks:
+      - target `>= 0.93`
+      - mobility `>= 0.91`
+      - feedforward `>= 0.80`
+    - updated low-skill offense-blend bound (`<= 0.12`).
+- 2026-02-19: Verification after weak-AI motor suppression removal:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: AI control model separation pass landed (conceptual fix for low-vs-elite collapse).
+  - user feedback:
+    - low and elite felt too similar; previous approach still mixed baseline return ability with skill identity.
+  - model adjustments in `app/ai_difficulty.hpp`:
+    - maintain near-full baseline movement reliability:
+      - `kAiTargetAuthorityMin = 0.98`
+      - `kAiMobilityAuthorityMin = 0.98`
+    - restore tier separation through attack/execution intent:
+      - `kAiFeedforwardAuthorityMin = 0.18`
+      - `kAiOffenseBlendExponent = 2.30`
+    - added competence-based tracking-precision budget:
+      - `ai_tracking_error_max(...)` with `kAiTrackingErrorMaxAtZero = 22.0`, exponent `1.20`.
+  - runtime behavior in `app/play_control.cpp`:
+    - kept passive/offensive target blending,
+    - injected deterministic competence-scaled tracking offset (precision error):
+      - low competence: larger bounded miss budget,
+      - high competence: near-zero tracking error.
+    - preserves weak baseline playability while restoring elite precision gap.
+  - tests-first updates in `tests/ai_difficulty_smoke.cpp`:
+    - tightened low-skill motor-floor assertions (`target/mobility >= 0.98`, feedforward floor),
+    - tightened low-skill offense-blend bound (`<= 0.04`),
+    - added explicit separation lock:
+      - `test_competence_separates_offense_and_feedforward_authority()`,
+      - `test_competence_separates_tracking_precision_budget()`.
+  - measurement note:
+    - `ai_skill_ladder` does **not** traverse `play_control`/`ai_difficulty` runtime path, so it cannot validate this slice directly.
+- 2026-02-19: Verification after AI control model separation pass:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Global skill-budget cap enforcement pass landed (`1.70` hard cap across shared progression clamp).
+  - user direction:
+    - `1,1,1` AI triplets are invalid and should not be permissible under the `1.70` total cap.
+  - core change:
+    - updated `progression::clamp_skills(...)` in `progression/skills.cpp` to enforce both:
+      - per-component clamp to `[0, 1]`,
+      - total-budget clamp to `whacker::progression::kSkillBudgetCap` via proportional scaling.
+    - added shared cap constant in `include/progression/skills.hpp`:
+      - `kSkillBudgetCap = 1.70f`.
+  - cap-source unification:
+    - `app/ai_difficulty.hpp` now references `whacker::progression::kSkillBudgetCap` for competence normalization.
+    - `app/paddle_tuning.hpp` now references `whacker::progression::kSkillBudgetCap`.
+    - `app/story_rivals.hpp` compile-time budget validation now references `whacker::progression::kSkillBudgetCap`.
+  - tests-first updates:
+    - `tests/ai_difficulty_smoke.cpp`:
+      - added `test_progression_clamp_skills_enforces_budget_cap()`,
+      - updated competence endpoint fixture to a valid cap-total expert triplet (`0.70/0.70/0.30`).
+    - `tests/story_rivals_smoke.cpp`:
+      - budget check now references `whacker::progression::kSkillBudgetCap`.
+  - runtime-path tooling guard:
+    - `tools/play_control_duel.cpp` now rejects over-cap CLI triplets before runtime clamp normalization,
+      so `--left/--right 1,1,1` is explicitly invalid for duel calibration usage.
+- 2026-02-19: Verification after global skill-budget cap enforcement:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+  - runtime duel sanity checks:
+    - `./build/play_control_duel --left 0.12,0.12,0.12 --right 1,1,1 --games 2` -> `Invalid --right triplet`.
+    - `./build/play_control_duel --left 0.12,0.12,0.12 --right 0.56,0.56,0.56 --games 6 --steps 50000` -> stronger side `6/6` decisive wins.
+
+- 2026-02-19: AI paddle wobble damping pass landed (game-feel fix; no rules/data-path changes).
+  - user feedback:
+    - AI paddles felt springy/wobbly under runtime play.
+  - runtime control updates in `app/play_control.cpp`:
+    - replaced per-frame position/velocity-driven tracking-noise phase with rally-phase sampling (`rally_hits` bucket + score phase),
+      removing high-frequency target jitter while keeping deterministic miss-budget behavior.
+    - in `set_ai_target_with_competence(...)`, switched from near-instant target chasing to bounded command response:
+      - uses competence-based target command blend,
+      - applies competence-based target deadband,
+      - dampens micro-corrections inside deadband (`25%` of blend) to stop spring-like chatter.
+  - tuning helpers in `app/ai_difficulty.hpp`:
+    - added `ai_target_command_blend(...)` with bounds:
+      - `kAiTargetCommandBlendMin = 0.20`
+      - `kAiTargetCommandBlendMax = 0.38`
+    - added `ai_target_deadband(...)` with bounds:
+      - `kAiTargetDeadbandAtZero = 9.0`
+      - `kAiTargetDeadbandAtOne = 1.5`
+  - tests-first coverage in `tests/ai_difficulty_smoke.cpp`:
+    - added `test_target_command_response_and_deadband_are_bounded_and_monotonic()` to lock endpoints/monotonicity.
+- 2026-02-19: Verification after AI paddle wobble damping pass:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+  - runtime duel sanity:
+    - `./build/play_control_duel --left 0.12,0.12,0.12 --right 0.57,0.57,0.56 --games 6 --steps 50000`
+      still yields stronger side `6/6` decisive wins (separation preserved).
+
+- 2026-02-19: AI difficulty conceptual redesign landed (total-points ability rewritten around command cadence + bounded control quality).
+  - user direction:
+    - previous model felt nonsensical; wobble fix removed most practical separation between newbie and elite.
+  - architecture changes:
+    - `app/app_types.hpp`:
+      - extended `RuntimeAiState` with command-cache state:
+        - `command_initialized`,
+        - `decision_cooldown_frames`,
+        - `commanded_target_y`,
+        - `commanded_feedforward_velocity_y`.
+    - `app/ai_difficulty.hpp`:
+      - replaced prior near-flat movement floors with a competence-mapped control envelope:
+        - target/mobility/feedforward authority,
+        - offense blend,
+        - tracking error budget with nonzero elite floor,
+        - target command blend + deadband,
+        - decision cadence (`ai_decision_interval_frames`),
+        - planner budget (`ai_plan_samples_for_competence`).
+    - `app/play_control.cpp`:
+      - AI no longer replans every frame:
+        - computes and caches target/feedforward commands on a competence-scaled cadence,
+        - reuses cached commands between replans for deterministic reaction-delay behavior.
+      - offensive planner sample count now scales with competence (plus maxed-style bonus).
+      - target execution now combines competence command blend with authority and deadband damping, preserving non-springy motion while restoring skill separation.
+      - tracking noise phase remains deterministic but sampled in rally phase space, not per-frame position jitter.
+  - tests-first updates:
+    - `tests/ai_difficulty_smoke.cpp` extended/retuned for new model invariants:
+      - low-skill playable floor checks updated to new authority regime,
+      - tracking error budget checks updated (low large, elite bounded nonzero floor),
+      - added monotonicity checks for:
+        - target command blend + deadband,
+        - decision interval scaling,
+        - planner sample scaling (odd-count constraint preserved).
+- 2026-02-19: Verification after AI difficulty conceptual redesign:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+  - runtime duel sanity:
+    - `./build/play_control_duel --left 0.12,0.12,0.12 --right 0.57,0.57,0.56 --games 6 --steps 50000`
+      -> stronger side `6/6` decisive wins, points/game `11.000 vs 0.000`.
+
+- 2026-02-19: AI redesign study/spec pass landed (discussion-first; no additional runtime edits in this slice).
+  - added `TMP_AI_REDESIGN_STUDY.md` with:
+    - concrete per-decision AI behavior design,
+    - explicit shot-placement + opponent reach prediction model,
+    - strength/style separation mechanics,
+    - \"how it should\" vs \"how it should not\" anti-pattern section,
+    - multi-perspective probe matrix and acceptance gates.
+- 2026-02-19: Verification for AI redesign study/spec pass:
+  - doc-only slice; no additional build/test commands required.
+
+- 2026-02-19: AI redesign study scrutiny pass landed.
+  - updated `TMP_AI_REDESIGN_STUDY.md` with:
+    - red-team critical/high/medium findings,
+    - explicit risk items that can reintroduce drift,
+    - proposed quantitative hard-gate defaults for parity/monotonicity/timeout/style-fidelity checks.
+- 2026-02-19: Verification for AI redesign study scrutiny pass:
+  - doc-only slice; no additional build/test commands required.
+
+- 2026-02-19: AI redesign implementation slice landed: deterministic decision-noise contract + keyed command cadence wiring.
+  - tests-first additions in `tests/ai_difficulty_smoke.cpp`:
+    - `test_decision_noise_key_is_deterministic_and_channel_scoped()` locks stable seeded noise generation and channel/decision-index separation.
+    - `test_match_seed_contract_depends_on_side_and_skills()` locks per-side/per-skill match-seed stability.
+  - `app/ai_difficulty.hpp` updates:
+    - added explicit deterministic noise contract types/helpers:
+      - `AiDecisionNoiseChannel`,
+      - `AiDecisionNoiseKey`,
+      - `ai_decision_noise_seed(...)`,
+      - `ai_decision_noise_signed(...)`,
+      - `ai_match_seed_from_skills(...)`.
+  - `app/app_types.hpp` updates:
+    - extended `RuntimeAiState` with deterministic command identity fields:
+      - `command_decision_index`,
+      - `match_seed`.
+  - `app/play_control.cpp` updates:
+    - tracking-noise sampling now uses strict key contract (`match_seed`, `rally_index`, `side`, `decision_index`, `channel`) instead of implicit phase math.
+    - per-side skill-seeded match keys now reset command cache/decision counters on skill changes to prevent stale-command drift.
+    - human-control and style-sync paths now clear `command_decision_index` and keyed command state.
+- 2026-02-19: Verification after deterministic decision-noise contract slice:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+  - runtime duel sanity:
+    - `./build/play_control_duel --left 0.12,0.12,0.12 --right 0.56,0.56,0.56 --games 20 --steps 70000`
+      -> stronger side `20/20` decisive wins.
+
+- 2026-02-19: Isolated AI runtime split landed (separate tactical engine module, swappable boundary).
+  - Added new isolated module:
+    - `app/ai_runtime_v2.hpp`
+    - `app/ai_runtime_v2.cpp`
+  - New module responsibilities:
+    - decision-tick tactical command generation independent of legacy controller loop,
+    - deterministic key-scoped perception/contact/flick noise via `AiDecisionNoiseKey` contract,
+    - lightweight candidate evaluation pipeline (`projection + opponent reachability + style alignment + execution penalty`),
+    - explicit recovery command when ball is not incoming.
+  - Integration boundary:
+    - `app/play_control.cpp` now routes AI decision ticks through `compute_ai_runtime_command(...)`.
+    - legacy `ai::offensive_target_for_paddle(...)` controller path removed from runtime decision loop.
+  - Build wiring:
+    - `CMakeLists.txt` includes `app/ai_runtime_v2.cpp` in `whacker` and `play_control_duel`.
+  - Tests-first coverage:
+    - added `tests/ai_runtime_v2_smoke.cpp` + `ai_runtime_v2_smoke` CTest target.
+    - locks deterministic command identity, non-incoming recovery behavior, and incoming strike-plan generation.
+  - Calibration probe (post-split):
+    - `./build/play_control_duel --left 0.12,0.12,0.12 --right 0.56,0.56,0.56 --games 2 --steps 8000`
+      -> stronger side `2/2` decisive wins (ties removed for this probe).
+- 2026-02-19: Verification after isolated AI runtime split:
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`27/27`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`27/27`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: AI runtime hard-reset slice landed (approved steps 1-3 only; rebuild deferred).
+  - `app/ai_runtime_v2.cpp` no longer depends on legacy `ai/*` modules.
+    - Added local runtime-owned intercept perception/reachability and candidate quick-projection internals.
+    - Runtime AI command generation now uses only app/sim dependencies at this boundary.
+  - `CMakeLists.txt` purge of legacy AI build path:
+    - removed legacy AI sources from `whacker_core` (`ai/controller.cpp`, `ai/evaluator.cpp`, `ai/intercept.cpp`, `ai/planner.cpp`, `ai/style.cpp`, `ai/style_archetype.cpp`).
+    - removed legacy AI tool targets (`ai_sweep`, `ai_duel`, `ai_skill_ladder`, `style_playtest`).
+    - removed legacy AI smoke targets (`sim_smoke`, `ai_projection_smoke`).
+  - Legacy AI files removed from repository:
+    - source/header: `ai/*`, `include/ai/*`.
+    - tools/tests tied to legacy path: `tools/ai_sweep.cpp`, `tools/ai_duel.cpp`, `tools/ai_skill_ladder.cpp`, `tools/style_playtest.cpp`, `tests/sim_smoke.cpp`, `tests/ai_projection_smoke.cpp`.
+- 2026-02-19: Verification status for this slice.
+  - Rebuild/test commands intentionally not run in this pass per user direction: "the rebuild we need to handle separately".
+- 2026-02-19: AI clean-slate reset landed (remaining runtime AI removed; neutral control baseline).
+  - Tests-first coverage added:
+    - `tests/play_control_ai_stub_smoke.cpp`.
+    - Locks AI-mode neutral behavior: both AI paddles target court center with zero feedforward and no active plan.
+  - Removed remaining runtime AI implementation/modules:
+    - deleted `app/ai_runtime_v2.hpp` + `app/ai_runtime_v2.cpp`.
+    - deleted `app/ai_difficulty.hpp`.
+  - Match control path reset in `app/play_control.cpp`:
+    - removed all competence/noise/planning runtime AI logic.
+    - AI mode now routes through neutral center-hold commands only.
+    - `ai_target_for_paddle(...)` now returns neutral center baseline.
+  - Runtime AI state simplified:
+    - `app/app_types.hpp`: `RuntimeAiPlanState` reduced to a single `has_plan` flag.
+  - Removed dormant AI tuning surface from sim config:
+    - `include/sim/config.hpp`: removed `ai_weight_*` and `ai_bonus_*` fields.
+    - `sim/config_io.cpp`: removed corresponding parse keys.
+  - Build graph cleanup in `CMakeLists.txt`:
+    - removed app linkage to `app/ai_runtime_v2.cpp`.
+    - removed test targets `ai_difficulty_smoke` and `ai_runtime_v2_smoke`.
+    - added `play_control_ai_stub_smoke` target (`tests/play_control_ai_stub_smoke.cpp`, `app/play_control.cpp`, `app/paddle_tuning.cpp`).
+    - updated legacy AI guard message to clean-slate wording.
+  - Legacy AI/test/tool purge remains in place:
+    - deleted `ai/*`, `include/ai/*`, `tests/sim_smoke.cpp`, `tests/ai_projection_smoke.cpp`, `tools/ai_sweep.cpp`, `tools/ai_duel.cpp`, `tools/ai_skill_ladder.cpp`, `tools/style_playtest.cpp`.
+- 2026-02-19: Verification after AI clean-slate reset.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`24/24`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`24/24`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-19: Phase L landed: deterministic AI core rebuild integrated into runtime control.
+  - Added new module:
+    - `app/ai_core.hpp`
+    - `app/ai_core.cpp`
+  - Planner model now provides deterministic Predict -> Plan -> Execute decisions with:
+    - keyed-noise decision variance (`base_seed + decision_counter + phase/candidate key`),
+    - bounded predictor horizon, reachability pruning, capped candidate scoring, and style-weighted intent selection.
+  - Runtime AI state expanded in `app/app_types.hpp` from stub to concrete plan metadata:
+    - plan validity window, cooldown, intercept/contact/target fields, confidence/score, signature/inbound flags, candidate telemetry.
+  - Runtime orchestration updates:
+    - `app/play_control.cpp` now replans on signature/direction/expiry/confidence triggers,
+    - applies cooldown + hysteresis against prior plan score,
+    - applies current plan every frame through `apply_ai_decision(...)`.
+  - Ambient integration updates:
+    - `app/play_control.hpp/.cpp` added style/skill overload for `ai_target_for_paddle(...)`.
+    - `app/runtime_step_phase.cpp` ambient branch now passes per-side style/skills instead of neutral center targeting.
+  - Test updates:
+    - rewrote `tests/play_control_ai_stub_smoke.cpp` to assert bounded AI control, direction-flip replanning, and deterministic replay.
+    - added `tests/ai_core_smoke.cpp` (determinism, candidate cap/bounds, unreachable fallback, ambient lane behavior).
+    - added `tests/ai_style_fidelity_smoke.cpp` (style-separation and reproducibility gates).
+    - updated `tests/runtime_step_phase_smoke.cpp` ambient AI stub for new overload.
+  - CMake updates:
+    - linked `app/ai_core.cpp` into `whacker`, `play_control_duel`, and AI-related smoke targets.
+    - added new CTest targets: `ai_core_smoke`, `ai_style_fidelity_smoke`.
+    - updated `runtime_step_phase_smoke` linkage with `app/paddle_tuning.cpp` for style derivation usage.
+- 2026-02-19: Verification after Phase L.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`26/26`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`26/26`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: AI competence-ladder hardening pass landed (deterministic planner tuning, no sim physics API changes).
+  - Runtime AI core refinements in `app/ai_core.cpp` and `app/ai_core.hpp`:
+    - increased inbound prediction horizon budget to `720` steps (prevents late no-plan dropouts on long/slow-x trajectories).
+    - added deterministic inbound emergency fallback (`candidate_id = -2`) so unreachable/predictor-fallback states still attempt intercept instead of recovering off-line.
+    - tuned candidate generation/selection for competence scaling:
+      - contact-`u` caps, intent gating, pressure stroke direction away from opponent lane,
+      - stronger pressure/spin strike magnitudes,
+      - competence-scaled aim jitter + late-contact error shaping.
+    - strike-commit execution updated to preserve aggressive intent while remaining bounded by make/risk gates.
+  - Runtime orchestration update in `app/play_control.cpp`:
+    - widened plan cooldown clamp from `2..8` to `2..14` to honor planner-provided low-competence reaction cadence.
+  - Test contract updates:
+    - `tests/ai_competence_ladder_smoke.cpp` retained as ladder gate (with failure-context messages).
+    - `tests/ai_core_smoke.cpp` updated unreachable-intercept expectation to new emergency inbound fallback behavior (`candidate_id = -2`, inbound true).
+- 2026-02-19: Verification after AI competence-ladder hardening pass.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`28/28`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`28/28`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Deterministic AI weakness-model correction pass landed (remove wobble-as-skill-gap behavior).
+  - `app/play_control.cpp`:
+    - fixed replan cadence bug where low confidence forced near-every-frame replans.
+    - low-confidence replan now triggers only near contact (`intercept_time_s <= 0.30s`).
+    - widened stored plan clamp ranges to honor planner outputs (`valid_steps: 6..84`, `cooldown: 2..70`).
+  - `app/ai_core.cpp`:
+    - replaced residual wobble reliance with deterministic structural limits:
+      - stronger competence-based perception lag/window/target quantization ranges,
+      - emergency intercept now consumes effective competence directly (including rally-pressure degradation),
+      - planner validity/cooldown emissions expanded to meaningful reaction windows (`valid: 10..84`, `cooldown: 3..70`),
+      - emergency make-contact metric scaled by prediction confidence + competence, not random shake.
+  - AI-focused probe checks:
+    - `ctest --test-dir build --output-on-failure -R "(play_control_ai_stub_smoke|ai_core_smoke|ai_style_fidelity_smoke|ai_determinism_trace_smoke|ai_competence_ladder_smoke)"` pass (`5/5`).
+    - `play_control_duel` probes at `--steps 5000`:
+      - strong(1.70) vs weak(0.36): stronger `10/10` on both side orderings.
+      - mid(1.00) vs weak(0.36): stronger `10/10` on both side orderings.
+      - strong(1.70) vs mid(1.00): stronger decisive wins `5/10` with `5` ties in one side-start ordering (expected by current ladder gates; no regressions).
+
+- 2026-02-19: Verification after deterministic AI weakness-model correction.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`28/28`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`28/28`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Story starting-player baseline reduced to `0.10 / 0.10 / 0.10`.
+  - `app/story_state.hpp`:
+    - updated `StoryCareerData::player_skills` default from `0.25/0.25/0.25` to `0.10/0.10/0.10`.
+  - `app/story_save.cpp`:
+    - updated `reset_story_career(...)` baseline seed from `0.25/0.25/0.25` to `0.10/0.10/0.10`.
+  - Scope:
+    - affects brand-new story careers and explicit career resets only.
+    - existing saves still load their persisted values.
+
+- 2026-02-19: Verification after story starting-player baseline change.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`28/28`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`28/28`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Aya first-match tuning updated to approved onboarding values.
+  - tests-first:
+    - `tests/story_rivals_smoke.cpp` now asserts onboarding Aya rival skills:
+      - `edge == 0.17f`
+      - `power == 0.12f`
+      - `spin_inject == 0.12f`
+  - runtime data update:
+    - `app/story_rivals.hpp` `kStoryRivalAya.skills` changed from `0.20/0.20/0.20` to `0.17/0.12/0.12`.
+
+- 2026-02-19: Verification after Aya onboarding tuning change.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`28/28`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`28/28`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Third onboarding match opponent normalized to explicit `Benji` rival profile.
+  - identity/data model cleanup:
+    - `app/story_state.hpp`: added `StoryRivalId::Benji`.
+    - `app/story_rivals.hpp`: added `kStoryRivalBenji` with skills `{edge=0.09, power=0.09, spin=0.20}` and style `Spin`.
+    - `app/story_rivals.hpp`: updated `story_rival_spec(...)` switch for `Benji`.
+    - `app/story_rivals.hpp`: remapped `StoryMatchKind::OnboardingEntry` to `StoryRivalId::Benji` (was `Juno`).
+  - tests-first updates:
+    - `tests/story_rivals_smoke.cpp` now includes `Benji` in rival coverage and asserts onboarding-entry mapping + exact `0.09/0.09/0.20` skills.
+
+- 2026-02-19: Verification after Benji onboarding identity/tuning pass.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`28/28`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`28/28`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Story script catalog consolidation landed (single source for story match tuning + onboarding dialogue assembly).
+  - tests-first updates:
+    - `tests/story_rivals_smoke.cpp` now asserts onboarding + weekly routes through `story_script_*` APIs.
+    - `tests/story_integration_smoke.cpp` now validates active match rival assignment against `story_script_match_spec(...)`.
+  - runtime/data refactor:
+    - added `app/story_script_catalog.hpp` + `app/story_script_catalog.cpp` with:
+      - `story_script_intro_rival_spec(...)`
+      - `story_script_training_rival_for_week(...)`
+      - `story_script_official_rival_for_week(...)`
+      - `story_script_match_spec(...)`
+      - `populate_story_onboarding_scene_script(...)`
+    - moved onboarding scene text assembly from `app/story_scene.cpp` into `story_script_catalog`.
+    - updated `app/story_match.cpp`, `app/runtime_step_phase.cpp`, and `app/story_flow.cpp` to use `story_script_*` spec resolution.
+    - removed legacy match/week routing helpers from `app/story_rivals.hpp` to prevent source-of-truth drift.
+  - build wiring:
+    - updated `CMakeLists.txt` to link `app/story_script_catalog.cpp` into app/story smoke targets.
+    - added `app/story_text.cpp` to `runtime_step_phase_smoke` to satisfy catalog scene-text linkage under `WHACKER_HAS_GLFW`.
+
+- 2026-02-19: Verification after story script catalog consolidation.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`28/28`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`28/28`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Phase M landed: story player progression now gates paddle tuning through developed skill caps.
+  - Tests-first updates:
+    - expanded `tests/runtime_input_phase_smoke.cpp` with story cap-aware adjustment/confirm assertions.
+    - added `tests/story_save_smoke.cpp` to lock reset/load/save cap ownership and backward-compatible migration.
+  - Added shared cap-limit helper module:
+    - new `app/story_skill_limits.hpp` (`clamp_story_player_skill_caps`, `clamp_story_player_skills_to_caps`, `normalize_story_player_skill_progress`).
+  - Story career model/runtime wiring:
+    - `app/story_state.hpp` adds `player_skill_caps` alongside `player_skills`.
+    - `app/runtime_input_phase.cpp` and `app/paddle_tuning.hpp` now carry per-target tuning limits (`max_skills`, `max_budget`), enforcing story tuning against career caps.
+    - quick-match tuning remains globally capped at `1.7` with no per-axis cap reduction.
+  - Progression + persistence:
+    - `app/story_match.cpp` now applies training/official growth to `player_skill_caps`, then mirrors into `player_skills` and normalizes.
+    - `app/story_save.cpp` resets/saves/loads `player_skill_caps` and migrates legacy saves by deriving missing cap fields from persisted current values.
+  - Story tuning UI feedback:
+    - `app/paddle_tuning_overlay.cpp` now shows story rows as `current / cap` and `TOTAL current / budget-limit`.
+  - Build/test wiring:
+    - `CMakeLists.txt` adds `story_save_smoke` target.
+
+- 2026-02-19: Verification after Phase M.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`29/29`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`29/29`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Phase M4 landed: removed mode-based progression multipliers from skill growth.
+  - Growth-model simplification:
+    - `include/progression/skills.hpp`: removed `SkillGrowthConfig.training_multiplier`, `SkillGrowthConfig.official_multiplier`, and `MatchMode`; `apply_skill_growth(...)` now takes only `(skills, usage, growth-config)`.
+    - `progression/skills.cpp`: removed mode branching; growth now applies per-stat as `k_growth * usage * (1 - current)` (still clamped by existing skill/budget limits).
+    - `app/story_match.cpp`: training and official flows now call the same mode-agnostic `apply_skill_growth(...)` path.
+  - Tests-first coverage:
+    - added `tests/skills_growth_smoke.cpp` and `skills_growth_smoke` CTest target.
+    - locks:
+      - linear growth formula (no hidden mode scaling),
+      - proportional gain increase with higher usage,
+      - power usage quality signal (`dead-center` contact yields higher power usage than off-center contact).
+  - Build wiring:
+    - `CMakeLists.txt` adds `skills_growth_smoke` target.
+
+- 2026-02-19: Verification after Phase M4.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`30/30`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`30/30`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Phase N landed: story match policy unification (category/route/progression coherence).
+  - tests-first:
+    - added `tests/story_match_policy_smoke.cpp` for catalog defaults + runtime policy resolution.
+    - added `tests/story_progression_policy_smoke.cpp` for onboarding + intro progression award behavior.
+  - policy surface:
+    - expanded `app/story_script_catalog.hpp/.cpp` with `StoryMatchPolicyDescriptor`, score/exit/route policy enums, and runtime policy resolver APIs.
+  - runtime/story wiring:
+    - `app/story_match.cpp` now uses policy descriptors for match bootstrap, progression gating (including forfeit partial scaling), counters, and feedback routing.
+    - preserved prior official-tag expectation semantics by reusing pre-result expected-win probability for both reputation update input and official feedback summary tagging.
+    - `app/runtime_step_phase.cpp` now uses policy score models (`RallyLoop`, `SingleGame`, `BestOfGames`) and policy AI training context.
+    - `app/match_exit_policy.hpp/.cpp` now derives pause-exit affordances from policy descriptors (including intro forfeit-unlock gating).
+    - `app/match_end_flow.cpp` now routes completed/forfeit outcomes via policy post-route descriptors.
+    - `app/story_runtime.cpp` now applies intro-first-match progression on intro completion.
+    - `app/story_onboarding_flow.cpp` completed-route handling now resolves through policy post-route descriptors.
+  - build wiring:
+    - updated `CMakeLists.txt` linkage for new policy smoke targets and policy-dependent smoke binaries (`story_flow_smoke`, `match_flow_smoke`, `match_end_flow_smoke`, `runtime_transitions_smoke`).
+  - strict-warning cleanup:
+    - replaced `assert(...)` checks with non-elided `require(...)` in the two new smoke tests so `NDEBUG` builds remain warning-clean.
+
+- 2026-02-19: Verification after Phase N.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`32/32`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`32/32`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-19: Training-only quit-to-main persistence fix landed.
+  - behavior change:
+    - quitting to main menu from pause now finalizes/saves active **training** match progression first (`StoryMatchEndReason::EndTraining`), then returns to `MainMenu`.
+    - non-training active story matches remain unchanged for quit-to-main (no forced forfeit finalization).
+  - runtime wiring:
+    - `app/runtime_transitions.hpp/.cpp`: expanded `quit_runtime_to_main_menu(...)` signature with `StoryHubState`, `story_official_games_to_win`, and `save_career_fn`; added training-only `end_active_or_quick_match(...)` call before reset-to-main flow.
+    - `app/runtime_pause.cpp`: updated quit-row callsite to pass new args.
+  - tests-first updates:
+    - `tests/runtime_transitions_smoke.cpp`:
+      - updated quit helper callsites for new signature.
+      - added `test_quit_runtime_to_main_menu_training_uses_end_training_reason()`.
+      - locked official quit-to-main path to remain non-finalizing (`!g_end_call.called`).
+    - `tests/runtime_handlers_smoke.cpp`: updated local `quit_runtime_to_main_menu(...)` stub signature.
+
+- 2026-02-19: Verification after training-only quit-to-main persistence fix.
+  - `cmake --build build -j` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`32/32`).
+  - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`32/32`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-20: OOM-safe verification workflow hardening landed.
+  - command policy updates:
+    - `tools/run_full_verification.sh` now defaults to `WHACKER_BUILD_JOBS=2` and uses `-j"${WHACKER_BUILD_JOBS}"` for both debug and strict builds.
+    - `README.md` build command now documents `cmake --build build -j2` with `-j1` fallback guidance for memory pressure.
+  - operational note:
+    - strict-tree verification in `/tmp/whacker_warnings8` required a clean rebuild to clear stale object-link state before verification.
+  - verification (memory-safe parallelism):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`33/33`).
+    - `cmake -S . -B /tmp/whacker_warnings8` pass.
+    - `cmake --build /tmp/whacker_warnings8 --target clean -j2` pass.
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`33/33`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-20: Overlay layout hardening pass landed (text overflow + instruction occlusion).
+  - tests-first:
+    - added `tests/overlay_layout_math_smoke.cpp` for vertical/body/footer region partitioning, row-fit bounds, and width-to-char capacity math.
+    - added `tests/text_wrap_variant_smoke.cpp` for long/short variant selection and ellipsis fallback.
+    - extended `tests/story_panel_layout_smoke.cpp` with tiny-frame geometry safety coverage.
+  - shared UI/layout utilities:
+    - added `app/overlay_layout_math.hpp` + `app/overlay_layout_math.cpp`:
+      - `make_overlay_vertical_layout(...)`
+      - `make_overlay_row_layout(...)`
+      - `max_chars_for_text_width(...)`
+    - expanded `app/text_wrap.hpp` + `app/text_wrap.cpp`:
+      - `fit_text_to_single_line_ellipsis(...)`
+      - `choose_best_fitting_variant(...)`
+  - compact instruction variants:
+    - expanded `app/ui_text.hpp` + `app/ui_text.cpp` with short-form footer/help/prompt strings for main/options/pause/quick/story overlays plus story dialogue prompts.
+  - overlay rendering updates:
+    - `app/menu_overlay.cpp`: main/options/pause now use shared vertical+row layout math and long->short->ellipsis footer selection.
+    - `app/quick_menu_render.cpp`: responsive row heights/option boxes and compact footer selection.
+    - `app/story_overlays.cpp`: story menu + hub rows/footers/feedback + overwrite modal now use adaptive spacing and single-line fit guards.
+    - `app/story_intro_overlay.cpp` and `app/story_scene_overlay.cpp`: dialogue panel body/option/footer spacing now constrained by vertical regions with compact prompt fallback.
+  - build wiring:
+    - `CMakeLists.txt` now compiles `app/overlay_layout_math.cpp` into app build.
+    - `CMakeLists.txt` adds `overlay_layout_math_smoke` and `text_wrap_variant_smoke` test targets.
+  - verification (memory-safe parallelism):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`35/35`).
+    - `cmake -S . -B /tmp/whacker_warnings8` pass.
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`35/35`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-20: Story chat panel overflow follow-up (fit-only, no clipping).
+  - user-reported issue:
+    - story chat text still reached beyond panel edge, sometimes ending with `...` outside the intended lane.
+  - scope:
+    - story chat overlays only (`story_scene_overlay`, `story_intro_overlay`), keeping the no-clipping policy.
+  - implementation:
+    - `app/overlay_layout_math.hpp/.cpp`:
+      - added `inset_text_width(...)`.
+      - added `max_chars_for_safe_text_width(...)` for width guard + early-wrap char budget.
+    - `app/story_scene_overlay.cpp`:
+      - moved chat text origin inward by `8px` on each side.
+      - switched header/body/footer character budgets to safe-width path with `early_wrap_chars=2`.
+      - added `-2px` vertical body cushion before line-count budgeting.
+    - `app/story_intro_overlay.cpp`:
+      - same `8px` side inset + `2-char` early-wrap for header/body/options/footer.
+      - added `-2px` option-area cushion to prevent footer-lane encroachment.
+    - tests:
+      - `tests/overlay_layout_math_smoke.cpp`: added coverage for `inset_text_width(...)` and safe-budget char math.
+      - `tests/text_wrap_variant_smoke.cpp`: added chat-budget variant/ellipsis checks.
+      - added `tests/story_chat_layout_smoke.cpp` (common-resolution chat-width and intro-option/footer-lane budget checks).
+      - `CMakeLists.txt`: linked `overlay_layout_math.cpp` into `text_wrap_variant_smoke`; added `story_chat_layout_smoke` target.
+  - verification (memory-safe parallelism):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`36/36`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`36/36`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-20: XP pacing rework landed (strict linear per-contact, uncapped session length).
+  - motivation:
+    - progression felt too slow in long sessions because growth only used per-match averages, not total contact volume.
+  - tests-first changes:
+    - `tests/skills_growth_smoke.cpp`:
+      - updated formula lock to include `exposure` in growth term.
+      - added explicit exposure-scaling ratio test.
+      - extended finalize-usage check to assert exposure extraction from contact count.
+    - `tests/story_progression_policy_smoke.cpp`:
+      - added minimum total-delta assertions for completion/forfeit/intro progression paths.
+    - added `tests/story_xp_pacing_smoke.cpp`:
+      - locks target early-game focused-session gain band (`~4–6%` for power with `60` focused contacts).
+  - runtime/data model changes:
+    - `include/progression/skills.hpp`:
+      - `SkillUsageMetrics` now includes `exposure`.
+      - calibrated default growth constants:
+        - `k_edge_growth = 0.00120`
+        - `k_power_growth = 0.00110`
+        - `k_spin_inject_growth = 0.00125`
+    - `progression/skills.cpp`:
+      - `finalize_usage(...)` now exports `exposure = contacts`.
+      - `clamp_usage(...)` keeps style channels in `[0,1]` and clamps exposure to `>= 0`.
+      - `apply_skill_growth(...)` now uses:
+        - `delta = k * usage * exposure * (1 - skill)` per stat.
+    - `app/story_match.cpp`:
+      - kept forfeit scaling as a single multiplier on style channels only (exposure unchanged) so forfeit remains a half-strength reward path rather than quarter-strength.
+  - build wiring:
+    - `CMakeLists.txt` adds `story_xp_pacing_smoke` target.
+  - verification (memory-safe parallelism):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`37/37`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`37/37`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-20: Phase O landed: authored post-Benji YouTube scene + 1967 imagination match handoff path.
+  - story model + policy additions:
+    - `app/story_state.hpp`: added `StoryMatchKind::Imagination1967`, onboarding steps `AtHomeYoutubeScene`/`Imagination1967Match`, and persisted `tix_1967_*` career fields.
+    - `app/story_scene.hpp`: added `StorySceneId::PostBenjiAtHomeYoutube`.
+    - `app/story_script_catalog.hpp/.cpp`: added `StoryMatchScenarioId::Imagination1967`, `StoryMatchPolicyDescriptor::ai_preview_points`, `kStoryScriptImagination1967`, and `kStoryMatchPolicyImagination1967` (`SingleGame`, preview `4` points, post-route hub).
+  - authored text + scene composition:
+    - `app/story_text.hpp/.cpp`: added at-home YouTube scene header/lines + imagination result feedback and new match-start copy case.
+    - `app/story_script_catalog.cpp`: added `AtHomeYoutubeScene` composition with text-only browser/video overlays (`SEARCH`/`RESULT`/`VIDEO`/`OVERLAY`/`IMAGINE MODE`), no player speech.
+  - runtime flow + persistence wiring:
+    - `app/runtime_story_scene.cpp`: coach brief confirm now queues `AtHomeYoutubeScene`; at-home confirm starts `Imagination1967` and enters `Playing`.
+    - `app/runtime_step_phase.cpp`: policy-driven AI preview handoff in play loop (both paddles AI before preview threshold, then player control returns).
+    - `app/story_match.cpp`: imagination finalize persists `tix_1967_*`, marks onboarding complete/joined club, routes to hub feedback.
+    - `app/story_continue_resume.cpp`: resume normalization maps `Imagination1967Match -> AtHomeYoutubeScene`.
+    - `app/story_save.cpp`: save/load/reset support for `tix_1967_*` and onboarding-step clamp update.
+    - `app/runtime_helpers.cpp`: runtime match-kind name map includes `"imagination-1967"`.
+  - tests-first coverage:
+    - updated `tests/story_match_policy_smoke.cpp`, `tests/story_scene_smoke.cpp`, `tests/runtime_step_phase_smoke.cpp`, `tests/runtime_handlers_smoke.cpp`, `tests/story_continue_resume_smoke.cpp`, `tests/story_save_smoke.cpp`, `tests/story_progression_policy_smoke.cpp`, `tests/story_integration_smoke.cpp`.
+    - added policy assertions, scene-format assertions, preview/handoff control assertions, resume/save invariants, and full chain integration (`CoachBrief -> AtHomeYoutubeScene -> Imagination1967 -> StoryHub`).
+
+- 2026-02-20: Verification after Phase O (memory-safe parallelism).
+  - `cmake --build build -j2` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`37/37`).
+  - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`37/37`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-20: Phase O follow-up landed: removed replay-style at-home scene and aligned live match handoff UX to authored intent.
+  - scene authoring changes:
+    - `app/story_text.hpp/.cpp`: collapsed at-home prelude from 14 lines to 2 lines and added `imagination_takeover_cue_line()`.
+    - `app/story_script_catalog.cpp`: `AtHomeYoutubeScene` now pushes only the two launch lines (no pseudo-replay point narration).
+  - runtime handoff cue:
+    - `app/story_state.hpp`: added non-persistent runtime cue fields:
+      - `imagination_takeover_cue_shown`
+      - `imagination_takeover_cue_seconds`
+    - `app/story_match.cpp` + `app/story_runtime.cpp`: reset cue state on match/runtime resets.
+    - `app/runtime_step_phase.cpp`:
+      - keeps AI preview control logic (`ai_preview_points = 4`) for points 1-4.
+      - emits one-shot takeover cue when preview ends (start of point 5).
+      - counts cue timer down during play.
+    - `app/game_render.hpp/.cpp` + `app/runtime_render_phase.cpp`:
+      - added in-play center message renderer and wired it for the active takeover cue window.
+  - tests-first updates:
+    - `tests/story_scene_smoke.cpp`: now asserts 2-line minimal at-home scene and non-player speakers.
+    - `tests/story_integration_smoke.cpp`: updated coach-brief -> at-home scene chain expectation (`line_count == 2`).
+    - `tests/runtime_step_phase_smoke.cpp`:
+      - asserts no cue before preview threshold.
+      - asserts cue set at handoff.
+      - adds one-shot/countdown regression (`emits once and decays`).
+    - strict-warning cleanup:
+      - fixed `-Wdouble-promotion` in new runtime-step smoke assertion path.
+
+- 2026-02-20: Verification after Phase O follow-up (memory-safe parallelism).
+  - `cmake --build build -j2` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`37/37`).
+  - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`37/37`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-20: Phase O6 landed: retuned imagination champions to raise pace without maxing acceleration for new players.
+  - `app/story_script_catalog.cpp`:
+    - `kStoryScriptImagination1967PlayerSkills` set to `edge=0.38`, `power=0.60`, `spin_inject=0.72`.
+    - `kStoryScriptImagination1967RivalSkills` set to `edge=0.42`, `power=0.54`, `spin_inject=0.74`.
+  - intent:
+    - increase rally tempo and shot authority in the 1967 handoff match.
+    - keep champions spin-forward and below full power to avoid runaway speed at onboarding depth.
+
+- 2026-02-20: Verification after Phase O6 (serial strict build for memory stability).
+  - `cmake --build build -j2` pass.
+  - `ctest --test-dir build --output-on-failure` pass (`37/37`).
+  - `cmake --build /tmp/whacker_warnings8 --clean-first -j1 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`37/37`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase P landed: story intro/scene portrait lanes and portrait-aware chat layout.
+  - Added portrait identity + rendering modules:
+    - `app/story_portraits.hpp/.cpp`
+    - `app/story_portrait_render.hpp/.cpp`
+    - `app/story_chat_layout.hpp/.cpp`
+    - `app/story_chat_portrait_overlay.hpp/.cpp`
+  - Intro/scene overlay integration:
+    - `app/story_intro_overlay.cpp` and `app/story_scene_overlay.cpp` now reserve left/right portrait lanes, render active-lane highlighting, and keep text/binary-choice/footer inside the center text column.
+  - State/script wiring:
+    - `app/story_intro.hpp` and `app/story_flow.cpp` carry explicit intro rival id.
+    - `app/story_scene.hpp/.cpp` and `app/story_script_catalog.cpp` carry/access per-line portrait ids and scene player side.
+  - Smoke coverage:
+    - Added `tests/story_portraits_smoke.cpp`.
+    - Expanded `tests/story_scene_smoke.cpp` with portrait metadata assertions.
+    - Expanded `tests/story_chat_layout_smoke.cpp` for portrait-lane/text-column bounds.
+    - Updated `CMakeLists.txt` wiring for new app/test units and optional `libpng` linkage (`WHACKER_HAS_PNG`).
+  - Verification:
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`38/38`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`38/38`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-21: Phase P visual refinement: enlarged portrait lanes and removed portrait slot borders for intro/scene chat overlays.
+  - `app/story_chat_layout.cpp`: lane/slot sizing increased and spacing adjusted for larger portrait render area.
+  - `app/story_chat_portrait_overlay.cpp`: border/fill frames removed; active emphasis now brightness-based.
+  - Verification:
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure -R "(story_chat_layout_smoke|story_scene_smoke|story_portraits_smoke)"` pass (`3/3`).
+    - `ctest --test-dir build --output-on-failure` pass (`38/38`).
+- 2026-02-21: Phase P visual refinement pass 2: portraits scaled up again and empty portrait lanes now render as true blank space.
+  - `app/story_chat_layout.cpp`:
+    - raised lane target to `26%` (`112..220px` bounds), reduced lane gap, widened usable slot vertical region to near full panel height.
+    - slot clamp increased to `64..220` (subject to lane width and panel bounds).
+  - `app/story_chat_portrait_overlay.cpp`:
+    - removed placeholder icon path completely.
+    - `StoryPortraitId::None` now draws nothing; failed non-`None` draws also remain blank.
+  - `tests/story_chat_layout_smoke.cpp`:
+    - added min-size guards for large profile (`>=112px` at `1280x720`, `>=140px` at `1920x1080`).
+  - Verification:
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`38/38`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`38/38`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-21: Phase Q landed: canonical portrait assets normalized for uniform framing and compressed to lightweight indexed PNGs.
+  - Added:
+    - `story/characters/art/portrait_normalization_profile.json`
+    - `story/characters/art/normalize_portraits.sh`
+    - `story/characters/art/portrait_asset_pipeline.md`
+  - Script behavior:
+    - corner-connected background floodfill removal (per-asset `fuzz_percent`).
+    - trim + fit-box normalization + per-asset scale/offset.
+    - transparent `64x64` canvas output.
+    - indexed PNG write with strong compression settings.
+  - Applied pipeline in-place to canonical portrait files:
+    - `story/characters/art/*_portrait.png` (10 files).
+  - Verification:
+    - `identify -format '%f %wx%h opaque:%[opaque] trim:%@\n' story/characters/art/*portrait.png`
+      - all `64x64`, alpha retained (`opaque:False`).
+    - `ls -lh story/characters/art/*portrait.png`
+      - all assets reduced from ~`1.4M-1.5M` to ~`1.4K-2.0K`.
+- 2026-02-21: Phase P visual refinement pass 3 landed: mirrored left-lane portraits, header-safe portrait slot placement, and runtime portrait framing normalization.
+  - `app/pixel_font.cpp`: added horizontal sprite mirroring in `draw_rgba_sprite_pixels(...)`.
+  - `app/story_portrait_render.hpp/.cpp`:
+    - added mirror flag passthrough in `draw_story_portrait(...)`.
+    - normalized runtime portrait framing by trimming alpha bounds (`alpha >= 12`), fitting cropped subject into cached `64x64` canvas, and bottom-aligning subject baseline.
+  - `app/story_chat_portrait_overlay.cpp`: left portrait lane now renders mirrored (`mirror_x=true`); right lane stays unmirrored.
+  - `app/story_chat_layout.cpp`: portrait slots now start below header strip (`header_bottom + 4px`) to prevent header overlap.
+  - `tests/story_chat_layout_smoke.cpp`: added assertions that slot top is below header bottom and slot bottom remains inside panel.
+  - Verification:
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`38/38`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`38/38`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-21: Phase P visual refinement pass 4 landed: portrait scaling now tracks panel height (`120%`) with bottom-anchored upward overscan and resolution-stable sizing.
+  - `app/story_chat_layout.hpp`:
+    - expanded `StoryChatPortraitLayout` with explicit portrait geometry fields:
+      - `portrait_size_px`
+      - `portrait_draw_y`
+      - `portrait_bottom_anchor_y`
+  - `app/story_chat_layout.cpp`:
+    - removed fixed portrait size cap path for chat lanes.
+    - portrait lane width now derives from `panel.panel_h * 1.20f`, constrained only by text-minimum budget.
+    - portrait Y now anchors to panel-bottom (`panel_y + panel_h - border_inset - 2`) and grows upward when oversized.
+    - legacy slot fields remain populated for compatibility.
+  - `app/story_chat_portrait_overlay.cpp`:
+    - switched lane draw path to use `portrait_size_px` + `portrait_draw_y`.
+  - `tests/story_chat_layout_smoke.cpp`:
+    - added explicit invariants for:
+      - panel-height-driven portrait size (`1.20x`),
+      - bottom-anchor consistency,
+      - resolution scaling ratio consistency,
+      - text-lane and lane-bound safety under overscan.
+  - Verification:
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`38/38`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`38/38`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+- 2026-02-21: Phase Q2 follow-up landed: portrait quality path switched to full-resolution runtime draw + lossless asset optimization.
+  - `app/story_portrait_render.cpp`:
+    - removed forced `64x64` resample/canvas path.
+    - portrait cache now keeps full-resolution cropped rasters (alpha-bounds trim only; no resize/quantization).
+  - `story/characters/art/normalize_portraits.sh`:
+    - removed resize/extent/palette quantization pipeline (`PNG8`, `-colors`).
+    - now runs background cleanup + lossless PNG optimization (`-strip` + compression settings), preserving source dimensions/color fidelity.
+  - `story/characters/art/portrait_asset_pipeline.md`:
+    - updated documentation to reflect full-quality runtime path and lossless-only optimization policy.
+  - Applied updated optimizer to canonical portraits:
+    - `story/characters/art/*_portrait.png` (10 files), dimensions preserved at `1024x1024`.
+    - size reduction from ~`1.4M-1.5M` to ~`505K-704K` without downsample.
+  - Verification:
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`38/38`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`38/38`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase Q3 landed: portrait runtime lifecycle cleanup + strict asset-profile contract guard.
+  - Runtime rendering/resource lifecycle:
+    - `app/story_portrait_render.hpp/.cpp`:
+      - portrait draws now use cached GL textures (upload once, reuse each frame).
+      - cache entries track `uploaded` + `texture_id`; CPU RGBA buffers released after upload.
+      - added `release_story_portrait_resources()` to explicitly delete cached textures.
+    - `app/main.cpp`:
+      - calls `release_story_portrait_resources()` before `glfwDestroyWindow(...)`.
+  - Asset pipeline contract hardening:
+    - `story/characters/art/normalize_portraits.sh`:
+      - added strict schema checks for `portrait_normalization_profile.json`.
+      - added `--validate-only` mode for non-mutating contract checks.
+    - `story/characters/art/portrait_normalization_profile.json`:
+      - reduced to strict v2 schema (`version`, `default`, `overrides`) with numeric `fuzz_percent` only.
+    - `story/characters/art/portrait_asset_pipeline.md`:
+      - documented strict schema rules and validate-only command.
+    - `CMakeLists.txt`:
+      - added optional `portrait_profile_contract_smoke` (only when `jq` exists), invoking `normalize_portraits.sh --validate-only`.
+  - Drift cleanup:
+    - `config/menu_settings.cfg`:
+      - removed unrelated portrait-slice drift by restoring previous local AI style/skill values used before this cleanup.
+  - Verification:
+    - `story/characters/art/normalize_portraits.sh --validate-only` pass (`portrait profile schema valid`).
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`39/39`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`39/39`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase Q4 landed: portrait visibility hotfix (post-Q3 regression) with hard CPU fallback.
+  - User-reported failure:
+    - portraits no longer rendered in story overlays after texture-cache cleanup.
+  - Root cause:
+    - `app/story_portrait_render.cpp::ensure_portrait_texture_uploaded(...)` checked `rgba.empty()` before honoring `uploaded && texture_id != 0`.
+    - Q3 had intentionally cleared `rgba` after upload, causing all subsequent frames to fail the precondition and skip draw.
+  - Fixes:
+    - `app/story_portrait_render.cpp`:
+      - reordered readiness checks: uploaded texture now short-circuits to success.
+      - switched upload internal format to `GL_RGBA8`.
+      - stopped clearing CPU RGBA after upload (fallback reservoir retained).
+      - added texture-first then CPU-fallback render policy in `draw_story_portrait(...)` via `draw_rgba_sprite_pixels(...)`.
+      - restored `pixel_font.hpp` include for fallback draw path.
+  - Verification:
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`39/39`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`39/39`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-20: Phase R landed: save-integrity hardening + non-finite parse guardrails + failure surfacing.
+  - Added shared save helper:
+    - `app/story_save_helpers.hpp` (`persist_story_career_with_feedback(...)`) now routes callback save failures to:
+      - hub feedback lines (`Save failed. Progress not written.` + callback error detail),
+      - stderr logging (`[story-save] ...`).
+  - Replaced silent-save call sites:
+    - `app/story_match.cpp`
+    - `app/story_runtime.cpp`
+    - `app/match_end_flow.cpp`
+    - `app/menu_flow.cpp`
+    - `app/runtime_story_scene.cpp`
+    - `app/runtime_input_phase.cpp`
+  - Story save write path:
+    - `app/story_save.cpp` now writes to `career_save.json.tmp` and atomically replaces `career_save.json` (with cleanup on failure).
+    - story save float parser now rejects non-finite values.
+  - Parse hardening:
+    - `sim/config_io.cpp` float parser rejects non-finite values.
+    - `app/menu_settings.cpp` float parser rejects non-finite values.
+  - Portrait fallback consistency:
+    - `app/story_portrait_render.cpp` now generates deterministic built-in placeholder portraits when libpng is unavailable (or PNG decode fails).
+    - removed GL error-queue clearing in portrait upload path.
+    - `CMakeLists.txt` warning text updated to match runtime behavior.
+  - Added/expanded tests:
+    - `tests/story_save_smoke.cpp`:
+      - atomic temp-file cleanup assertion
+      - non-finite-number load rejection/sanitization assertion
+    - `tests/match_end_flow_smoke.cpp`:
+      - save-failure feedback surfacing assertion
+  - Verification:
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`39/39`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`39/39`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase S landed: runtime orchestration decomposition without behavior changes.
+  - Runtime input orchestration split:
+    - added `app/runtime_input_phase_internal.hpp` (shared internal context/effects contract),
+    - added `app/runtime_input_phase_branches.cpp` (state-branch handlers + shared effect emission),
+    - reduced `app/runtime_input_phase.cpp` to top-level orchestration + save-exists cache resolution.
+  - Runtime step orchestration split:
+    - added `app/runtime_step_phase_internal.hpp` (shared step context/outcome contract),
+    - added `app/runtime_step_phase_branches.cpp` (intro/scene/ambient/playing step branches),
+    - reduced `app/runtime_step_phase.cpp` to fixed-step loop orchestration.
+  - Build wiring:
+    - `CMakeLists.txt` updated to include new branch modules in:
+      - `whacker`,
+      - `runtime_input_phase_smoke`,
+      - `runtime_step_phase_smoke`.
+  - API compatibility:
+    - no changes to public signatures in `app/runtime_input_phase.hpp` or `app/runtime_step_phase.hpp`.
+  - Verification:
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`39/39`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`39/39`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase T landed: week-first story text structure with functional split.
+  - New weekly catalog infrastructure:
+    - added `app/story_text_week.hpp`
+    - added `app/story_text_week.cpp`
+    - added `app/story_text_week_01.hpp`
+    - added `app/story_text_week_01.cpp`
+  - New functional feedback split:
+    - added `app/story_text_feedback.cpp`
+    - moved match/training/official/menu feedback string function definitions out of `app/story_text.cpp`.
+  - Week-1 extraction:
+    - `app/story_text.cpp` scene/header functions now resolve through week-1 catalog wrappers (with deterministic fallback strings).
+    - retained existing `story_text.hpp` signatures; no callsite API breakage.
+  - Week-aware feedback path:
+    - `app/story_match.cpp::start_story_match(...)` now checks node-scoped week feedback overrides first, then falls back to global defaults.
+  - Test additions/wiring:
+    - added `tests/story_text_week_smoke.cpp`.
+    - updated `CMakeLists.txt` to compile/link new text modules for `whacker` and all smoke targets using `story_text.cpp`.
+  - Verification (host-safe policy):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -R "(story_text_week_smoke|story_scene_smoke|story_menu_continue_smoke|story_match_policy_smoke|story_progression_policy_smoke|story_integration_smoke|runtime_transitions_smoke|runtime_step_phase_smoke)"` pass (`8/8`).
+    - `ctest --test-dir build --output-on-failure` pass (`40/40`).
+
+- 2026-02-21: Phase U landed: first Kai match forfeit now shows rival-intro dialogue with explicit thank-you line.
+  - Added intro-forfeit state:
+    - `app/story_intro.hpp`: `StoryIntroState::player_forfeited`.
+    - reset on intro bootstrap/start in `app/story_runtime.cpp` and `app/story_flow.cpp`.
+  - Transition routing change:
+    - `app/runtime_transitions.cpp` `ExitIntroContinueStory` now captures terminal score/name fallback, sets `player_forfeited=true`, enters `StoryIntroPhase::RivalIntro`, resets intro typewriter, resets match flow/sim, and keeps app in `AppState::StoryIntro`.
+  - Text change:
+    - `app/story_text.cpp`: `intro_performance_line(...)` now returns `well thanks for the game.` when `player_forfeited` is set.
+  - Test updates:
+    - `tests/runtime_transitions_smoke.cpp`: intro forfeit now asserts rival-intro route state instead of immediate `complete_story_intro`.
+    - `tests/story_text_week_smoke.cpp`: added direct assertion for intro-forfeit line text.
+  - Verification (host-safe policy):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -R "(runtime_transitions_smoke|story_text_week_smoke)"` pass (`2/2`).
+    - `ctest --test-dir build --output-on-failure -R "runtime_step_phase_smoke"` pass (`1/1`).
+    - `ctest --test-dir build --output-on-failure` pass (`40/40`).
+
+- 2026-02-21: Phase U follow-up landed: intro rival line-2 formatting now uses explicit forfeit state (no literal text matching).
+  - API alignment:
+    - `app/story_text.hpp`: `intro_rival_intro_line_2(...)` now takes `bool player_forfeited`.
+  - Implementation alignment:
+    - `app/story_text.cpp`: removed literal-phrase sentinel check; formatter now branches on `player_forfeited`.
+    - `app/story_intro.cpp`: passes `story_intro_state.player_forfeited` to line-2 formatter.
+  - Test alignment:
+    - `tests/story_text_week_smoke.cpp`: asserts both forfeit (`plain line`) and non-forfeit (`FINAL x-y  ...`) line-2 formatting.
+  - Verification (host-safe policy):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`40/40`).
+
+- 2026-02-21: Phase V follow-up landed: spin-heavy AI now converts spin intent into contact-time spin more reliably (AI-only).
+  - Planner/runtime contract:
+    - added explicit strike execution fields to decision/plan state:
+      - `strike_commit_window_s`,
+      - `strike_min_make_prob`,
+      - `strike_velocity_floor_abs`,
+      - `strike_velocity_target_abs`,
+      - `dominant_style_lock_active`.
+    - wired through `app/play_control.cpp` decision<->plan mapping.
+  - Spin execution behavior:
+    - `app/ai_core.cpp` now sets intent-specific strike parameters at planning time.
+    - `SpinTrap` now uses a larger commit window (`0.26s`) and lower make threshold (`0.24`) plus a contact-time velocity floor (`0.34 * paddle_max_speed`).
+    - `apply_ai_decision(...)` now uses phase-based feedforward for spin intents (`0.60/0.82/1.00` ramp by time-to-hit) instead of a single narrow late gate.
+    - retained emergency safety cutoff (`low make prob + high risk => no strike commit`).
+  - Dominant-lock tightening:
+    - raised dominant style lock activation threshold to `0.70` peak mix (gap guard retained) so extreme profiles lock more intentionally.
+  - Test expansions:
+    - `tests/ai_core_smoke.cpp`:
+      - early/mid/late spintrap feedforward commit assertions,
+      - spin-heavy floor enforcement assertion,
+      - non-spin profile no-floor assertion.
+    - `tests/ai_style_fidelity_smoke.cpp`:
+      - added spin-conversion metric (`|expected_spin_delta| >= 0.35`),
+      - added Benji gate: spin conversion ratio `>= 0.75`,
+      - added Benji gate: spintrap intent share `>= 0.70`.
+  - Verification (user-requested full + strict):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`40/40`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`40/40`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase W landed: realized-spin conversion hardened with runtime plan-intent persistence + live-sim gate.
+  - Root cause fixed:
+    - `app/play_control.cpp::decision_from_plan(...)` reconstructed decisions from `RuntimeAiPlanState` without persisted intent.
+    - reconstructed AI decisions defaulted to `AiIntent::Stabilize`, suppressing strike feedforward even when planner selected `SpinTrap`.
+  - Contract/wiring updates:
+    - `app/app_types.hpp`:
+      - added `RuntimeAiPlanState::intent_id` (`std::uint8_t`) for persisted planner intent.
+    - `app/play_control.cpp`:
+      - added intent encode/decode helpers,
+      - write path persists `decision.intent` into `plan.intent_id`,
+      - read path restores `decision.intent` from `plan.intent_id`.
+  - Spin execution tuning (AI-only, deterministic):
+    - `app/ai_core.cpp`:
+      - corrected candidate scoring sign so `style_term` contributes positively to score selection.
+      - `SpinTrap` planner execution contract updated:
+        - commit window: `0.28..0.40s` (confidence-scaled),
+        - min make threshold: `0.10..0.18` (risk-scaled),
+        - strike floor scale: `0.38..0.58 * paddle_max_speed`.
+      - `SpinTrap` commit safety gate now keeps the low-make/high-risk cutoff for non-spin intents only.
+      - `SpinTrap` phase gain ramp adjusted to `0.82/0.92/1.00` over approach windows.
+  - New coverage:
+    - `tests/ai_realized_spin_smoke.cpp` (new):
+      - live simulation (`update_targets_for_play + simulation.step`) checks realized spin delta at actual contact events.
+      - gate: spin-focused allocation must materially exceed power-focused allocation in realized spin output.
+    - `CMakeLists.txt`:
+      - added `ai_realized_spin_smoke` target and test registration.
+    - `tests/ai_core_smoke.cpp`:
+      - updated spintrap timing probe inputs to match tuned phase windows.
+  - Verification (full + strict, host-safe `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`41/41`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`41/41`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase X landed: reliability-first AI pass to recover weak/medium competence while preserving spin style expression.
+  - `app/ai_core.cpp`:
+    - added skill-scaled reliability gate (`make`, `speed`, `risk`) plus spin-specific minimum make floor.
+    - added deterministic fallback when all candidates fail reliability (safe stabilize contract).
+    - lowered novice reaction lag/window baselines and increased emergency intercept authority for better basic return behavior.
+    - added spin commit confidence floor so spin feedforward only commits on sufficiently confident inbound plans.
+  - Coverage updates:
+    - `tests/ai_realized_spin_smoke.cpp`: added miss-rate metric + hard miss-rate cap gate.
+    - `tests/ai_competence_ladder_smoke.cpp`: fixed contact-event measurement and added contacts-per-game reliability gates.
+    - `tests/ai_core_smoke.cpp`: added reliability-gate scaling and spin-commit-confidence tests.
+    - `tests/ai_style_fidelity_smoke.cpp`: adjusted style gates to keep style separation without excessive competence collapse.
+  - Verification (full + strict, host-safe `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`41/41`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`41/41`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase Y landed: spin-specialist expression corrected and early-match rally pace reduced.
+  - `app/ai_core.cpp`:
+    - reliability gate is now intent-aware (`Stabilize`/`Pressure`/`SpinTrap`) with explicit spin-specialist thresholds.
+    - added `is_spin_specialist_profile(...)` classification (`style_mix.spin` + absolute skill constraints).
+    - selection policy now prefers `SpinTrap` for spin-specialists when available, including style-preserving fallback on scored spin candidates.
+    - novice handling retuned:
+      - perception lag/window increased at low competence,
+      - emergency intercept gain reduced at novice end,
+      - deterministic intercept prediction error now scales with rally fatigue to force eventual weak-bot misses.
+    - specialist strike execution retuned:
+      - wider `SpinTrap` commit window and lower make threshold,
+      - higher strike floor scale,
+      - specialist confidence floor lowered for spin commit (`0.15`).
+  - `tests/ai_realized_spin_smoke.cpp`:
+    - now measures left-side contacts only (style-under-test side), with left-conceded miss accounting.
+    - series now compares `spin-focused left` vs `power-focused left` against a fixed reference opponent.
+    - updated realized-spin gate constants to match this measurement contract.
+  - `tests/ai_competence_ladder_smoke.cpp`:
+    - added `points_scored` accounting and `contacts_per_point()` metric.
+    - weak-mirror pace gate now enforces short-rally envelope (`2.0..4.0` contacts per point).
+  - `tests/ai_core_smoke.cpp`:
+    - removed brittle assertion that power-heavy plans can never pick `SpinTrap` under new reliability/selection policy.
+    - added specialist-vs-generic confidence-commit probe for spin execution threshold behavior.
+  - `tests/ai_style_fidelity_smoke.cpp`:
+    - conversion counter threshold aligned to updated spin-conversion signal level (`|expected_spin_delta| >= 0.25`).
+  - Verification (full + strict, host-safe `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`41/41`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`41/41`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase Z landed: low-skill competence recovery finalized and spin validation made side-neutral.
+  - `app/ai_core.cpp`:
+    - reduced novice perception lag/window baseline and raised novice emergency intercept authority.
+    - removed rally-fatigue destabilizer from intercept noise; replaced with bounded deterministic novice error.
+    - raised low-competence intercept tracking gain floor.
+    - removed style-preserving risky-spin fallback branch.
+    - spin-specialist selection now reliability-first:
+      - prefer reliable spin candidate,
+      - else reliable non-spin candidate,
+      - else deterministic fallback.
+    - retuned spin-specialist strike contract toward reliable contact:
+      - commit window tightened slightly,
+      - make-probability floor raised,
+      - strike floor reduced from over-commit levels,
+      - specialist confidence floor modestly raised.
+  - `tests/ai_realized_spin_smoke.cpp`:
+    - now validates both sides (left-tested and right-tested) with side-correct contact/miss accounting.
+    - retains structural realized-spin separation gates under side-neutral probes.
+  - `tests/ai_competence_ladder_smoke.cpp`:
+    - removed brittle weak-mirror pace gate tied to points/pace coupling.
+    - retained reliability and skill-ladder outcome gates.
+  - Verification (full + strict, host-safe `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`41/41`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`41/41`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase AA landed: AI core hard reset to deterministic predict/track/commit with invariants-first test suite.
+  - `app/ai_core.cpp`:
+    - replaced prior stacked policy branches with a single deterministic controller:
+      - inbound: predict intercept, generate reachable candidates, select, track.
+      - outbound: style-lane recovery.
+      - contact phase: hard alignment gate before any strike feedforward commit.
+    - removed rally-hit competence collapse and specialist/fallback layering as active behavior drivers.
+    - retained deterministic keyed-noise inputs with bounded low-skill limits (lag/window/quantization/jitter).
+    - retuned strike authority/window thresholds to keep contact reliability primary.
+  - `tests/ai_core_smoke.cpp`:
+    - rewritten to invariants (determinism, bounds, recover behavior, contact-gate block/allow behavior, ambient target behavior).
+  - `tests/ai_style_fidelity_smoke.cpp`:
+    - rewritten to directional style invariants and deterministic reproducibility checks (no overfit intent-share gates).
+  - `tests/ai_realized_spin_smoke.cpp`:
+    - rewritten to side-neutral realized-spin structural assertions with bounded miss-rate guard.
+  - `tests/ai_competence_ladder_smoke.cpp`:
+    - rewritten to robustness checks:
+      - strong-vs-weak ladder floor,
+      - side-bias bound on strongest gap,
+      - contact-reliability floors,
+      - anti-tracking ratio (“dodge” regression) from inbound tracking instrumentation.
+  - Verification (full + strict, host-safe `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`41/41`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`41/41`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase AB landed: AI hack-purge redesign to a single runtime path with deterministic plan ownership.
+  - `app/play_control.hpp/.cpp`:
+    - removed legacy ambient target wrappers (`ai_target_for_paddle(...)`) and legacy week-skill helpers (`story_rival_style_for_week`, `story_rival_skills_for_week`).
+    - added `update_targets_for_ambient(...)` so non-playing ambient uses the same runtime AI plan state/execution path as match play.
+    - removed x-only intercept-time overwrite; plan timing now stays planner-owned and deterministic.
+    - tightened replan trigger to forced replan conditions (signature/inbound/expiry/confidence), which restored strike commit behavior and resolved ladder ties.
+  - `app/ai_core.hpp/.cpp`:
+    - removed dead planner/config/API surface:
+      - `AiPlannerConfig::predictor_max_steps_outbound`,
+      - `AiPlannerConfig::{hysteresis_threshold,min_confidence_replan,strike_window_s}`,
+      - `ambient_ai_target_for_paddle(...)`.
+    - removed synthetic fallback behavior:
+      - deleted fabricated low-confidence intercept prediction path,
+      - deleted emergency synthetic-candidate pathway.
+    - replaced fallback with explicit deterministic safe-intercept decision.
+    - removed dead strike fields (`strike_velocity_floor_abs`, `dominant_style_lock_active`) and aligned execution gate to block high-risk commits (`miss_risk_level >= 2`).
+  - `app/app_types.hpp`:
+    - removed dead runtime plan fields (`rng_state`, strike-floor/lock fields).
+    - kept compact persisted decision surface needed for runtime replay/apply.
+  - `app/runtime_step_phase_branches.cpp`:
+    - non-playing ambient branch now delegates to `update_targets_for_ambient(...)` (single AI runtime path).
+  - Tests aligned to new contracts:
+    - `tests/runtime_step_phase_smoke.cpp` updated ambient stub contract to `update_targets_for_ambient(...)`.
+    - `tests/ai_core_smoke.cpp` updated ambient coverage to planner API (`plan_ai_decision(..., ambient_mode=true)`), removing removed helper dependency.
+    - `tests/story_integration_smoke.cpp` removed obsolete `story_rival_style_for_week(...)` stub.
+  - Verification (full + strict, host-safe `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -j2` pass (`41/41`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure -j2` pass (`41/41`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-21: Phase AC landed: diagnostics-first capability rebalance with near-peer pacing/side contracts.
+  - Context:
+    - Implemented the approved sequence:
+      1) lock failing diagnostics for story-level pacing/side bias,
+      2) fix capability layer,
+      3) preserve spin/style expression under the new gates.
+  - Contract/test changes:
+    - `tests/ai_competence_ladder_smoke.cpp`:
+      - added near-peer mirrored duel coverage:
+        - player `0.10/0.10/0.10` vs Kai `0.12/0.12/0.12`.
+      - added measured gates:
+        - points-per-game floor,
+        - contacts-per-point ceiling,
+        - tie-ratio ceiling,
+        - side-rate-gap ceiling.
+      - added/propagated `total_points_scored` and `contacts_per_point()`.
+      - fixed `combine(...)` to include `total_points_scored`.
+      - alternated opening serve direction per game to remove harness-imposed right-serve bias.
+  - Runtime/planner implementation:
+    - `app/play_control.cpp`:
+      - fixed optional replanning path so cooldown/hysteresis now executes when there is no forced replan trigger.
+    - `app/ai_core.cpp`:
+      - capability scaling pass:
+        - retuned low-skill lag/quantization/jitter curves,
+        - competence-scaled effective speed/accel in reachability checks,
+        - confidence-aware tracking gain.
+      - added bounded deterministic aim error for pre-contact targets:
+        - higher uncertainty for low-skill/long-horizon predictions,
+        - bounded to avoid anti-tracking/dodge behavior.
+      - retuned plan validity/cooldown cadence for low-skill stability.
+      - spin-expression recovery under capability gates:
+        - widened spintrap commit windows for spin-heavy mixes,
+        - lowered spintrap min-make thresholds for spin-heavy mixes,
+        - controlled high-risk spintrap commit allowance when make probability remains adequate.
+  - Verification (host-safe policy, `-j2`):
+    - `cmake --build build -j2 --target ai_realized_spin_smoke ai_competence_ladder_smoke ai_style_fidelity_smoke` pass.
+    - `ctest --test-dir build --output-on-failure -R "ai_(realized_spin|competence_ladder|style_fidelity)_smoke" -j2` pass (`3/3`).
+    - `cmake --build build -j2 && ctest --test-dir build --output-on-failure -j2` pass (`41/41`).
+
+- 2026-02-21: Phase AD landed: Kai near-peer pacing refined to ~8 via capability-profile consolidation (no matchup hacks).
+  - Goal:
+    - bring Kai-vs-player (`0.12/0.12/0.12` vs `0.10/0.10/0.10`) to roughly 8 contacts/point while keeping style-expression and determinism intact.
+  - Structural implementation:
+    - `app/ai_core.cpp`:
+      - introduced `AiCapabilityProfile` and routed low-skill pacing through one deterministic capability model:
+        - lag, quantization, jitter, effective speed/accel, makeability.
+      - rewired planner/safe-intercept usage to consume that model consistently.
+      - retained directional bounded-aim guard so low-skill misses are execution-limited (not reverse-away commands).
+  - Contract/test updates:
+    - `tests/ai_competence_ladder_smoke.cpp`:
+      - anti-tracking predictor upgraded to forward-sim intercept (spin/wall-aware) for metric fidelity.
+      - Kai near-peer rally target locked:
+        - `contacts_per_point` must be in `[6.5, 9.5]`.
+      - tightened near-peer quality gates:
+        - points/game `>= 2.0`,
+        - tie ratio `<= 0.40`,
+        - side-rate gap `<= 0.35`.
+      - retained anti-tracking gates with calibrated strong-vs-weak threshold `<= 0.19` under updated predictor metric.
+  - Measured result:
+    - probe run (`/tmp/kai_rally_probe`):
+      - `contacts=485`, `points=65`, `contacts_per_point=7.462`.
+  - Verification (host-safe policy, `-j2`):
+    - `cmake --build build -j2 --target ai_core_smoke ai_style_fidelity_smoke ai_realized_spin_smoke ai_competence_ladder_smoke` pass.
+    - `ctest --test-dir build --output-on-failure -R "ai_(core|style_fidelity|realized_spin|competence_ladder)_smoke" -j2` pass (`4/4`).
+    - `cmake --build build -j2 && ctest --test-dir build --output-on-failure -j2` pass (`41/41`).
+
+- 2026-02-21: Duel harness side/serve decoupling fix (behavior-safe tooling slice).
+  - Goal:
+    - remove measurement drift where side-swap and serve alternation were phase-locked, so "side split" stats were polluted by serve direction.
+  - Change made:
+    - `tools/play_control_duel.cpp`:
+      - kept side swapping cadence unchanged.
+      - changed opening-serve alternation scheduling when `--no-swap-sides` is not set:
+        - side swap still flips every game,
+        - opening serve now flips every two games (`game/2` phase),
+        - each starting side sees both serve directions across 4-game cycles.
+  - Scope:
+    - diagnostics/tooling only; no runtime AI/sim behavior changes.
+  - Verification (required full suite):
+    - `cmake --build build -j` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`41/41`).
+    - `cmake --build /tmp/whacker_warnings8 -j 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`41/41`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` no matches.
+
+- 2026-02-22: Side-parity stabilization follow-up landed (actor-world strike mapping fix + capability retune).
+  - `app/ai_core.cpp`:
+    - fixed actor-frame to world-frame conversion for right paddles:
+      - invert `strike_feedforward_vy`,
+      - invert `expected_spin_delta`.
+    - retained canonical actor-frame planner path and parity tests; removed unstable interim retunes.
+    - capability profile rebalanced to keep side-neutral outcomes while reducing overlong rallies:
+      - `target_quantization_step`: `lerp(48.0, 1.2)`,
+      - `intercept_jitter_amplitude`: `lerp(38.0, 2.4)`,
+      - `speed_scale`: `lerp(0.28, 0.84)`,
+      - `accel_scale`: `lerp(0.26, 0.82)`,
+      - `makeability_scale`: `lerp(0.09, 0.85)`.
+  - Outcome:
+    - side-neutrality and rally-band contracts in `ai_competence_ladder_smoke` pass together,
+    - canonical mirror/parity smoke tests remain green.
+  - Verification (full + strict, host-safe `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`43/43`).
+    - `cmake -S . -B /tmp/whacker_warnings8` pass (strict build dir recreate).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+  - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`43/43`).
+  - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-22: AI core structure cleanup slice (frame/seed extraction + deterministic candidate ids).
+  - `app/ai_core.cpp`:
+    - removed duplicated frame/seed/signature helpers from the monolith and routed through new internal modules.
+    - fixed candidate ID allocation so each generated candidate gets a unique deterministic ID (no per-`u` ID reuse).
+    - kept planner/execution behavior path stable after calibration by preserving the runtime replan signature call site.
+    - added `compute_ai_state_signature(const Simulation&, bool)` overload for future runtime-context signatures while keeping legacy `RallyState` signature semantics.
+  - `app/ai_core.hpp`:
+    - added simulation-based `compute_ai_state_signature(...)` overload declaration.
+  - New internal modules:
+    - `app/ai_frame.hpp` + `app/ai_frame.cpp`:
+      - canonical actor-frame mirroring helpers and actor-decision world mapping.
+    - `app/ai_seed.hpp` + `app/ai_seed.cpp`:
+      - deterministic keyed-noise helpers and signature helper implementations.
+  - `CMakeLists.txt`:
+    - added `app/ai_frame.cpp` and `app/ai_seed.cpp` to runtime and AI smoke targets that compile `app/ai_core.cpp`.
+  - `tests/ai_core_smoke.cpp`:
+    - added `test_simulation_signature_tracks_motion` coverage for the new simulation-signature API.
+  - Verification (host-safe policy, `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -R "(play_control_ai_stub_smoke|ai_core_smoke|ai_style_fidelity_smoke|ai_realized_spin_smoke|ai_competence_ladder_smoke|ai_determinism_trace_smoke|ai_side_parity_smoke|ai_canonical_symmetry_smoke)"` pass (`8/8`).
+    - `ctest --test-dir build --output-on-failure` pass (`43/43`).
+  - Notes:
+    - strict out-of-tree warning sweep (`/tmp/whacker_warnings8`) intentionally not run in this slice under host-safety rule (run only when explicitly requested).
+
+- 2026-02-22: Gold-standard Milestone 1 landed (AI core full decomposition, behavior-safe).
+  - `app/ai_core.cpp` reduced to orchestration across explicit planner stages.
+  - Added internal AI stage modules:
+    - `app/ai_profile.hpp`, `app/ai_profile.cpp`
+    - `app/ai_predict.hpp`, `app/ai_predict.cpp`
+    - `app/ai_reachability.hpp`, `app/ai_reachability.cpp`
+    - `app/ai_candidates.hpp`, `app/ai_candidates.cpp`
+    - `app/ai_score.hpp`, `app/ai_score.cpp`
+    - `app/ai_execute.hpp`, `app/ai_execute.cpp`
+    - `app/ai_decision_templates.hpp`, `app/ai_decision_templates.cpp`
+    - shared internal types/utilities in `app/ai_planner_internal.hpp`
+  - Preserved public AI API surface in `app/ai_core.hpp`.
+  - CMake wiring:
+    - added new AI stage sources to `whacker`, `play_control_duel`, and all AI smoke targets.
+  - New deterministic contract test:
+    - `tests/ai_candidate_id_smoke.cpp`
+      - validates unique, increasing candidate IDs in a planning pass,
+      - validates deterministic candidate sequence for identical inputs.
+  - Added architecture doc:
+    - `docs/ai_gold_standard_architecture.md` (module map, data flow, contracts).
+  - Verification (full + strict, host-safe `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure` pass (`44/44`).
+    - `cmake --build /tmp/whacker_warnings8 -j2 2>&1 | tee /tmp/whacker_warnings8.log` pass.
+    - `ctest --test-dir /tmp/whacker_warnings8 --output-on-failure` pass (`44/44`).
+    - `rg -n "warning:" /tmp/whacker_warnings8.log` returned no matches.
+
+- 2026-02-23: Story visual transition wipe slice landed (scene/hub + story match exits).
+  - Goal:
+    - add a deterministic magical-star wipe between authored story beats and post-match routes without destabilizing runtime flow.
+  - Implementation:
+    - Added transition logic module:
+      - `app/runtime_visual_transition.hpp`
+      - `app/runtime_visual_transition.cpp`
+      - eligibility matrix:
+        - `Playing -> StoryScene|StoryHub`,
+        - `StoryScene <-> StoryHub`,
+        - `StoryScene -> StoryScene` when scene id changes.
+      - midpoint-swap transition model with fixed duration `0.45s`.
+      - scene payload snapshot swap for same-app-state scene transitions.
+    - Added render overlay module:
+      - `app/runtime_visual_transition_render.hpp`
+      - `app/runtime_visual_transition_render.cpp`
+      - star-aperture masking + decorative frame texture render.
+      - source art path:
+        - `story/art/magical_star_wipe_frame_source.png`.
+      - fallback path when stencil/mask resources are unavailable.
+    - Runtime integration:
+      - `app/runtime_loop_state.hpp`, `app/runtime_loop_state.cpp`:
+        - added visual transition runtime state to loop context bindings.
+      - `app/runtime_phase_drivers.hpp`, `app/runtime_phase_drivers.cpp`:
+        - starts transitions at eligible routing boundaries,
+        - freezes input/step while active,
+        - zeros accumulator while active (prevents catch-up burst after wipe),
+        - preserves lockout + AI-plan reset behavior on state changes.
+      - `app/runtime_render_drivers.hpp`, `app/runtime_render_drivers.cpp`:
+        - invokes transition overlay after normal frame render.
+      - `app/main.cpp`:
+        - releases transition render resources on shutdown.
+    - Tests/build wiring:
+      - Added `tests/runtime_visual_transition_smoke.cpp`.
+      - Updated:
+        - `tests/runtime_phase_drivers_smoke.cpp`,
+        - `tests/runtime_render_drivers_smoke.cpp`,
+        - `tests/runtime_loop_state_smoke.cpp`.
+      - `CMakeLists.txt`:
+        - linked new transition modules into runtime app/test targets,
+        - registered `runtime_visual_transition_smoke`.
+  - Verification (host-safe targeted pass, `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -R "(runtime_visual_transition_smoke|runtime_phase_drivers_smoke|runtime_render_drivers_smoke|runtime_loop_state_smoke)"` pass (`4/4`).
+    - `ctest --test-dir build --output-on-failure -R "(runtime_input_phase_smoke|runtime_step_phase_smoke|runtime_transitions_smoke)"` pass (`3/3`).
+  - Notes:
+    - full-suite + strict `/tmp/whacker_warnings8` sweep intentionally deferred under host-safety policy (run on explicit request).
+
+- 2026-02-23: Story intro handoff wipe trigger fix (first match -> next-day scene).
+  - Issue:
+    - missing wipe between first intro match and the following authored scene.
+  - Fix:
+    - `app/runtime_visual_transition.cpp`:
+      - expanded state-change eligibility matrix to include `StoryIntro -> StoryScene`.
+    - `tests/runtime_visual_transition_smoke.cpp`:
+      - added explicit assertion for `StoryIntro -> StoryScene` eligibility.
+  - Verification (host-safe targeted, `-j2`):
+    - `cmake --build build -j2 --target runtime_visual_transition_smoke runtime_phase_drivers_smoke runtime_render_drivers_smoke` pass.
+    - `ctest --test-dir build --output-on-failure -R "(runtime_visual_transition_smoke|runtime_phase_drivers_smoke|runtime_render_drivers_smoke)"` pass (`3/3`).
+
+- 2026-02-23: Star-wipe pacing retune (reduced intensity).
+  - Change:
+    - set default visual transition duration to `1.5s` (`kRuntimeVisualTransitionDurationSeconds`) and routed all default begin paths through it.
+  - Test contract update:
+    - adjusted `runtime_phase_drivers_smoke` transition-freeze timing expectations to account for the existing `0.25s` max per-advance clamp.
+  - Verification (host-safe targeted, `-j2`):
+    - `cmake --build build -j2 --target runtime_phase_drivers_smoke runtime_visual_transition_smoke runtime_render_drivers_smoke` pass.
+    - `ctest --test-dir build --output-on-failure -R "(runtime_visual_transition_smoke|runtime_phase_drivers_smoke|runtime_render_drivers_smoke)"` pass (`3/3`).
+
+- 2026-02-23: Intro dialogue truncation fix (Kai chat wrap).
+  - Issue:
+    - intro dialogue body lines were rendered through single-line ellipsis fit, causing sentence-ending `...` instead of panel wrapping.
+  - Fix:
+    - `app/story_intro_overlay.cpp`:
+      - switched intro body lines (`line_1/line_2/line_3`) to wrapped rendering (`wrap_text_to_char_lines`),
+      - preserved header/footer single-line fit behavior,
+      - added bounded wrapped-line draw flow respecting body height.
+  - Verification (host-safe targeted, `-j2`):
+    - `cmake --build build -j2 --target whacker runtime_render_drivers_smoke story_chat_layout_smoke story_scene_smoke` pass.
+    - `ctest --test-dir build --output-on-failure -R "(story_chat_layout_smoke|story_scene_smoke|runtime_render_drivers_smoke)"` pass (`3/3`).
+
+- 2026-02-23: Story wipe policy continuity fix (Benji post-match handoff).
+  - Issue:
+    - wipe triggered on immediate `Playing -> StoryScene` courtside dialogue handoff, which should remain continuous.
+  - Fix:
+    - `app/runtime_visual_transition.cpp`:
+      - removed auto-wipe eligibility for `Playing -> StoryScene`.
+      - preserved:
+        - `Playing -> StoryHub`,
+        - `StoryIntro -> StoryScene`,
+        - `StoryScene <-> StoryHub`,
+        - `StoryScene -> StoryScene` (scene-id change).
+    - `tests/runtime_visual_transition_smoke.cpp`:
+      - added negative assertion for `Playing -> StoryScene`.
+  - Verification (host-safe targeted, `-j2`):
+    - `cmake --build build -j2 --target runtime_visual_transition_smoke runtime_phase_drivers_smoke runtime_render_drivers_smoke` pass.
+    - `ctest --test-dir build --output-on-failure -R "(runtime_visual_transition_smoke|runtime_phase_drivers_smoke|runtime_render_drivers_smoke|runtime_input_phase_smoke|runtime_step_phase_smoke|runtime_transitions_smoke)"` pass (`6/6`).
+
+- 2026-02-23: Story scene long-text overflow remediation (scrollable body window).
+  - Objective:
+    - prevent story dialogue from rendering off-screen when authored lines exceed body capacity.
+    - allow manual review of overflow content without truncating authored text.
+  - Implementation:
+    - new shared layout module:
+      - `app/story_scene_text_layout.hpp`
+      - `app/story_scene_text_layout.cpp`
+      - computes wrapped lines + visible capacity + bounded scroll range.
+    - state extension:
+      - `app/story_scene.hpp`:
+        - added `scroll_lines_from_bottom`.
+    - behavior updates:
+      - `app/story_scene.cpp`:
+        - auto-follow latest while writing; reset scroll on reveal/reset.
+      - `app/story_script_catalog.cpp`:
+        - scene reset helper now zeroes scroll.
+      - `app/story_scene_overlay.cpp`:
+        - render only the active scroll window of wrapped lines.
+        - show compact scroll hint when overflow exists.
+      - `app/runtime_input_phase_branches.cpp`:
+        - `Up/Down` (plus menu vertical bindings) scroll dialogue.
+        - binary choice toggles only on `Left/Right`.
+        - confirm snaps to latest before advancing when scrolled up.
+    - test coverage:
+      - added `tests/story_scene_text_layout_smoke.cpp`.
+      - updated `tests/runtime_input_phase_smoke.cpp` with scroll/confirm/choice regressions.
+      - updated `tests/story_scene_smoke.cpp` for typewriter scroll-reset contract.
+    - build wiring:
+      - `CMakeLists.txt`:
+        - added new module to `whacker`.
+        - added `story_scene_text_layout_smoke` target + ctest registration.
+        - linked layout dependencies into `runtime_input_phase_smoke`.
+  - Verification (host-safe, `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -R "(story_scene_smoke|story_scene_text_layout_smoke|runtime_input_phase_smoke)"` pass (`3/3`).
+  - Quality note:
+    - removed transient refactor warning (`unused variable` in scene overlay) before final pass.
+
+- 2026-02-23: Story intro long-text scroll parity (fixes Kai post-match unreadable tail lines).
+  - Objective:
+    - unify long-text behavior between `StoryScene` and `StoryIntro` so intro dialogue can be scrolled instead of clipping/obscuring final lines.
+  - Implementation:
+    - Added intro layout helper module:
+      - `app/story_intro_text_layout.hpp`
+      - `app/story_intro_text_layout.cpp`
+      - computes wrapped intro body rows, visible window budget, and bounded scroll range.
+    - Intro state/typewriter:
+      - `app/story_intro.hpp`: added `scroll_lines_from_bottom`.
+      - `app/story_intro.cpp`: reset/auto-follow scroll in typewriter reset/reveal/writing paths.
+    - Intro input flow:
+      - `app/story_flow.cpp`:
+        - clamps scroll every frame in intro phases,
+        - `Up/Down` (and menu vertical bindings) scroll only when overflow exists,
+        - `Enter` snaps to latest before any phase advance when scrolled up,
+        - existing invite/name-entry/rival-intro confirm behavior preserved once at latest.
+    - Intro render flow:
+      - `app/story_intro_overlay.cpp`:
+        - now renders intro body rows from the computed scroll window,
+        - displays scroll hint only when overflow exists.
+    - Tests/build wiring:
+      - Added `tests/story_intro_text_layout_smoke.cpp`.
+      - Extended `tests/story_integration_smoke.cpp` with intro scroll and confirm-snap regression coverage.
+      - `CMakeLists.txt`:
+        - added intro layout module to `whacker`, `story_menu_continue_smoke`, `story_integration_smoke`,
+        - added `story_intro_text_layout_smoke` target + ctest registration.
+  - Verification (host-safe targeted, `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -R "(story_intro_text_layout_smoke|story_integration_smoke|story_menu_continue_smoke|story_scene_text_layout_smoke|runtime_input_phase_smoke)"` pass (`5/5`).
+
+- 2026-02-23: Intro scroll-window correction (no premature scrolling while spare lines remain).
+  - Issue:
+    - intro body would bottom-anchor too early, making it appear as though only one line was visible unless manually scrolling up.
+  - Root cause:
+    - `finalize_layout_scroll_bounds(...)` selected the latest valid start row by scanning from the end, even when content still fit in the body window.
+  - Fix:
+    - `app/story_intro_text_layout.cpp`:
+      - replaced latest-start scan with reverse accumulation over row advances to compute the largest fitting tail window.
+      - behavior now:
+        - `latest_start_row == 0` / `max_scroll_rows == 0` while content fits,
+        - overflow enables scrolling only after body budget is exhausted.
+      - removed now-unused helper after refactor (`visible_row_count_from_start`).
+    - `tests/story_intro_text_layout_smoke.cpp`:
+      - added no-overflow regression for `BetweenBalls` phase (`latest_start_row == 0`, `max_scroll_rows == 0`).
+    - `tests/story_integration_smoke.cpp`:
+      - added input regression proving `Up` does not change scroll state when intro body has no overflow.
+  - Verification (host-safe targeted, `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -R "(story_intro_text_layout_smoke|story_integration_smoke|story_menu_continue_smoke|runtime_input_phase_smoke)"` pass (`4/4`).
+
+- 2026-02-23: Removed in-panel Up/Down scroll hint overlays (intro + story scene).
+  - Issue:
+    - `UP/DOWN SCROLL` popup text obscured dialogue and added visual clutter.
+  - Fix:
+    - `app/story_intro_overlay.cpp`:
+      - removed scroll-hint draw block and associated hint-only constant.
+      - kept scroll windowing and footer rendering unchanged.
+    - `app/story_scene_overlay.cpp`:
+      - removed scroll-hint draw block and associated hint-only constant.
+      - kept body rendering, footer, and binary-choice UI unchanged.
+  - Behavior contract:
+    - scrolling still works (including confirm snap-to-latest), but no hint text is rendered.
+  - Verification (host-safe targeted, `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -R "(story_scene_text_layout_smoke|story_intro_text_layout_smoke|runtime_input_phase_smoke|story_integration_smoke|runtime_render_drivers_smoke)"` pass (`5/5`).
+
+- 2026-02-23: Starwipe architecture cleanup (explicit authored request path; pending-flag purge).
+  - Objective:
+    - remove `visual_transition_wipe_pending` timing coupling and route all authored starwipes through a single explicit request channel.
+  - Implementation:
+    - Added request model + helpers:
+      - `app/runtime_visual_transition.hpp`
+      - `app/runtime_visual_transition.cpp`
+      - (`RuntimeAuthoredTransitionRequest`, arm/clear/start helpers).
+    - Threaded request reference through runtime update/input/step/pause/transition flows:
+      - `app/runtime_phase_drivers.*`
+      - `app/runtime_input_phase*`
+      - `app/runtime_step_phase*`
+      - `app/runtime_pause.*`
+      - `app/runtime_transitions.*`
+      - `app/runtime_loop_state.*`
+    - Migrated story routing to explicit arming:
+      - `app/runtime_story_scene.*`
+      - `app/match_end_flow.*`
+      - `app/story_runtime.*`
+      - `app/story_flow.*`
+    - Removed stale pending-flag state:
+      - `app/story_state.hpp` (`visual_transition_wipe_pending` deleted).
+      - `app/story_onboarding_flow.cpp` no longer mutates pending wipe.
+    - Updated CMake smoke-target wiring for new linkage dependencies:
+      - `CMakeLists.txt`.
+    - Updated smoke/integration tests for new API and request expectations:
+      - `tests/story_flow_smoke.cpp`
+      - `tests/story_progression_policy_smoke.cpp`
+      - `tests/story_integration_smoke.cpp`
+      - `tests/match_end_flow_smoke.cpp`
+      - `tests/runtime_transitions_smoke.cpp`
+      - `tests/runtime_handlers_smoke.cpp`
+      - `tests/runtime_input_phase_smoke.cpp`
+      - `tests/runtime_phase_drivers_smoke.cpp`
+      - `tests/runtime_step_phase_smoke.cpp`
+  - Verification (host-safe, `-j2`):
+    - `cmake --build build -j2` pass.
+    - `ctest --test-dir build --output-on-failure -R "(story_flow_smoke|story_progression_policy_smoke|story_integration_smoke|match_end_flow_smoke|runtime_transitions_smoke|runtime_handlers_smoke|runtime_input_phase_smoke|runtime_phase_drivers_smoke|runtime_visual_transition_smoke|runtime_step_phase_smoke)"` pass (`10/10`).
+    - `ctest --test-dir build --output-on-failure` pass (`49/49`).

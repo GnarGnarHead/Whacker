@@ -1,0 +1,10 @@
+type = "season_graph"
+pack_id = "season1_graph_invalid_dangling_edge"
+season_id = "season1"
+
+[[hub_node]]
+node_id = "club_week_01"
+display_week = 1
+training_rival_id = "Kai"
+official_rival_id = "Aya"
+next_node_id = "club_week_02"

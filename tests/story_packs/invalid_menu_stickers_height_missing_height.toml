@@ -1,0 +1,14 @@
+type = "menu_stickers"
+pack_id = "invalid_height_missing_height"
+
+[[menu_sticker_surface]]
+surface = "main_menu"
+
+[[menu_sticker_surface.slot]]
+asset = "chatgpt_image_feb_26_2026_02_10_33_am_024.png"
+anchor = "top_left"
+placement = "edge"
+size_mode = "height_px"
+offset_x_px = 0
+offset_y_px = 0
+z_order = 0

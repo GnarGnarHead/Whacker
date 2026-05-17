@@ -1,0 +1,13 @@
+/build/
+/build_warnings/
+/build-rel/
+.cache/
+compile_commands.json
+*.swp
+*.swo
+*~
+__pycache__/
+*.pyc
+.obsidian/
+Untitled*.canvas
+art_exports/

@@ -1,0 +1,33 @@
+{
+	"nodes":[
+		{"id":"title_current","type":"text","text":"CURRENT (implemented)\\nPlain-English storyboard of what exists right now.","x":0,"y":-260,"width":520,"height":90},
+		{"id":"legend","type":"text","text":"Legend\\nSCENE = text beat\\nMATCH = gameplay beat\\nArrows = required order\\nOptional branches are labeled.","x":560,"y":-260,"width":420,"height":120},
+		{"id":"cast_now","type":"text","text":"Cast we actually have right now\\nKai • Aya • Coach • Benji • Tix\\nDream beat: 1967 championship","x":1020,"y":-260,"width":460,"height":120},
+		{"id":"ref_onboarding_contract","type":"file","file":"STORY_ONBOARDING_CONTRACT.md","x":1520,"y":-260,"width":420,"height":120},
+		{"id":"ref_scene_drafts","type":"file","file":"STORY_SCENE_DRAFTS.md","x":1980,"y":-260,"width":420,"height":120},
+		{"id":"current_start","type":"text","text":"START","x":0,"y":0,"width":180,"height":70},
+		{"id":"current_intro_match","type":"text","text":"MATCH: Intro vs Kai","x":250,"y":-5,"width":260,"height":80},
+		{"id":"current_aya_warmup","type":"text","text":"AYA WARM-UP (single beat)\\nScene: early arrival / Aya first contact\\nMatch: Aya friendly (casual warm-up)","x":610,"y":-20,"width":640,"height":110},
+		{"id":"current_club_intro","type":"text","text":"SCENE: Club intro\\nAya introduces you to Coach\\nCoach assigns Benji next (no Benji dialogue)","x":1350,"y":-25,"width":380,"height":120},
+		{"id":"current_entry_benchmark","type":"text","text":"MATCH: Entry benchmark\\nvs Benji (casual)\\n(no conversation; just play)","x":1870,"y":-20,"width":320,"height":110},
+		{"id":"current_coach_brief","type":"text","text":"SCENE: Coach brief\\nTraining unlocked\\nTix post-day feedback (after Benji match)","x":0,"y":320,"width":320,"height":120},
+		{"id":"current_hub","type":"text","text":"HUB LOOP (post-onboarding)\\nTraining (optional)\\nNext match (mainline)\\nPost-match feedback","x":2010,"y":325,"width":340,"height":130},
+		{"id":"optional_tix_lunch","type":"text","text":"OPTIONAL MATCH\\nTix lunch set","x":1690,"y":580,"width":260,"height":80},
+		{"id":"optional_1967","type":"text","text":"MATCH: 1967 championship (dream)\\n(not an official week match)","x":850,"y":325,"width":340,"height":110},
+		{"id":"optional_youtube","type":"text","text":"SCENE: At-home YouTube","x":460,"y":340,"width":260,"height":80},
+		{"id":"optional_tix_midweek","type":"text","text":"SCENE: Tix midweek\\n(choice: lunch set?)","x":1320,"y":340,"width":260,"height":80}
+	],
+	"edges":[
+		{"id":"e_current_start_intro","fromNode":"current_start","fromSide":"right","toNode":"current_intro_match","toSide":"left"},
+		{"id":"e_current_s02_m02","fromNode":"current_club_intro","fromSide":"right","toNode":"current_entry_benchmark","toSide":"left"},
+		{"id":"e_current_m02_s03","fromNode":"current_entry_benchmark","fromSide":"right","toNode":"current_coach_brief","toSide":"left"},
+		{"id":"e_optional_youtube_1967","fromNode":"optional_youtube","fromSide":"right","toNode":"optional_1967","toSide":"left"},
+		{"id":"e_optional_1967_tix_scene","fromNode":"optional_1967","fromSide":"right","toNode":"optional_tix_midweek","toSide":"left"},
+		{"id":"e_optional_tix_scene_back_hub","fromNode":"optional_tix_midweek","fromSide":"right","toNode":"current_hub","toSide":"left"},
+		{"id":"e_optional_tix_scene_lunch_yes","fromNode":"optional_tix_midweek","fromSide":"bottom","toNode":"optional_tix_lunch","toSide":"top"},
+		{"id":"e_optional_lunch_to_hub","fromNode":"optional_tix_lunch","fromSide":"right","toNode":"current_hub","toSide":"bottom"},
+		{"id":"e_current_intro_s01","fromNode":"current_intro_match","fromSide":"right","toNode":"current_aya_warmup","toSide":"left"},
+		{"id":"e_current_s01_m01","fromNode":"current_aya_warmup","fromSide":"right","toNode":"current_club_intro","toSide":"left"},
+		{"id":"e_current_s03_hub","fromNode":"current_coach_brief","fromSide":"right","toNode":"optional_youtube","toSide":"left"}
+	]
+}

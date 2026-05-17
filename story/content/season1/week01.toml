@@ -1,0 +1,159 @@
+type = "week_text"
+pack_id = "season1_week01"
+node_id = "club_week_01"
+
+[[scene_text]]
+key = "OnboardingEarlyArrivalHeader"
+text = "White Lions / Early arrival"
+
+[[scene_text]]
+key = "OnboardingClubFloorHeader"
+text = "White Lions / Club floor"
+
+[[scene_text]]
+key = "OnboardingCoachReyesHeader"
+text = "White Lions / Coach Reyes"
+
+[[scene_text]]
+key = "AtHomeYoutubeHeader"
+text = "Bedroom / Late night"
+
+[[scene_text]]
+key = "TixMidweekSceneHeader"
+text = "White Lions / Midweek"
+
+[[scene_text]]
+key = "OnboardingAyaEarlyArrivalLine1"
+text = "AYA: You're early."
+
+[[scene_text]]
+key = "OnboardingAyaEarlyArrivalLine2Template"
+text = "AYA: I'm Aya. You're {player_name}, right?"
+
+[[scene_text]]
+key = "OnboardingAyaEarlyArrivalLine3"
+text = "AYA: Kai mentioned you. Glad you made it."
+
+[[scene_text]]
+key = "OnboardingAyaEarlyArrivalLine4"
+text = "AYA: We've got a few quiet minutes. Want a short warm-up?"
+
+[[scene_text]]
+key = "OnboardingAyaIntroToCoachTemplate"
+text = "AYA: Coach, this is {player_name}. We just hit a warm-up."
+
+[[scene_text]]
+key = "OnboardingCoachIntroPlayerTemplate"
+text = "COACH REYES: Reyes. Good to meet you, {player_name}."
+
+[[scene_text]]
+key = "OnboardingCoachWelcomeLine"
+text = "COACH REYES: Let's see what you can do."
+
+[[scene_text]]
+key = "OnboardingCoachAssignBenjiLine"
+text = "COACH REYES: Benji. Table two."
+
+[[scene_text]]
+key = "OnboardingCoachBenjiSpinWarningLine"
+text = "COACH REYES: Careful, he puts spin on everything."
+
+[[scene_text]]
+key = "OnboardingCoachEntryRetryLine"
+text = "COACH REYES: You'll need to play a full match so I can assess your skill level."
+
+[[scene_text]]
+key = "OnboardingCoachDayEndLine"
+text = "COACH REYES: That's enough for today."
+
+[[scene_text]]
+key = "OnboardingCoachTrainingOpenLine"
+text = "COACH REYES: Training tables are open any time. Play as many practice matches as you want."
+
+[[scene_text]]
+key = "OnboardingCoachTrainingRepsLine"
+text = "COACH REYES: Use those reps to sharpen your game."
+
+[[scene_text]]
+key = "OnboardingTixPostDayLine1"
+text = "TIX: Tix. Technical table."
+
+[[scene_text]]
+key = "OnboardingTixPostDayLine2"
+text = "TIX: You load your shoulder early on crosscourt returns. Benji read it twice. Easy fix."
+
+[[scene_text]]
+key = "OnboardingTixPostDayLine3"
+text = "TIX: You know the '67 World Championships?"
+
+[[scene_text]]
+key = "OnboardingTixPostDayLine4"
+text = "TIX: Look it up tonight. Full final, not highlights."
+
+[[scene_text]]
+key = "OnboardingTixPostDayLine5"
+text = "TIX: If you want to understand this game, start there."
+
+[[scene_text]]
+key = "AtHomeYoutubeLine1"
+text = "SEARCH: \"1967 world championships table tennis final\""
+
+[[scene_text]]
+key = "AtHomeYoutubeLine2"
+text = "IMAGINE: The film starts. Press Enter to step into point five."
+
+[[scene_text]]
+key = "ImaginationTakeoverCueLine"
+text = "I could see myself playing in the match."
+
+[[scene_text]]
+key = "TixMidweekSceneLine1"
+text = "TIX: I can tell you watched it. Powerful stuff, hey."
+
+[[scene_text]]
+key = "TixMidweekSceneLine2"
+text = "TIX: Point five: when he waits an extra beat. You saw it, right?"
+
+[[scene_text]]
+key = "TixMidweekSceneLine3"
+text = "TIX: That's not hesitation. It's a trap. He waits until you move."
+
+[[scene_text]]
+key = "TixMidweekSceneLine4"
+text = "TIX: Then he takes the table from you."
+
+[[scene_text]]
+key = "TixMidweekSceneLine5"
+text = "TIX: Let's get a game in before the next class. One game?"
+
+[[scene_text]]
+key = "OnboardingAyaForfeitFeedbackLine"
+text = "Are you feeling okay? No worries we can play someother time."
+
+[[scene_text]]
+key = "TixPostLunchLine1"
+text = "TIX: Thanks for the game."
+
+[[scene_text]]
+key = "TixPostLunchLine2"
+text = "TIX: Don't be late."
+
+[[match_start_feedback]]
+match_kind = "Training"
+line_1 = "Training set started."
+line_2 = "Unlimited reps. Esc pauses; stop training from pause menu."
+
+[[match_start_feedback]]
+match_kind = "Official"
+line_1 = "Next Match started."
+line_2 = "Best of 5 games. Game to 11, win by 2."
+
+[[match_start_feedback]]
+match_kind = "Imagination1967"
+line_1 = "Imagination set started."
+line_2 = "Watch four points, then take over."
+
+[[match_start_feedback]]
+match_kind = "TixLunch"
+line_1 = "Lunch set: Tix."
+line_2 = "Single game. No excuses."

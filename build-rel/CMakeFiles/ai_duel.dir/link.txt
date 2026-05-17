@@ -1,0 +1,1 @@
+/usr/bin/c++ -O2 -g -DNDEBUG -Wl,--dependency-file=CMakeFiles/ai_duel.dir/link.d CMakeFiles/ai_duel.dir/tools/ai_duel.cpp.o -o ai_duel  libwhacker_core.a

@@ -1,0 +1,1 @@
+/usr/bin/c++ -O2 -g -DNDEBUG -Wl,--dependency-file=CMakeFiles/ai_sweep.dir/link.d CMakeFiles/ai_sweep.dir/tools/ai_sweep.cpp.o -o ai_sweep  libwhacker_core.a

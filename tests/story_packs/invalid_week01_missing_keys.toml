@@ -1,0 +1,27 @@
+type = "week_text"
+pack_id = "invalid_week01_missing_keys"
+node_id = "club_week_01"
+
+[[scene_text]]
+key = "OnboardingEarlyArrivalHeader"
+text = "White Lions / Early arrival"
+
+[[match_start_feedback]]
+match_kind = "Training"
+line_1 = "Training set started."
+line_2 = "Unlimited reps."
+
+[[match_start_feedback]]
+match_kind = "Official"
+line_1 = "Next Match started."
+line_2 = "Best of 5 games."
+
+[[match_start_feedback]]
+match_kind = "Imagination1967"
+line_1 = "Imagination set started."
+line_2 = "Watch four points, then take over."
+
+[[match_start_feedback]]
+match_kind = "TixLunch"
+line_1 = "Lunch set: Tix."
+line_2 = "Single game. No excuses."

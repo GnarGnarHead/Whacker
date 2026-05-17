@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "default": {
+    "fuzz_percent": 18
+  },
+  "overrides": {
+    "aya_villanueva_portrait.png": {
+      "fuzz_percent": 18
+    },
+    "benji_santos_portrait.png": {
+      "fuzz_percent": 18
+    },
+    "champion_1967_contender_portrait.png": {
+      "fuzz_percent": 18
+    },
+    "champion_1967_player_standin_portrait.png": {
+      "fuzz_percent": 18
+    },
+    "coach_reyes_portrait.png": {
+      "fuzz_percent": 18
+    },
+    "issa_flores_portrait.png": {
+      "fuzz_percent": 18
+    },
+    "jolo_marasigan_portrait.png": {
+      "fuzz_percent": 18
+    },
+    "kai_alvarez_portrait.png": {
+      "fuzz_percent": 18
+    },
+    "player_character_portrait.png": {
+      "fuzz_percent": 18
+    },
+    "tino_tix_ramos_portrait.png": {
+      "fuzz_percent": 18
+    }
+  }
+}

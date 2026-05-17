@@ -1,0 +1,19 @@
+Start testing: Feb 16 01:11 AEDT
+----------------------------------------------------------
+1/1 Testing: sim_smoke
+1/1 Test: sim_smoke
+Command: "/home/scott/Programming/Whacker/build-rel/sim_smoke"
+Directory: /home/scott/Programming/Whacker/build-rel
+"sim_smoke" start time: Feb 16 01:11 AEDT
+Output:
+----------------------------------------------------------
+sim_smoke: all checks passed
+<end of output>
+Test time =   4.17 sec
+----------------------------------------------------------
+Test Passed.
+"sim_smoke" end time: Feb 16 01:11 AEDT
+"sim_smoke" time elapsed: 00:00:04
+----------------------------------------------------------
+
+End testing: Feb 16 01:11 AEDT

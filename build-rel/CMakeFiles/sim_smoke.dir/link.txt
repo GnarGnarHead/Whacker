@@ -1,0 +1,1 @@
+/usr/bin/c++ -O2 -g -DNDEBUG -Wl,--dependency-file=CMakeFiles/sim_smoke.dir/link.d CMakeFiles/sim_smoke.dir/tests/sim_smoke.cpp.o -o sim_smoke  libwhacker_core.a

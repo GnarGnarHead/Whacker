@@ -1,0 +1,2 @@
+/usr/bin/ar qc libwhacker_core.a CMakeFiles/whacker_core.dir/sim/config_io.cpp.o CMakeFiles/whacker_core.dir/sim/collision.cpp.o CMakeFiles/whacker_core.dir/sim/physics.cpp.o CMakeFiles/whacker_core.dir/sim/spin.cpp.o CMakeFiles/whacker_core.dir/ai/evaluator.cpp.o CMakeFiles/whacker_core.dir/ai/intercept.cpp.o CMakeFiles/whacker_core.dir/ai/planner.cpp.o CMakeFiles/whacker_core.dir/input/gamepad.cpp.o CMakeFiles/whacker_core.dir/input/keyboard.cpp.o CMakeFiles/whacker_core.dir/input/mouse.cpp.o CMakeFiles/whacker_core.dir/input/serial.cpp.o
+/usr/bin/ranlib libwhacker_core.a

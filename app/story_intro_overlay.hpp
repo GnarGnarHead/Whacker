@@ -1,0 +1,23 @@
+#pragma once
+
+#include "menu_input.hpp"
+#include "story_intro.hpp"
+#include "story_state.hpp"
+
+#ifdef WHACKER_HAS_GLFW
+
+struct GLFWwindow;
+
+namespace whacker::app {
+
+void render_story_intro_overlay(
+    GLFWwindow* window,
+    const StoryRuntimeState& story_runtime,
+    const StoryIntroState& story_intro_state,
+    const ControlBindings& controls,
+    StoryIntroKeyNameFn key_name_fn,
+    StoryIntroSanitizeNameFn sanitize_name_fn);
+
+}  // namespace whacker::app
+
+#endif  // WHACKER_HAS_GLFW

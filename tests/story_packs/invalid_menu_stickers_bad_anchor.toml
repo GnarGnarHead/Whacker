@@ -1,0 +1,21 @@
+type = "menu_stickers"
+pack_id = "invalid_bad_anchor"
+
+[[menu_sticker_surface]]
+surface = "main_menu"
+
+[[menu_sticker_surface.slot]]
+asset = "chatgpt_image_feb_26_2026_02_10_33_am_024.png"
+anchor = "top_left"
+scale = 0.16
+offset_x_px = 0
+offset_y_px = 0
+z_order = 0
+
+[[menu_sticker_surface.slot]]
+asset = "chatgpt_image_feb_26_2026_02_10_33_am_029.png"
+anchor = "center_maybe"
+scale = 0.12
+offset_x_px = 0
+offset_y_px = 0
+z_order = 0
