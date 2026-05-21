@@ -9,6 +9,10 @@
 
 #include "play_control.hpp"
 
+extern "C" int glfwGetKey(GLFWwindow* /*window*/, const int /*key*/) {
+    return GLFW_RELEASE;
+}
+
 namespace {
 
 namespace app = whacker::app;

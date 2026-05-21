@@ -10,9 +10,8 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
 endif()
 
-option(WHACKER_BUILD_APP "Build the GLFW app executable." ON)
+option(WHACKER_BUILD_APP "Build the SDL2 app executable." ON)
 option(WHACKER_BUILD_TESTS "Build smoke tests." ON)
-option(WHACKER_USE_GLFW "Enable GLFW window/input backend when available." ON)
 option(WHACKER_STRICT_WARNINGS "Enable stricter warning flags for local audits." OFF)
 option(WHACKER_STORY_STRICT_CONTENT "Enable strict story authoring integrity checks (for CI/release gates)." OFF)
 
@@ -146,88 +145,20 @@ set(WHACKER_AI_PLAY_CONTROL_RUNTIME_SOURCES
 
 if(WHACKER_BUILD_APP)
     add_executable(whacker
-        app/app_runtime.cpp
         app/audio_engine.cpp
         app/main.cpp
-        app/game_render.cpp
-        app/menu_flow.cpp
-        app/options_menu_input.cpp
-        app/menu_overlay.cpp
-        app/menu_sticker_render.cpp
-        app/menu_settings.cpp
-        app/pixel_font.cpp
-        ${WHACKER_AI_PLAY_CONTROL_RUNTIME_SOURCES}
-        app/quick_menu_render.cpp
-        app/match_flow.cpp
-        app/match_end_flow.cpp
-        app/match_exit_policy.cpp
-        app/menu_input.cpp
-        app/story_match.cpp
-        app/story_classification.cpp
-        app/story_onboarding_flow.cpp
-        app/story_text.cpp
-        app/story_text_feedback.cpp
-        app/story_text_week.cpp
-        app/story_text_week_01.cpp
-        app/story_intro.cpp
-        app/story_intro_overlay.cpp
-        app/story_intro_text_layout.cpp
-        app/story_portraits.cpp
-        app/story_portrait_render.cpp
-        app/story_chat_layout.cpp
-        app/story_chat_portrait_overlay.cpp
-        app/paddle_tuning_overlay.cpp
-        app/story_play_session.cpp
-        app/story_panel_layout.cpp
-        app/story_script_catalog.cpp
-        app/story_scene.cpp
-        app/story_continue_resume.cpp
-        app/story_scene_overlay.cpp
-        app/story_scene_text_layout.cpp
-        app/story_flow.cpp
-        app/story_overlays.cpp
-        app/story_runtime_invariants.cpp
-        app/story_runtime.cpp
-        app/runtime_escape.cpp
-        app/runtime_frame_timing.cpp
-        app/runtime_helpers.cpp
-        app/runtime_input_phase.cpp
-        app/runtime_input_phase_branches.cpp
-        app/runtime_loop_state.cpp
-        app/runtime_loop_policy.cpp
-        app/runtime_phase_drivers.cpp
-        app/runtime_pause.cpp
-        app/runtime_render_phase.cpp
-        app/runtime_render_drivers.cpp
-        app/runtime_story_save_cache.cpp
-        app/runtime_visual_transition.cpp
-        app/runtime_visual_transition_render.cpp
-        app/runtime_step_phase.cpp
-        app/runtime_step_phase_branches.cpp
-        app/runtime_step_input.cpp
-        app/runtime_story_scene.cpp
-        app/runtime_transitions.cpp
-        app/story_onboarding_sync.cpp
-        app/text_utils.cpp
-        app/text_wrap.cpp
-        app/overlay_layout_math.cpp
-        app/ui_text.cpp
-        app/story_save.cpp
-        app/window_title.cpp
+        app/platform_sdl.cpp
     )
     target_link_libraries(whacker PRIVATE whacker_core)
-    target_link_libraries(whacker PRIVATE story_pack_gen)
     target_compile_definitions(whacker PRIVATE WHACKER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     whacker_apply_warnings(whacker)
 
-    set(WHACKER_SDL2_AUDIO_ENABLED OFF)
+    set(WHACKER_SDL2_TARGET "")
     find_package(SDL2 QUIET)
     if(TARGET SDL2::SDL2)
-        target_link_libraries(whacker PRIVATE SDL2::SDL2)
-        set(WHACKER_SDL2_AUDIO_ENABLED ON)
+        set(WHACKER_SDL2_TARGET SDL2::SDL2)
     elseif(TARGET SDL2::SDL2-static)
-        target_link_libraries(whacker PRIVATE SDL2::SDL2-static)
-        set(WHACKER_SDL2_AUDIO_ENABLED ON)
+        set(WHACKER_SDL2_TARGET SDL2::SDL2-static)
     else()
         find_package(PkgConfig QUIET)
         if(PkgConfig_FOUND)
@@ -236,63 +167,52 @@ if(WHACKER_BUILD_APP)
                 target_include_directories(whacker PRIVATE ${SDL2_PC_INCLUDE_DIRS})
                 target_link_libraries(whacker PRIVATE ${SDL2_PC_LINK_LIBRARIES})
                 target_compile_options(whacker PRIVATE ${SDL2_PC_CFLAGS_OTHER})
-                set(WHACKER_SDL2_AUDIO_ENABLED ON)
             endif()
         endif()
     endif()
-    if(WHACKER_SDL2_AUDIO_ENABLED)
-        target_compile_definitions(whacker PRIVATE WHACKER_HAS_SDL2_AUDIO=1)
+
+    if(WHACKER_SDL2_TARGET)
+        target_link_libraries(whacker PRIVATE ${WHACKER_SDL2_TARGET})
+    elseif(NOT SDL2_PC_FOUND)
+        message(FATAL_ERROR "SDL2 is required when WHACKER_BUILD_APP=ON. Install SDL2 or configure with -DWHACKER_BUILD_APP=OFF for a headless/test-only build.")
+    endif()
+
+    target_compile_definitions(
+        whacker
+        PRIVATE
+            WHACKER_PLATFORM_SDL2=1
+            WHACKER_HAS_SDL2_AUDIO=1
+    )
+
+    find_package(OpenGL QUIET)
+    if(TARGET OpenGL::GL)
+        target_link_libraries(whacker PRIVATE OpenGL::GL)
     else()
-        message(WARNING "SDL2 audio backend not found. Building with silent audio stub.")
+        message(WARNING "OpenGL library not found. Rendering symbols may be unavailable once the SDL2 render path is enabled.")
     endif()
 
-    if(WHACKER_USE_GLFW)
-        find_package(glfw3 QUIET)
-
-        set(WHACKER_GLFW_TARGET "")
-        if(TARGET glfw)
-            set(WHACKER_GLFW_TARGET glfw)
-        elseif(TARGET glfw::glfw)
-            set(WHACKER_GLFW_TARGET glfw::glfw)
-        endif()
-
-        if(WHACKER_GLFW_TARGET)
-            target_link_libraries(whacker PRIVATE ${WHACKER_GLFW_TARGET})
-            target_compile_definitions(whacker PRIVATE WHACKER_HAS_GLFW=1)
-
-            add_executable(play_control_duel
-                tools/play_control_duel.cpp
-                ${WHACKER_AI_PLAY_CONTROL_RUNTIME_SOURCES}
-                app/match_flow.cpp
-            )
-            target_link_libraries(play_control_duel PRIVATE whacker_core ${WHACKER_GLFW_TARGET})
-            target_include_directories(play_control_duel PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-            target_compile_definitions(
-                play_control_duel
-                PRIVATE
-                    WHACKER_HAS_GLFW=1
-                    WHACKER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
-            )
-            whacker_apply_warnings(play_control_duel)
-
-            find_package(OpenGL QUIET)
-            if(TARGET OpenGL::GL)
-                target_link_libraries(whacker PRIVATE OpenGL::GL)
-            else()
-                message(WARNING "OpenGL library not found. Rendering symbols may be unavailable.")
-            endif()
-
-            find_package(PNG QUIET)
-            if(TARGET PNG::PNG)
-                target_link_libraries(whacker PRIVATE PNG::PNG)
-                target_compile_definitions(whacker PRIVATE WHACKER_HAS_PNG=1)
-            else()
-                message(WARNING "libpng not found. Story portraits will render deterministic built-in placeholders.")
-            endif()
-        else()
-            message(WARNING "GLFW was not found. Building 'whacker' with a stub main.")
-        endif()
+    find_package(PNG QUIET)
+    if(TARGET PNG::PNG)
+        target_link_libraries(whacker PRIVATE PNG::PNG)
+        target_compile_definitions(whacker PRIVATE WHACKER_HAS_PNG=1)
+    else()
+        message(WARNING "libpng not found. Story portraits will render deterministic built-in placeholders once the SDL2 render path is enabled.")
     endif()
+
+    add_executable(play_control_duel
+        tools/play_control_duel.cpp
+        ${WHACKER_AI_PLAY_CONTROL_RUNTIME_SOURCES}
+        app/match_flow.cpp
+    )
+    target_link_libraries(play_control_duel PRIVATE whacker_core)
+    target_include_directories(play_control_duel PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+    target_compile_definitions(
+        play_control_duel
+        PRIVATE
+            WHACKER_HAS_GLFW=1
+            WHACKER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    whacker_apply_warnings(play_control_duel)
 endif()
 
 if(WHACKER_BUILD_TESTS)

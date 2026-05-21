@@ -3,17 +3,9 @@
 #include <string>
 #include <vector>
 
-#include "app_runtime.hpp"
+#include "platform_sdl.hpp"
 #include "sim/config_io.hpp"
 #include "sim/physics.hpp"
-
-#ifdef WHACKER_HAS_GLFW
-#include <GLFW/glfw3.h>
-
-#include "menu_input.hpp"
-#include "story_portrait_render.hpp"
-#include "runtime_visual_transition_render.hpp"
-#endif
 
 namespace {
 
@@ -46,51 +38,15 @@ int main() {
     const whacker::sim::SimulationConfig startup_config = load_startup_config();
     whacker::sim::Simulation simulation(startup_config);
 
-#ifndef WHACKER_HAS_GLFW
-    std::puts("whacker: built without GLFW support. Install glfw3 and rebuild to run the windowed app.");
+#ifndef WHACKER_PLATFORM_SDL2
+    std::puts("whacker: built without an app platform. Reconfigure with WHACKER_BUILD_APP=ON and SDL2 installed.");
     const auto& state = simulation.state();
     std::printf("sim initialized: score %d:%d\n", state.left_score, state.right_score);
     return 0;
 #else
-#if defined(__linux__) && defined(GLFW_PLATFORM_X11)
-    // Force X11 on GLFW 3.4+ to avoid Wayland libdecor-gtk crashes.
-    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
-#endif
-
-    if (glfwInit() == GLFW_FALSE) {
-        const char* message = nullptr;
-        const int error = glfwGetError(&message);
-        std::fprintf(stderr, "Failed to initialize GLFW (error %d): %s\n", error, message ? message : "unknown");
-        const char* display = std::getenv("DISPLAY");
-        const char* wayland = std::getenv("WAYLAND_DISPLAY");
-        if (display == nullptr && wayland == nullptr) {
-            std::fputs("No DISPLAY/WAYLAND_DISPLAY detected. Run in a desktop session or use a virtual display.\n", stderr);
-        }
-        return 1;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-
-    GLFWwindow* window = glfwCreateWindow(960, 540, "Whacker", nullptr, nullptr);
-    if (window == nullptr) {
-        const char* message = nullptr;
-        const int error = glfwGetError(&message);
-        std::fprintf(stderr, "Failed to create window (error %d): %s\n", error, message ? message : "unknown");
-        glfwTerminate();
-        return 1;
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
-    glfwSetKeyCallback(window, whacker::app::on_key_event);
-
-    const int exit_code = whacker::app::run_app_loop(window, simulation);
-
-    whacker::app::release_story_portrait_resources();
-    whacker::app::release_visual_transition_render_resources();
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return exit_code;
+    std::puts("whacker: SDL2 platform scaffold is enabled. Window/render handoff arrives in checkpoint 2.");
+    const auto& state = simulation.state();
+    std::printf("sim initialized: score %d:%d\n", state.left_score, state.right_score);
+    return 0;
 #endif
 }
