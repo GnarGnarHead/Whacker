@@ -128,6 +128,10 @@ void SdlPlatform::poll_events() {
     }
 }
 
+void SdlPlatform::request_close() {
+    should_close_ = true;
+}
+
 void SdlPlatform::swap_buffers() {
     if (window_ != nullptr) {
         SDL_GL_SwapWindow(window_);
@@ -140,6 +144,12 @@ void SdlPlatform::framebuffer_size(int& width, int& height) const {
     if (window_ != nullptr) {
         SDL_GL_GetDrawableSize(window_, &width, &height);
     }
+}
+
+RenderContext SdlPlatform::render_context() const {
+    RenderContext context {};
+    framebuffer_size(context.framebuffer_width, context.framebuffer_height);
+    return context;
 }
 
 void SdlPlatform::set_window_title(const char* title) {

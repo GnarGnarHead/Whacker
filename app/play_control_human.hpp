@@ -11,5 +11,10 @@ void set_human_target(
     bool move_down,
     float dt);
 
-}  // namespace whacker::app
+void set_human_axis_target(
+    whacker::sim::PaddleState& paddle,
+    const whacker::sim::SimulationConfig& config,
+    float move_y,
+    float dt);
 
+}  // namespace whacker::app

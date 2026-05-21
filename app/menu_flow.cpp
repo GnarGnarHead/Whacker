@@ -6,6 +6,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include "main_menu_actions.hpp"
 #include "story_match.hpp"
 #include "story_runtime.hpp"
 #include "story_runtime_invariants.hpp"
@@ -41,35 +42,33 @@ void handle_main_menu_input(
     OptionsMenuState& options_menu_state,
     const ControlBindings& controls,
     AppState& app_state) {
-    if (consume_menu_up_press(window, edge_state, controls)) {
-        main_menu_state.selected_row = (main_menu_state.selected_row + MainMenuRowCount - 1) % MainMenuRowCount;
+    const MainMenuActionResult result = apply_main_menu_action(
+        main_menu_state,
+        consume_menu_up_press(window, edge_state, controls),
+        consume_menu_down_press(window, edge_state, controls),
+        consume_confirm_press(window, edge_state),
+        false);
+    if (result == MainMenuActionResult::Story) {
+        story_menu_state.selected_row = StoryMenuRowContinue;
+        story_menu_state.confirm_overwrite = false;
+        story_menu_state.confirm_selected = 0;
+        app_state = AppState::StoryMenu;
+        return;
     }
-    if (consume_menu_down_press(window, edge_state, controls)) {
-        main_menu_state.selected_row = (main_menu_state.selected_row + 1) % MainMenuRowCount;
+    if (result == MainMenuActionResult::Quick) {
+        quick_menu_state.selected_row = MenuRowP1;
+        app_state = AppState::QuickMatchSetup;
+        return;
     }
-    if (consume_confirm_press(window, edge_state)) {
-        if (main_menu_state.selected_row == MainMenuRowStory) {
-            story_menu_state.selected_row = StoryMenuRowContinue;
-            story_menu_state.confirm_overwrite = false;
-            story_menu_state.confirm_selected = 0;
-            app_state = AppState::StoryMenu;
-            return;
-        }
-        if (main_menu_state.selected_row == MainMenuRowQuick) {
-            quick_menu_state.selected_row = MenuRowP1;
-            app_state = AppState::QuickMatchSetup;
-            return;
-        }
-        if (main_menu_state.selected_row == MainMenuRowOptions) {
-            options_menu_state.selected_row = OptionsMenuRowP1Up;
-            options_menu_state.waiting_for_key = false;
-            app_state = AppState::OptionsMenu;
-            return;
-        }
-        if (main_menu_state.selected_row == MainMenuRowQuit) {
-            glfwSetWindowShouldClose(window, GLFW_TRUE);
-            return;
-        }
+    if (result == MainMenuActionResult::Options) {
+        options_menu_state.selected_row = OptionsMenuRowP1Up;
+        options_menu_state.waiting_for_key = false;
+        app_state = AppState::OptionsMenu;
+        return;
+    }
+    if (result == MainMenuActionResult::Quit) {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+        return;
     }
 }
 

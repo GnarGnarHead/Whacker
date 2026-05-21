@@ -19,20 +19,28 @@ void set_human_target(
     const bool move_down,
     const float dt) {
     const int direction = static_cast<int>(move_down) - static_cast<int>(move_up);
+    set_human_axis_target(paddle, config, static_cast<float>(direction), dt);
+}
+
+void set_human_axis_target(
+    whacker::sim::PaddleState& paddle,
+    const whacker::sim::SimulationConfig& config,
+    const float move_y,
+    const float dt) {
+    const float axis = clampf(move_y, -1.0f, 1.0f);
     const float min_y = config.paddle_half_height;
     const float max_y = config.court_height - config.paddle_half_height;
     const float max_speed = config.paddle_max_speed;
 
-    if (direction == 0) {
+    if (axis == 0.0f) {
         paddle.target_y = clampf(paddle.center_y, min_y, max_y);
         paddle.feedforward_velocity_y = 0.0f;
         return;
     }
 
-    const float next_target = paddle.target_y + static_cast<float>(direction) * max_speed * dt;
+    const float next_target = paddle.target_y + axis * max_speed * dt;
     paddle.target_y = clampf(next_target, min_y, max_y);
-    paddle.feedforward_velocity_y = static_cast<float>(direction) * max_speed;
+    paddle.feedforward_velocity_y = axis * max_speed;
 }
 
 }  // namespace whacker::app
-

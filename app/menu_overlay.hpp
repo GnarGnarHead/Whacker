@@ -1,17 +1,30 @@
 #pragma once
 
-#include "audio_engine.hpp"
-#include "match_exit_policy.hpp"
-#include "menu_input.hpp"
+#include <string>
+
+#include "render_context.hpp"
 #include "ui_state.hpp"
 
 #ifdef WHACKER_HAS_GLFW
+#include "audio_engine.hpp"
+#include "match_exit_policy.hpp"
+#include "menu_input.hpp"
 
 struct GLFWwindow;
+#endif
 
 namespace whacker::app {
 
 using RowNameFn = const char* (*)(int);
+
+void render_main_menu_overlay(
+    const RenderContext& context,
+    const MainMenuState& menu_state,
+    RowNameFn row_name_fn,
+    const std::string& status_message = {});
+
+#ifdef WHACKER_HAS_GLFW
+
 using KeyNameFn = const char* (*)(int);
 using BindingValueFn = int (*)(const ControlBindings&, int);
 
@@ -34,6 +47,6 @@ void render_pause_overlay(
     const PauseMenuState& pause_menu_state,
     const MatchExitPolicy& exit_policy);
 
-}  // namespace whacker::app
-
 #endif  // WHACKER_HAS_GLFW
+
+}  // namespace whacker::app

@@ -145,14 +145,19 @@ set(WHACKER_AI_PLAY_CONTROL_RUNTIME_SOURCES
 
 if(WHACKER_BUILD_APP)
     add_executable(whacker
+        app/action_input.cpp
+        app/app_runtime.cpp
         app/audio_engine.cpp
         app/game_render.cpp
         app/main.cpp
-        app/main_menu_overlay.cpp
+        app/main_menu_actions.cpp
+        app/menu_overlay.cpp
         app/menu_sticker_render.cpp
         app/overlay_layout_math.cpp
+        app/play_control_human.cpp
         app/platform_sdl.cpp
         app/pixel_font.cpp
+        app/sdl_input.cpp
         app/text_wrap.cpp
         app/ui_text.cpp
     )
@@ -544,6 +549,8 @@ if(WHACKER_BUILD_TESTS)
 
         add_executable(story_integration_smoke
             tests/story_integration_smoke.cpp
+            app/action_input.cpp
+            app/main_menu_actions.cpp
             app/match_end_flow.cpp
             app/match_flow.cpp
             app/menu_flow.cpp
@@ -710,6 +717,15 @@ if(WHACKER_BUILD_TESTS)
         target_include_directories(runtime_loop_policy_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
         whacker_configure_smoke_test(runtime_loop_policy_smoke)
         add_test(NAME runtime_loop_policy_smoke COMMAND runtime_loop_policy_smoke)
+
+        add_executable(action_input_smoke
+            tests/action_input_smoke.cpp
+            app/action_input.cpp
+            app/main_menu_actions.cpp
+        )
+        target_include_directories(action_input_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(action_input_smoke)
+        add_test(NAME action_input_smoke COMMAND action_input_smoke)
 
         add_executable(runtime_render_drivers_smoke
             tests/runtime_render_drivers_smoke.cpp

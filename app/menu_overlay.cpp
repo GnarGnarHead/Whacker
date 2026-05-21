@@ -1,14 +1,14 @@
 #include "menu_overlay.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <array>
 #include <initializer_list>
 #include <string>
 #include <string_view>
 
+#ifdef WHACKER_HAS_GLFW
 #include <GLFW/glfw3.h>
+#endif
 
 #include "menu_sticker_render.hpp"
 #include "overlay_layout_math.hpp"
@@ -48,12 +48,12 @@ std::string choose_variant_for_width(
 }  // namespace
 
 void render_main_menu_overlay(
-    GLFWwindow* window,
+    const RenderContext& context,
     const MainMenuState& menu_state,
-    const RowNameFn row_name_fn) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    const RowNameFn row_name_fn,
+    const std::string& status_message) {
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -154,10 +154,13 @@ void render_main_menu_overlay(
             Color {0.90f, 0.94f, 1.00f});
     }
 
-    const std::string footer = choose_variant_for_width(
-        {ui_text::main_menu_footer(), ui_text::main_menu_footer_short()},
-        panel_w - 32.0f,
-        kFooterScale);
+    const bool has_status = !status_message.empty();
+    const std::string footer = has_status
+        ? fit_for_width(status_message, panel_w - 32.0f, kFooterScale)
+        : choose_variant_for_width(
+            {ui_text::main_menu_footer(), ui_text::main_menu_footer_short()},
+            panel_w - 32.0f,
+            kFooterScale);
     draw_text_pixels(
         fb_width,
         fb_height,
@@ -165,7 +168,7 @@ void render_main_menu_overlay(
         vertical.footer_y,
         kFooterScale,
         footer,
-        Color {0.70f, 0.78f, 0.88f});
+        has_status ? Color {0.96f, 0.86f, 0.34f} : Color {0.70f, 0.78f, 0.88f});
 
     const float header_protected_w = std::clamp(panel_w * 0.44f, 210.0f, panel_w - 28.0f);
     const std::array<MenuStickerRect, 3> protected_regions {{
@@ -184,6 +187,22 @@ void render_main_menu_overlay(
         MenuStickerSurface::MainMenu,
         panel_rect,
         protected_regions);
+}
+
+#ifdef WHACKER_HAS_GLFW
+
+void render_main_menu_overlay(
+    GLFWwindow* window,
+    const MainMenuState& menu_state,
+    const RowNameFn row_name_fn) {
+    int fb_width = 0;
+    int fb_height = 0;
+    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    render_main_menu_overlay(
+        RenderContext {.framebuffer_width = fb_width, .framebuffer_height = fb_height},
+        menu_state,
+        row_name_fn,
+        {});
 }
 
 void render_options_menu_overlay(
@@ -616,6 +635,6 @@ void render_pause_overlay(
         protected_regions);
 }
 
-}  // namespace whacker::app
-
 #endif  // WHACKER_HAS_GLFW
+
+}  // namespace whacker::app

@@ -6,7 +6,6 @@
 #include <GL/gl.h>
 
 #include "pixel_font.hpp"
-#include "platform_sdl.hpp"
 
 namespace {
 
@@ -18,12 +17,9 @@ float clampf(const float value, const float lo, const float hi) {
 
 namespace whacker::app {
 
-void render_scene(SdlPlatform* platform, const whacker::sim::Simulation& simulation, const bool ball_visible) {
-    int fb_width = 0;
-    int fb_height = 0;
-    if (platform != nullptr) {
-        platform->framebuffer_size(fb_width, fb_height);
-    }
+void render_scene(const RenderContext& context, const whacker::sim::Simulation& simulation, const bool ball_visible) {
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -100,12 +96,9 @@ void render_scene(SdlPlatform* platform, const whacker::sim::Simulation& simulat
         0.26f);
 }
 
-void render_hud(SdlPlatform* platform, const whacker::sim::Simulation& simulation) {
-    int fb_width = 0;
-    int fb_height = 0;
-    if (platform != nullptr) {
-        platform->framebuffer_size(fb_width, fb_height);
-    }
+void render_hud(const RenderContext& context, const whacker::sim::Simulation& simulation) {
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -137,16 +130,13 @@ void render_hud(SdlPlatform* platform, const whacker::sim::Simulation& simulatio
         Color {0.90f, 0.94f, 1.00f});
 }
 
-void render_play_center_message(SdlPlatform* platform, const std::string& message) {
+void render_play_center_message(const RenderContext& context, const std::string& message) {
     if (message.empty()) {
         return;
     }
 
-    int fb_width = 0;
-    int fb_height = 0;
-    if (platform != nullptr) {
-        platform->framebuffer_size(fb_width, fb_height);
-    }
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -171,14 +161,11 @@ void render_play_center_message(SdlPlatform* platform, const std::string& messag
 }
 
 void render_dev_overlay(
-    SdlPlatform* platform,
+    const RenderContext& context,
     const whacker::sim::Simulation& simulation,
     const bool ai_controls_player_paddle) {
-    int fb_width = 0;
-    int fb_height = 0;
-    if (platform != nullptr) {
-        platform->framebuffer_size(fb_width, fb_height);
-    }
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
