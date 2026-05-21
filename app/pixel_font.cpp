@@ -1,7 +1,5 @@
 #include "pixel_font.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -411,5 +409,3 @@ void draw_rgba_sprite_pixels(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

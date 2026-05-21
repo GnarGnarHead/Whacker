@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "game_render.hpp"
+#include "main_menu_overlay.hpp"
 #include "platform_sdl.hpp"
 #include "sim/config_io.hpp"
 #include "sim/physics.hpp"
@@ -32,6 +34,22 @@ whacker::sim::SimulationConfig load_startup_config() {
     return config;
 }
 
+const char* main_menu_row_name(const int row) {
+    using namespace whacker::app;
+    switch (row) {
+        case MainMenuRowStory:
+            return "STORY MODE";
+        case MainMenuRowQuick:
+            return "QUICK MATCH";
+        case MainMenuRowOptions:
+            return "OPTIONS";
+        case MainMenuRowQuit:
+            return "QUIT";
+        default:
+            return "?";
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -44,9 +62,26 @@ int main() {
     std::printf("sim initialized: score %d:%d\n", state.left_score, state.right_score);
     return 0;
 #else
-    std::puts("whacker: SDL2 platform scaffold is enabled. Window/render handoff arrives in checkpoint 2.");
-    const auto& state = simulation.state();
-    std::printf("sim initialized: score %d:%d\n", state.left_score, state.right_score);
+    whacker::app::SdlPlatform platform;
+    std::string error_message;
+    if (!platform.init(&error_message)) {
+        std::fprintf(stderr, "Failed to initialize SDL2 platform: %s\n", error_message.c_str());
+        return 1;
+    }
+    if (!platform.create_window(960, 540, "Whacker", &error_message)) {
+        std::fprintf(stderr, "Failed to create SDL2 OpenGL window: %s\n", error_message.c_str());
+        return 1;
+    }
+
+    whacker::app::MainMenuState main_menu_state {};
+    while (!platform.should_close()) {
+        platform.poll_events();
+        whacker::app::render_scene(&platform, simulation, true);
+        whacker::app::render_main_menu_overlay(&platform, main_menu_state, main_menu_row_name);
+        platform.swap_buffers();
+    }
+
+    platform.destroy_window();
     return 0;
 #endif
 }

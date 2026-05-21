@@ -1,14 +1,12 @@
 #include "game_render.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <string>
 
 #include <GL/gl.h>
-#include <GLFW/glfw3.h>
 
 #include "pixel_font.hpp"
+#include "platform_sdl.hpp"
 
 namespace {
 
@@ -20,10 +18,12 @@ float clampf(const float value, const float lo, const float hi) {
 
 namespace whacker::app {
 
-void render_scene(GLFWwindow* window, const whacker::sim::Simulation& simulation, const bool ball_visible) {
+void render_scene(SdlPlatform* platform, const whacker::sim::Simulation& simulation, const bool ball_visible) {
     int fb_width = 0;
     int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    if (platform != nullptr) {
+        platform->framebuffer_size(fb_width, fb_height);
+    }
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -100,10 +100,12 @@ void render_scene(GLFWwindow* window, const whacker::sim::Simulation& simulation
         0.26f);
 }
 
-void render_hud(GLFWwindow* window, const whacker::sim::Simulation& simulation) {
+void render_hud(SdlPlatform* platform, const whacker::sim::Simulation& simulation) {
     int fb_width = 0;
     int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    if (platform != nullptr) {
+        platform->framebuffer_size(fb_width, fb_height);
+    }
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -135,14 +137,16 @@ void render_hud(GLFWwindow* window, const whacker::sim::Simulation& simulation) 
         Color {0.90f, 0.94f, 1.00f});
 }
 
-void render_play_center_message(GLFWwindow* window, const std::string& message) {
+void render_play_center_message(SdlPlatform* platform, const std::string& message) {
     if (message.empty()) {
         return;
     }
 
     int fb_width = 0;
     int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    if (platform != nullptr) {
+        platform->framebuffer_size(fb_width, fb_height);
+    }
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -167,12 +171,14 @@ void render_play_center_message(GLFWwindow* window, const std::string& message) 
 }
 
 void render_dev_overlay(
-    GLFWwindow* window,
+    SdlPlatform* platform,
     const whacker::sim::Simulation& simulation,
     const bool ai_controls_player_paddle) {
     int fb_width = 0;
     int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    if (platform != nullptr) {
+        platform->framebuffer_size(fb_width, fb_height);
+    }
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -224,5 +230,3 @@ void render_dev_overlay(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

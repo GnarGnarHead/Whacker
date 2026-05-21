@@ -146,10 +146,18 @@ set(WHACKER_AI_PLAY_CONTROL_RUNTIME_SOURCES
 if(WHACKER_BUILD_APP)
     add_executable(whacker
         app/audio_engine.cpp
+        app/game_render.cpp
         app/main.cpp
+        app/main_menu_overlay.cpp
+        app/menu_sticker_render.cpp
+        app/overlay_layout_math.cpp
         app/platform_sdl.cpp
+        app/pixel_font.cpp
+        app/text_wrap.cpp
+        app/ui_text.cpp
     )
     target_link_libraries(whacker PRIVATE whacker_core)
+    target_link_libraries(whacker PRIVATE story_pack_gen)
     target_compile_definitions(whacker PRIVATE WHACKER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     whacker_apply_warnings(whacker)
 

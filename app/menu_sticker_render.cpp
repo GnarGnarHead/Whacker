@@ -1,7 +1,5 @@
 #include "menu_sticker_render.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -13,7 +11,6 @@
 #include <vector>
 
 #include <GL/gl.h>
-#include <GLFW/glfw3.h>
 
 #if defined(WHACKER_HAS_PNG)
 #include <png.h>
@@ -508,5 +505,3 @@ void render_menu_stickers(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

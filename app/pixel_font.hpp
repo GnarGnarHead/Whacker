@@ -5,8 +5,6 @@
 
 #include "app_types.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 namespace whacker::app {
 
 void draw_rect_pixels(
@@ -67,5 +65,3 @@ void draw_rgba_sprite_pixels(
     bool mirror_x = false);
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW
