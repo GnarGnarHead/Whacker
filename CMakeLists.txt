@@ -737,6 +737,14 @@ if(WHACKER_BUILD_TESTS)
         whacker_configure_smoke_test(control_plan_smoke)
         add_test(NAME control_plan_smoke COMMAND control_plan_smoke)
 
+        add_executable(render_context_smoke
+            tests/render_context_smoke.cpp
+        )
+        target_link_libraries(render_context_smoke PRIVATE whacker_core)
+        target_include_directories(render_context_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(render_context_smoke)
+        add_test(NAME render_context_smoke COMMAND render_context_smoke)
+
         add_executable(input_binding_codec_smoke
             tests/input_binding_codec_smoke.cpp
             app/action_input.cpp

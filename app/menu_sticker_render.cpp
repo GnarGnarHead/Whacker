@@ -16,6 +16,7 @@
 #include <png.h>
 #endif
 
+#include "pixel_font.hpp"
 #include "story_pack.hpp"
 
 #ifndef WHACKER_SOURCE_DIR
@@ -64,7 +65,7 @@ struct ScopedStickerScissor {
         was_enabled_ = (glIsEnabled(GL_SCISSOR_TEST) == GL_TRUE);
         glGetIntegerv(GL_SCISSOR_BOX, previous_box_.data());
         glEnable(GL_SCISSOR_TEST);
-        glScissor(0, 0, fb_width, fb_height);
+        apply_full_pixel_scissor(fb_width, fb_height);
     }
 
     ~ScopedStickerScissor() {

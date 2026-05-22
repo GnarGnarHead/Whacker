@@ -5,6 +5,7 @@
 #include "match_flow.hpp"
 #include "menu_overlay.hpp"
 #include "paddle_tuning_overlay.hpp"
+#include "pixel_font.hpp"
 #include "quick_menu_render.hpp"
 #include "runtime_match_exit_policy.hpp"
 #include "runtime_visual_transition_render.hpp"
@@ -17,12 +18,24 @@
 #include "story_scene_overlay.hpp"
 #include "text_utils.hpp"
 
+#include <GL/gl.h>
+
 namespace whacker::app {
 
 void render_runtime_frame(
     const RenderContext& render_context,
     const SdlRuntimeState& runtime,
     const whacker::sim::Simulation& simulation) {
+    if (!render_context_valid(render_context)) {
+        return;
+    }
+
+    glViewport(0, 0, render_context.drawable_width, render_context.drawable_height);
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    const ScopedPixelRenderContext scoped_pixel_context {render_context};
     const bool ball_visible =
         (runtime.app_state == AppState::Playing ||
          runtime.app_state == AppState::Paused ||

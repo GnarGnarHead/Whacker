@@ -214,9 +214,10 @@ void SdlPlatform::framebuffer_size(int& width, int& height) const {
 }
 
 RenderContext SdlPlatform::render_context() const {
-    RenderContext context {};
-    framebuffer_size(context.framebuffer_width, context.framebuffer_height);
-    return context;
+    int width = 0;
+    int height = 0;
+    framebuffer_size(width, height);
+    return make_letterboxed_render_context(width, height);
 }
 
 void SdlPlatform::set_window_title(const char* title) {

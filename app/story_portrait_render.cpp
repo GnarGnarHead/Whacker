@@ -11,6 +11,8 @@
 
 #include <GL/gl.h>
 
+#include "pixel_font.hpp"
+
 #if defined(WHACKER_HAS_PNG)
 #include <png.h>
 #endif
@@ -457,7 +459,7 @@ void draw_story_portrait_texture(
     const float u0 = mirror_x ? 1.0f : 0.0f;
     const float u1 = mirror_x ? 0.0f : 1.0f;
 
-    glScissor(0, 0, fb_width, fb_height);
+    apply_full_pixel_scissor(fb_width, fb_height);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();

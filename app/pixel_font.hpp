@@ -4,8 +4,21 @@
 #include <string>
 
 #include "app_types.hpp"
+#include "render_context.hpp"
 
 namespace whacker::app {
+
+class ScopedPixelRenderContext {
+public:
+    explicit ScopedPixelRenderContext(const RenderContext& context);
+    ~ScopedPixelRenderContext();
+
+    ScopedPixelRenderContext(const ScopedPixelRenderContext&) = delete;
+    ScopedPixelRenderContext& operator=(const ScopedPixelRenderContext&) = delete;
+};
+
+void apply_render_context_viewport(const RenderContext& context);
+void apply_full_pixel_scissor(int fb_width, int fb_height);
 
 void draw_rect_pixels(
     int fb_width,

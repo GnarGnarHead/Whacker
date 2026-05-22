@@ -5,7 +5,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
 #include <cstdio>
 #include <memory>
 #include <vector>
@@ -140,6 +139,7 @@ Voice make_voice(
 struct AudioEngine::Impl {
     SDL_AudioDeviceID device = 0;
     SDL_AudioSpec obtained_spec {};
+    bool audio_subsystem_initialized = false;
     AudioSettings settings {};
     std::uint32_t type_blip_counter = 0;
 
@@ -659,11 +659,12 @@ bool AudioEngine::init() {
     (void)SDL_SetHint(SDL_HINT_APP_NAME, "Whacker");
 #endif
 
-    const auto init_audio_subsystem = []() -> bool {
+    const auto init_audio_subsystem = [&]() -> bool {
         if ((SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) != 0u) {
             return true;
         }
         if (SDL_InitSubSystem(SDL_INIT_AUDIO) == 0) {
+            impl_->audio_subsystem_initialized = true;
             return true;
         }
         std::fprintf(
@@ -689,8 +690,8 @@ bool AudioEngine::init() {
         constexpr std::array<int, 2> kFreqs {48000, 44100};
         constexpr std::array<SDL_AudioFormat, 2> kFormats {AUDIO_F32SYS, AUDIO_S16SYS};
 
-        // Route through the session default device and let PipeWire/WirePlumber
-        // own sink selection. This keeps behavior aligned with desktop routing.
+        // Use SDL's default output device. Backend and device selection belong
+        // to SDL, the environment, or launcher/platform packaging.
         for (const SDL_AudioFormat format : kFormats) {
             desired.format = format;
             for (const int freq : kFreqs) {
@@ -709,84 +710,30 @@ bool AudioEngine::init() {
             SDL_CloseAudioDevice(impl_->device);
             impl_->device = 0;
         }
-        if ((SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) != 0u) {
+        if (impl_->audio_subsystem_initialized) {
             SDL_QuitSubSystem(SDL_INIT_AUDIO);
+            impl_->audio_subsystem_initialized = false;
         }
     };
 
-    const auto is_dummy_driver = []() -> bool {
-        const char* driver = SDL_GetCurrentAudioDriver();
-        return driver != nullptr && std::strcmp(driver, "dummy") == 0;
-    };
-
-    const char* env_driver = SDL_getenv("SDL_AUDIODRIVER");
-    const bool user_forced_driver = env_driver != nullptr && env_driver[0] != '\0';
-    bool opened_audio = false;
-
-    if (user_forced_driver) {
-        if (init_audio_subsystem() && open_audio_device()) {
-            opened_audio = true;
-        } else {
-            std::fprintf(
-                stderr,
-                "Audio init failed for SDL_AUDIODRIVER=%s: %s\n",
-                env_driver,
-                SDL_GetError());
-            close_audio_subsystem();
-        }
-    } else {
-#if defined(__linux__)
-        // Prefer modern Linux session backends by default.
-        // Do not auto-fallback to ALSA here; ALSA may block on some setups.
-        constexpr std::array<const char*, 2> kPreferredDrivers {"pipewire", "pulseaudio"};
-#elif defined(_WIN32)
-        constexpr std::array<const char*, 3> kPreferredDrivers {"wasapi", "directsound", "winmm"};
-#elif defined(__APPLE__)
-        constexpr std::array<const char*, 1> kPreferredDrivers {"coreaudio"};
-#else
-        constexpr std::array<const char*, 0> kPreferredDrivers {};
-#endif
-        for (const char* driver : kPreferredDrivers) {
-            if (driver == nullptr || driver[0] == '\0') {
-                continue;
-            }
-            close_audio_subsystem();
-            (void)SDL_setenv("SDL_AUDIODRIVER", driver, 1);
-            if (!init_audio_subsystem()) {
-                continue;
-            }
-            if (!open_audio_device()) {
-                close_audio_subsystem();
-                continue;
-            }
-            if (is_dummy_driver()) {
-                close_audio_subsystem();
-                continue;
-            }
-            opened_audio = true;
-            break;
-        }
-
-        if (!opened_audio) {
-            std::fprintf(
-                stderr,
-                "Audio init failed: no preferred audio backend available. "
-                "Try SDL_AUDIODRIVER=pipewire or SDL_AUDIODRIVER=pulseaudio.\n");
-        }
-    }
-
-    if (!opened_audio) {
+    if (!init_audio_subsystem()) {
         close_audio_subsystem();
         delete impl_;
         impl_ = nullptr;
         return false;
     }
 
-    if (is_dummy_driver()) {
+    const char* current_driver = SDL_GetCurrentAudioDriver();
+    std::fprintf(
+        stderr,
+        "SDL audio driver: %s\n",
+        current_driver != nullptr && current_driver[0] != '\0' ? current_driver : "unknown");
+
+    if (!open_audio_device()) {
         std::fprintf(
             stderr,
-            "Audio init failed: SDL selected dummy driver (silent). "
-            "Set SDL_AUDIODRIVER explicitly.\n");
+            "Audio init failed: SDL_OpenAudioDevice(default output): %s\n",
+            SDL_GetError());
         close_audio_subsystem();
         delete impl_;
         impl_ = nullptr;
@@ -820,8 +767,9 @@ void AudioEngine::shutdown() {
         SDL_CloseAudioDevice(impl_->device);
         impl_->device = 0;
     }
-    if ((SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) != 0u) {
+    if (impl_->audio_subsystem_initialized) {
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        impl_->audio_subsystem_initialized = false;
     }
 #endif
     delete impl_;

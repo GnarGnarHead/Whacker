@@ -29,7 +29,7 @@ void render_scene(const RenderContext& context, const whacker::sim::Simulation& 
     const float sx = static_cast<float>(fb_width) / config.court_width;
     const float sy = static_cast<float>(fb_height) / config.court_height;
 
-    glViewport(0, 0, fb_width, fb_height);
+    apply_render_context_viewport(context);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_SCISSOR_TEST);
 

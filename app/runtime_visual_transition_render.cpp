@@ -11,6 +11,8 @@
 
 #include <GL/gl.h>
 
+#include "pixel_font.hpp"
+
 #if defined(WHACKER_HAS_PNG)
 #include <png.h>
 #endif
@@ -66,7 +68,7 @@ std::filesystem::path star_frame_source_path() {
 }
 
 void begin_pixel_projection(const int fb_width, const int fb_height) {
-    glScissor(0, 0, fb_width, fb_height);
+    apply_full_pixel_scissor(fb_width, fb_height);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();

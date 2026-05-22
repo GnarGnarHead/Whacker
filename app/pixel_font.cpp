@@ -9,6 +9,33 @@
 
 namespace {
 
+struct PixelRenderViewport {
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    bool active = false;
+};
+
+PixelRenderViewport& active_pixel_viewport() {
+    static PixelRenderViewport viewport {};
+    return viewport;
+}
+
+PixelRenderViewport pixel_viewport_for(const int fb_width, const int fb_height) {
+    const PixelRenderViewport& viewport = active_pixel_viewport();
+    if (viewport.active && viewport.width == fb_width && viewport.height == fb_height) {
+        return viewport;
+    }
+    return PixelRenderViewport {
+        .x = 0,
+        .y = 0,
+        .width = fb_width,
+        .height = fb_height,
+        .active = false,
+    };
+}
+
 std::array<std::uint8_t, 5> glyph_3x5(char ch) {
     switch (ch) {
         case 'A': return {7, 5, 7, 5, 5};
@@ -217,6 +244,41 @@ void draw_digit_pixels(
 
 namespace whacker::app {
 
+ScopedPixelRenderContext::ScopedPixelRenderContext(const RenderContext& context) {
+    PixelRenderViewport& viewport = active_pixel_viewport();
+    if (!render_context_valid(context)) {
+        viewport = PixelRenderViewport {};
+        return;
+    }
+    viewport = PixelRenderViewport {
+        .x = context.viewport_x,
+        .y = context.viewport_y,
+        .width = context.framebuffer_width,
+        .height = context.framebuffer_height,
+        .active = true,
+    };
+}
+
+ScopedPixelRenderContext::~ScopedPixelRenderContext() {
+    active_pixel_viewport() = PixelRenderViewport {};
+}
+
+void apply_render_context_viewport(const RenderContext& context) {
+    if (!render_context_valid(context)) {
+        return;
+    }
+    glViewport(
+        context.viewport_x,
+        context.viewport_y,
+        context.framebuffer_width,
+        context.framebuffer_height);
+}
+
+void apply_full_pixel_scissor(const int fb_width, const int fb_height) {
+    const PixelRenderViewport viewport = pixel_viewport_for(fb_width, fb_height);
+    glScissor(viewport.x, viewport.y, fb_width, fb_height);
+}
+
 void draw_rect_pixels(
     const int fb_width,
     const int fb_height,
@@ -229,9 +291,9 @@ void draw_rect_pixels(
     const float b) {
     const int sx = std::max(0, static_cast<int>(std::lround(x)));
     const int sy_top = std::max(0, static_cast<int>(std::lround(y)));
-    const int sw = std::max(0, static_cast<int>(std::lround(w)));
-    const int sh = std::max(0, static_cast<int>(std::lround(h)));
-    if (sw <= 0 || sh <= 0) {
+    const int sw = std::min(std::max(0, static_cast<int>(std::lround(w))), std::max(0, fb_width - sx));
+    const int sh = std::min(std::max(0, static_cast<int>(std::lround(h))), std::max(0, fb_height - sy_top));
+    if (sw <= 0 || sh <= 0 || fb_width <= 0 || fb_height <= 0) {
         return;
     }
 
@@ -240,7 +302,8 @@ void draw_rect_pixels(
         return;
     }
 
-    glScissor(sx, sy, sw, sh);
+    const PixelRenderViewport viewport = pixel_viewport_for(fb_width, fb_height);
+    glScissor(viewport.x + sx, viewport.y + sy, sw, sh);
     glClearColor(r, g, b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -352,7 +415,7 @@ void draw_rgba_sprite_pixels(
         return;
     }
 
-    glScissor(0, 0, fb_width, fb_height);
+    apply_full_pixel_scissor(fb_width, fb_height);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
