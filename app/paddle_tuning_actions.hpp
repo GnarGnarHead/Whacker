@@ -1,11 +1,17 @@
 #pragma once
 
-#include "action_input.hpp"
+#include "menu_intent.hpp"
 #include "paddle_tuning.hpp"
 #include "story_state.hpp"
 #include "ui_state.hpp"
 
 namespace whacker::app {
+
+struct PaddleTuningInputIntent {
+    MenuIntent pressed {};
+    MenuIntent held {};
+    bool pause = false;
+};
 
 enum class PaddleTuningActionResult {
     None,
@@ -24,9 +30,9 @@ void begin_story_player_paddle_tuning(
     PaddleTuningState& tuning_state,
     const StoryCareerData& career);
 
-PaddleTuningActionResult apply_paddle_tuning_action_frame(
+PaddleTuningActionResult apply_paddle_tuning_action(
     PaddleTuningState& tuning_state,
-    const ActionInputFrame& input);
+    const PaddleTuningInputIntent& intent);
 
 void commit_paddle_tuning_to_options(
     const PaddleTuningState& tuning_state,

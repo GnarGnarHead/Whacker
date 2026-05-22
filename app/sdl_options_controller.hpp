@@ -1,6 +1,6 @@
 #pragma once
 
-#include "action_input.hpp"
+#include "menu_intent.hpp"
 #include "platform_sdl.hpp"
 #include "sdl_runtime_state.hpp"
 
@@ -17,7 +17,7 @@ struct SdlOptionsUpdateEffects {
 
 SdlOptionsUpdateEffects update_sdl_options_menu(
     SdlRuntimeState& runtime,
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     const SdlEventFrame& events);
 
 }  // namespace whacker::app

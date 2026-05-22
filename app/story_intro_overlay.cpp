@@ -19,7 +19,7 @@ void render_story_intro_overlay(
     const RenderContext& context,
     const StoryRuntimeState& story_runtime,
     const StoryIntroState& story_intro_state,
-    const ControlBindings& controls,
+    const ControlHintBindings& controls,
     const StoryIntroKeyNameFn key_name_fn,
     const StoryIntroSanitizeNameFn sanitize_name_fn) {
     const int fb_width = context.framebuffer_width;

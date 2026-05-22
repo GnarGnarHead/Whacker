@@ -4,9 +4,11 @@
 #include <cstddef>
 #include <string>
 
+#include "control_plan.hpp"
 #include "main_menu_actions.hpp"
 #include "match_exit_policy.hpp"
 #include "match_flow.hpp"
+#include "menu_intent.hpp"
 #include "paddle_tuning_actions.hpp"
 #include "pause_menu_actions.hpp"
 #include "play_control.hpp"
@@ -60,11 +62,11 @@ void append_story_name_text(StoryIntroState& story_intro, const std::string& tex
 }
 
 void update_main_menu(
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     SdlRuntimeState& runtime,
     SdlPlatform& platform) {
     const int previous_row = runtime.main_menu.selected_row;
-    const MainMenuActionResult result = apply_main_menu_action_frame(runtime.main_menu, input);
+    const MainMenuActionResult result = apply_main_menu_action(runtime.main_menu, intent);
     if (runtime.main_menu.selected_row != previous_row) {
         runtime.main_menu_feedback.clear();
         play_menu_move_sound(runtime);
@@ -77,10 +79,10 @@ void update_main_menu(
 }
 
 void update_options_menu(
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     const SdlEventFrame& events,
     SdlRuntimeState& runtime) {
-    const SdlOptionsUpdateEffects effects = update_sdl_options_menu(runtime, input, events);
+    const SdlOptionsUpdateEffects effects = update_sdl_options_menu(runtime, intent, events);
     if (effects.audio_changed) {
         apply_sdl_runtime_audio_settings(runtime);
     }
@@ -121,7 +123,7 @@ void apply_story_menu_route(
 }
 
 void update_story_menu(
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     whacker::sim::Simulation& simulation,
     SdlRuntimeState& runtime) {
     const StoryMenuControllerEffects effects = update_story_menu_controller(
@@ -136,7 +138,7 @@ void update_story_menu(
             .simulation = simulation,
             .feedback = &runtime.story_menu_feedback,
         },
-        input,
+        intent,
         story_save_exists(),
         load_story_career,
         reset_story_career);
@@ -175,10 +177,10 @@ void apply_story_hub_route(
 }
 
 void update_story_hub(
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     SdlRuntimeState& runtime,
     whacker::sim::Simulation& simulation) {
-    const StoryHubControllerEffects effects = update_story_hub_controller_frame(
+    const StoryHubControllerEffects effects = update_story_hub_controller(
         StoryHubControllerContext {
             .story_runtime = runtime.story_runtime,
             .story_hub = runtime.story_hub,
@@ -189,7 +191,7 @@ void update_story_hub(
             .simulation = simulation,
             .rng = runtime.rng,
         },
-        input,
+        intent,
         save_story_career);
     if (effects.play_move_sound) {
         play_menu_move_sound(runtime);
@@ -201,27 +203,25 @@ void update_story_hub(
 }
 
 void update_quick_match_setup(
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     SdlRuntimeState& runtime,
     whacker::sim::Simulation& simulation) {
-    if (input_pressed(input, InputAction::Back)) {
+    const QuickMenuActionResult result =
+        apply_quick_menu_action(runtime.quick_menu, runtime.options, intent);
+
+    if (result.back_requested) {
         play_menu_confirm_sound(runtime);
         return_to_main_menu(runtime);
         return;
     }
 
-    const int row_before = runtime.quick_menu.selected_row;
-    const MatchOptions options_before = runtime.options;
-    const QuickMenuActionResult result =
-        apply_quick_menu_action_frame(runtime.quick_menu, runtime.options, input);
-    const bool options_changed = !options_equal(options_before, runtime.options);
-    if (runtime.quick_menu.selected_row != row_before || options_changed) {
+    if (result.row_changed || result.options_changed) {
         play_menu_move_sound(runtime);
     }
-    if (result == QuickMenuActionResult::StartMatch) {
+    if (result.start_requested) {
         play_menu_confirm_sound(runtime);
         start_quick_match(runtime, simulation);
-    } else if (result == QuickMenuActionResult::TuneP1) {
+    } else if (result.tune_p1_requested) {
         play_menu_confirm_sound(runtime);
         begin_quick_paddle_tuning(
             runtime.paddle_tuning,
@@ -229,7 +229,7 @@ void update_quick_match_setup(
             PaddleTuningTarget::QuickLeft,
             runtime.options.left_paddle_skills);
         runtime.app_state = AppState::PaddleTuning;
-    } else if (result == QuickMenuActionResult::TuneP2) {
+    } else if (result.tune_p2_requested) {
         play_menu_confirm_sound(runtime);
         begin_quick_paddle_tuning(
             runtime.paddle_tuning,
@@ -238,17 +238,17 @@ void update_quick_match_setup(
             runtime.options.right_paddle_skills);
         runtime.app_state = AppState::PaddleTuning;
     }
-    if (options_changed) {
+    if (result.options_changed) {
         persist_runtime_menu_settings(runtime);
     }
     runtime.accumulator = 0.0;
 }
 
 void update_paddle_tuning(
-    const ActionInputFrame& input,
+    const PaddleTuningInputIntent& intent,
     SdlRuntimeState& runtime) {
     const PaddleTuningActionResult result =
-        apply_paddle_tuning_action_frame(runtime.paddle_tuning, input);
+        apply_paddle_tuning_action(runtime.paddle_tuning, intent);
     if (result == PaddleTuningActionResult::Changed) {
         play_menu_move_sound(runtime);
     } else if (result == PaddleTuningActionResult::Commit) {
@@ -638,8 +638,11 @@ void step_match_simulation(
     PlayControlOverrides overrides {};
     PlayControlOverrides* overrides_ptr = nullptr;
     StoryMatchPolicyDescriptor story_policy = story_match_policy_fallback();
+    MatchControlPlan control_plan = quick_match_control_plan();
     const bool has_active_story_match = runtime.story_runtime.active_match != StoryMatchKind::None;
     if (runtime.app_state == AppState::StoryIntro && runtime.story_intro.phase == StoryIntroPhase::PlayMatch) {
+        control_plan = story_player_control_plan(
+            runtime.story_intro.player_is_right ? CourtSide::Right : CourtSide::Left);
         overrides.force_modes = true;
         overrides.left_mode = runtime.story_intro.player_is_right ? PaddleMode::AI : PaddleMode::Human;
         overrides.right_mode = runtime.story_intro.player_is_right ? PaddleMode::Human : PaddleMode::AI;
@@ -656,6 +659,7 @@ void step_match_simulation(
     } else if (has_active_story_match) {
         story_policy = story_match_policy_for_kind(runtime.story_runtime.active_match);
         const bool player_is_right = runtime.story_runtime.career.prefers_right_side;
+        control_plan = story_player_control_plan(player_is_right ? CourtSide::Right : CourtSide::Left);
         const whacker::progression::SkillState rival_skills = resolve_story_active_rival_skills(runtime.story_runtime);
         const int points_played = std::max(0, before.left_score + before.right_score);
         const bool ai_preview_active =
@@ -703,8 +707,11 @@ void step_match_simulation(
         runtime.left_ai,
         runtime.right_ai,
         whacker::sim::kFixedDt,
-        input.p1_move_y,
-        input.p2_move_y,
+        control_plan,
+        InputSlotAxes {
+            .p1_move_y = input.p1_move_y,
+            .p2_move_y = input.p2_move_y,
+        },
         overrides_ptr);
     const whacker::sim::ScoreEvent score_event = simulation.step(whacker::sim::kFixedDt);
     const whacker::sim::RallyState after = simulation.state();
@@ -845,7 +852,7 @@ void update_playing(
 }
 
 void update_paused(
-    const ActionInputFrame& input,
+    const PauseMenuIntent& intent,
     SdlRuntimeState& runtime,
     whacker::sim::Simulation& simulation) {
     const int row_before = runtime.pause_menu.selected_row;
@@ -858,11 +865,10 @@ void update_paused(
         runtime.match_flow,
         runtime.story_runtime,
         runtime.story_intro);
-    const PauseMenuActionResult result = apply_pause_menu_action_frame(
+    const PauseMenuActionResult result = apply_pause_menu_action(
         runtime.pause_menu,
         exit_policy,
-        input,
-        input_pressed(input, InputAction::Pause));
+        intent);
     if (runtime.pause_menu.selected_row != row_before ||
         runtime.pause_menu.confirm_selected != confirm_selected_before) {
         play_menu_move_sound(runtime);
@@ -929,16 +935,25 @@ void update_runtime(
             platform.now_seconds());
     }
 
+    const MenuInputIntent menu_input = derive_menu_input_intent(input);
+    const MenuIntent& menu_intent = menu_input.pressed;
+
     if (runtime.app_state == AppState::MainMenu) {
-        update_main_menu(input, runtime, platform);
+        update_main_menu(menu_intent, runtime, platform);
     } else if (runtime.app_state == AppState::OptionsMenu) {
-        update_options_menu(input, events, runtime);
+        update_options_menu(menu_intent, events, runtime);
     } else if (runtime.app_state == AppState::QuickMatchSetup) {
-        update_quick_match_setup(input, runtime, simulation);
+        update_quick_match_setup(menu_intent, runtime, simulation);
     } else if (runtime.app_state == AppState::PaddleTuning) {
-        update_paddle_tuning(input, runtime);
+        update_paddle_tuning(
+            PaddleTuningInputIntent {
+                .pressed = menu_intent,
+                .held = menu_input.held,
+                .pause = menu_input.pause,
+            },
+            runtime);
     } else if (runtime.app_state == AppState::StoryMenu) {
-        update_story_menu(input, simulation, runtime);
+        update_story_menu(menu_intent, simulation, runtime);
     } else if (runtime.app_state == AppState::StoryIntro) {
         update_story_intro_dialogue_input(input, events, render_context, runtime, simulation);
         if (runtime.app_state == AppState::StoryIntro && runtime.story_intro.phase == StoryIntroPhase::PlayMatch) {
@@ -952,11 +967,17 @@ void update_runtime(
         update_dialogue_step(runtime, frame_dt, simulation);
         runtime.accumulator = 0.0;
     } else if (runtime.app_state == AppState::StoryHub) {
-        update_story_hub(input, runtime, simulation);
+        update_story_hub(menu_intent, runtime, simulation);
     } else if (runtime.app_state == AppState::Playing) {
         update_playing(input, frame_dt, runtime, simulation);
     } else if (runtime.app_state == AppState::Paused) {
-        update_paused(input, runtime, simulation);
+        update_paused(
+            PauseMenuIntent {
+                .menu = menu_intent,
+                .pause = menu_input.pause,
+            },
+            runtime,
+            simulation);
     }
 }
 

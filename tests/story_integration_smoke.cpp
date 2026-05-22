@@ -355,7 +355,7 @@ struct StoryIntroInputFixture {
     whacker::app::StoryIntroState intro {};
     whacker::app::StorySceneState scene {};
     whacker::app::MatchOptions options {};
-    whacker::app::ControlBindings controls {};
+    whacker::app::ControlHintBindings controls {};
     whacker::app::MatchFlowState match_flow {};
     whacker::sim::Simulation simulation {};
     std::mt19937_64 rng;
@@ -433,7 +433,7 @@ struct StoryMenuInputFixture {
     whacker::app::StoryIntroState intro {};
     whacker::app::StorySceneState scene {};
     whacker::app::MatchOptions options {};
-    whacker::app::ControlBindings controls {};
+    whacker::app::ControlHintBindings controls {};
     whacker::app::MatchFlowState match_flow {};
     whacker::sim::Simulation simulation {};
     whacker::app::AppState app_state = whacker::app::AppState::StoryMenu;
@@ -457,7 +457,7 @@ struct StoryMenuInputFixture {
                 .simulation = simulation,
                 .feedback = &feedback,
             },
-            take_stub_action_frame(),
+            whacker::app::derive_menu_intent(take_stub_action_frame()),
             has_save,
             load_career_fn,
             reset_career_fn);
@@ -526,7 +526,7 @@ struct StoryHubInputFixture {
     whacker::app::StorySceneState scene {};
     whacker::app::PaddleTuningState paddle_tuning {};
     whacker::app::MatchOptions options {};
-    whacker::app::ControlBindings controls {};
+    whacker::app::ControlHintBindings controls {};
     whacker::app::MatchFlowState match_flow {};
     whacker::sim::Simulation simulation {};
     std::mt19937_64 rng;
@@ -539,7 +539,7 @@ struct StoryHubInputFixture {
 
     void run() {
         const whacker::app::StoryHubControllerEffects effects =
-            whacker::app::update_story_hub_controller_frame(
+            whacker::app::update_story_hub_controller(
             whacker::app::StoryHubControllerContext {
                 .story_runtime = runtime,
                 .story_hub = hub,
@@ -550,7 +550,7 @@ struct StoryHubInputFixture {
                 .simulation = simulation,
                 .rng = rng,
             },
-            take_stub_action_frame(),
+            whacker::app::derive_menu_intent(take_stub_action_frame()),
             capture_save);
         last_route = effects.route;
         apply_story_hub_route_to_fixture(last_route, app_state);

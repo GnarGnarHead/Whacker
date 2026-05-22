@@ -60,40 +60,35 @@ bool audio_toggle_value(const AudioSettings& settings, const int row) {
 OptionsMenuActionResult apply_options_menu_action(
     OptionsMenuState& options_menu_state,
     AudioSettings& audio_settings,
-    const bool move_up,
-    const bool move_down,
-    const bool move_left,
-    const bool move_right,
-    const bool confirm,
-    const bool back) {
+    const MenuIntent& intent) {
     if (options_menu_state.waiting_for_key) {
-        if (back || confirm) {
+        if (intent.back || intent.confirm) {
             options_menu_state.waiting_for_key = false;
             return OptionsMenuActionResult::None;
         }
-        if (move_left || move_right) {
+        if (intent.left || intent.right) {
             return OptionsMenuActionResult::BindingChanged;
         }
         return OptionsMenuActionResult::None;
     }
 
-    if (move_up) {
+    if (intent.up) {
         options_menu_state.selected_row = (options_menu_state.selected_row + OptionsMenuRowCount - 1) % OptionsMenuRowCount;
     }
-    if (move_down) {
+    if (intent.down) {
         options_menu_state.selected_row = (options_menu_state.selected_row + 1) % OptionsMenuRowCount;
     }
-    if (back) {
+    if (intent.back) {
         options_menu_state.waiting_for_key = false;
         return OptionsMenuActionResult::Back;
     }
 
     if (options_row_is_volume(options_menu_state.selected_row)) {
         int delta = 0;
-        if (move_left) {
+        if (intent.left) {
             delta -= 5;
         }
-        if (move_right) {
+        if (intent.right) {
             delta += 5;
         }
         if (delta != 0) {
@@ -104,12 +99,12 @@ OptionsMenuActionResult apply_options_menu_action(
                 return *slot != before ? OptionsMenuActionResult::AudioChanged : OptionsMenuActionResult::None;
             }
         }
-    } else if (options_row_is_mute(options_menu_state.selected_row) && (move_left || move_right)) {
+    } else if (options_row_is_mute(options_menu_state.selected_row) && (intent.left || intent.right)) {
         audio_settings.mute = !audio_settings.mute;
         return OptionsMenuActionResult::AudioChanged;
     }
 
-    if (!confirm) {
+    if (!intent.confirm) {
         return OptionsMenuActionResult::None;
     }
 
@@ -125,21 +120,6 @@ OptionsMenuActionResult apply_options_menu_action(
         return OptionsMenuActionResult::AudioChanged;
     }
     return OptionsMenuActionResult::None;
-}
-
-OptionsMenuActionResult apply_options_menu_action_frame(
-    OptionsMenuState& options_menu_state,
-    AudioSettings& audio_settings,
-    const ActionInputFrame& input) {
-    return apply_options_menu_action(
-        options_menu_state,
-        audio_settings,
-        input_pressed(input, InputAction::MenuUp),
-        input_pressed(input, InputAction::MenuDown),
-        input_pressed(input, InputAction::MenuLeft),
-        input_pressed(input, InputAction::MenuRight),
-        input_pressed(input, InputAction::Confirm),
-        input_pressed(input, InputAction::Back));
 }
 
 }  // namespace whacker::app

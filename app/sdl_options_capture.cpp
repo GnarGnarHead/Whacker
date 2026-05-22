@@ -9,62 +9,42 @@ namespace whacker::app {
 namespace {
 
 bool set_keyboard_scancode_for_options_row(ActionInputBindings& bindings, const int row, const int scancode) {
-    switch (row) {
-        case OptionsMenuRowP1Up:
-            bindings.p1_move_up_key = scancode;
-            return true;
-        case OptionsMenuRowP1Down:
-            bindings.p1_move_down_key = scancode;
-            return true;
-        case OptionsMenuRowP2Up:
-            bindings.p2_move_up_key = scancode;
-            return true;
-        case OptionsMenuRowP2Down:
-            bindings.p2_move_down_key = scancode;
-            return true;
-        default:
-            return false;
+    SdlOptionsBindingRow binding_row {};
+    if (!sdl_options_binding_row(row, binding_row)) {
+        return false;
     }
+    return bind_keyboard_scancode_for_move_direction(
+        bindings,
+        binding_row.slot,
+        binding_row.direction,
+        scancode);
 }
 
 bool set_controller_button_for_options_row(
     ActionInputBindings& bindings,
     const int row,
     const ControllerButton button) {
-    switch (row) {
-        case OptionsMenuRowP1Up:
-            bindings.p1_controller.move_up_button = button;
-            return true;
-        case OptionsMenuRowP1Down:
-            bindings.p1_controller.move_down_button = button;
-            return true;
-        case OptionsMenuRowP2Up:
-            bindings.p2_controller.move_up_button = button;
-            return true;
-        case OptionsMenuRowP2Down:
-            bindings.p2_controller.move_down_button = button;
-            return true;
-        default:
-            return false;
+    SdlOptionsBindingRow binding_row {};
+    if (!sdl_options_binding_row(row, binding_row)) {
+        return false;
     }
+    return bind_controller_button_for_move_direction(
+        bindings,
+        binding_row.slot,
+        binding_row.direction,
+        button);
 }
 
 bool set_controller_index_for_options_row(
     ActionInputBindings& bindings,
     const int row,
     const int controller_index) {
-    switch (row) {
-        case OptionsMenuRowP1Up:
-        case OptionsMenuRowP1Down:
-            bindings.p1_controller.controller_index = controller_index;
-            return true;
-        case OptionsMenuRowP2Up:
-        case OptionsMenuRowP2Down:
-            bindings.p2_controller.controller_index = controller_index;
-            return true;
-        default:
-            return false;
+    SdlOptionsBindingRow binding_row {};
+    if (!sdl_options_binding_row(row, binding_row)) {
+        return false;
     }
+    bind_controller_index_for_input_slot(bindings, binding_row.slot, controller_index);
+    return true;
 }
 
 }  // namespace
@@ -72,7 +52,7 @@ bool set_controller_index_for_options_row(
 SdlOptionsCaptureResult apply_sdl_options_capture(
     OptionsMenuState& options_menu_state,
     ActionInputBindings& bindings,
-    ControlBindings& controls,
+    ControlHintBindings& controls,
     const SdlInput& input,
     const SdlEventFrame& events) {
     SdlOptionsCaptureResult result {};

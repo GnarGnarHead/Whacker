@@ -205,11 +205,13 @@ void update_targets_for_play(
     RuntimeAiState& left_ai_state,
     RuntimeAiState& right_ai_state,
     const float dt,
-    const float left_human_axis,
-    const float right_human_axis,
+    const MatchControlPlan& control_plan,
+    const InputSlotAxes input_axes,
     const PlayControlOverrides* overrides) {
     auto& state = simulation.mutable_state();
     const auto& config = simulation.config();
+    const float left_human_axis = human_axis_for_court_side(control_plan, input_axes, CourtSide::Left);
+    const float right_human_axis = human_axis_for_court_side(control_plan, input_axes, CourtSide::Right);
 
     PaddleMode left_mode = options.left_mode;
     PaddleMode right_mode = options.right_mode;

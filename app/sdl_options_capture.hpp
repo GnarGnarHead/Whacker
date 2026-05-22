@@ -16,7 +16,7 @@ struct SdlOptionsCaptureResult {
 SdlOptionsCaptureResult apply_sdl_options_capture(
     OptionsMenuState& options_menu_state,
     ActionInputBindings& bindings,
-    ControlBindings& controls,
+    ControlHintBindings& controls,
     const SdlInput& input,
     const SdlEventFrame& events);
 

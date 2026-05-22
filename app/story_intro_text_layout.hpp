@@ -7,7 +7,7 @@
 
 namespace whacker::app {
 
-struct ControlBindings;
+struct ControlHintBindings;
 struct StoryIntroState;
 using StoryIntroSanitizeNameFn = std::string (*)(const std::string&);
 using StoryIntroKeyNameFn = const char* (*)(int);
@@ -30,7 +30,7 @@ StoryIntroBodyLayout compute_story_intro_body_layout_for_framebuffer(
     int fb_width,
     int fb_height,
     const StoryIntroState& story_intro_state,
-    const ControlBindings& controls,
+    const ControlHintBindings& controls,
     StoryIntroKeyNameFn key_name_fn,
     StoryIntroSanitizeNameFn sanitize_name_fn);
 

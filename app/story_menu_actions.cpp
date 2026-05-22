@@ -14,21 +14,16 @@ void clear_overwrite_confirm(StoryMenuState& story_menu_state) {
 StoryMenuActionResult apply_story_menu_action(
     StoryMenuState& story_menu_state,
     const bool has_save,
-    const bool move_up,
-    const bool move_down,
-    const bool move_left,
-    const bool move_right,
-    const bool confirm,
-    const bool back) {
+    const MenuIntent& intent) {
     if (story_menu_state.confirm_overwrite) {
-        if (back) {
+        if (intent.back) {
             clear_overwrite_confirm(story_menu_state);
             return StoryMenuActionResult::None;
         }
-        if (move_up || move_down || move_left || move_right) {
+        if (intent.up || intent.down || intent.left || intent.right) {
             story_menu_state.confirm_selected = 1 - story_menu_state.confirm_selected;
         }
-        if (!confirm) {
+        if (!intent.confirm) {
             return StoryMenuActionResult::None;
         }
         if (story_menu_state.confirm_selected == 1) {
@@ -39,17 +34,17 @@ StoryMenuActionResult apply_story_menu_action(
         return StoryMenuActionResult::None;
     }
 
-    if (move_up) {
+    if (intent.up) {
         story_menu_state.selected_row = (story_menu_state.selected_row + StoryMenuRowCount - 1) % StoryMenuRowCount;
     }
-    if (move_down) {
+    if (intent.down) {
         story_menu_state.selected_row = (story_menu_state.selected_row + 1) % StoryMenuRowCount;
     }
-    if (back) {
+    if (intent.back) {
         story_menu_state.selected_row = StoryMenuRowBack;
         return StoryMenuActionResult::Back;
     }
-    if (!confirm) {
+    if (!intent.confirm) {
         return StoryMenuActionResult::None;
     }
 
@@ -68,21 +63,6 @@ StoryMenuActionResult apply_story_menu_action(
         return StoryMenuActionResult::NewCareer;
     }
     return StoryMenuActionResult::None;
-}
-
-StoryMenuActionResult apply_story_menu_action_frame(
-    StoryMenuState& story_menu_state,
-    const bool has_save,
-    const ActionInputFrame& input) {
-    return apply_story_menu_action(
-        story_menu_state,
-        has_save,
-        input_pressed(input, InputAction::MenuUp),
-        input_pressed(input, InputAction::MenuDown),
-        input_pressed(input, InputAction::MenuLeft),
-        input_pressed(input, InputAction::MenuRight),
-        input_pressed(input, InputAction::Confirm),
-        input_pressed(input, InputAction::Back));
 }
 
 }  // namespace whacker::app

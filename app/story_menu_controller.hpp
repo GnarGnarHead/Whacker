@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "action_input.hpp"
 #include "match_flow.hpp"
+#include "menu_intent.hpp"
 #include "sim/physics.hpp"
 #include "story_runtime.hpp"
 #include "story_scene.hpp"
@@ -41,7 +41,7 @@ struct StoryMenuControllerEffects {
 
 StoryMenuControllerEffects update_story_menu_controller(
     StoryMenuControllerContext context,
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     bool has_save,
     StoryLoadCareerCallback load_career_fn,
     StoryResetCareerFn reset_career_fn = nullptr);

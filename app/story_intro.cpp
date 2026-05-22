@@ -26,7 +26,7 @@ void reveal_story_intro_typewriter(StoryIntroState& story_intro_state) {
 
 StoryIntroDialogue compose_story_intro_dialogue(
     const StoryIntroState& story_intro_state,
-    const ControlBindings& controls,
+    const ControlHintBindings& controls,
     const StoryIntroKeyNameFn key_name_fn,
     const StoryIntroSanitizeNameFn sanitize_name_fn) {
     const auto safe_key_name = [key_name_fn](const int key) -> const char* {
@@ -50,10 +50,12 @@ StoryIntroDialogue compose_story_intro_dialogue(
             dialogue.options = {story_text::intro_swap_option_stay_left(), story_text::intro_swap_option_swap_right()};
             dialogue.option_count = 2;
         } else if (story_intro_state.break_kind == StoryIntroBreak::Controls) {
-            const int up_key = story_intro_state.player_is_right ? controls.p2_up : controls.p1_up;
-            const int down_key = story_intro_state.player_is_right ? controls.p2_down : controls.p1_down;
+            const StoryIntroControlHintKeys hint_keys =
+                story_intro_control_hint_keys(story_intro_state, controls);
             dialogue.line_1 = story_text::intro_controls_line_1();
-            dialogue.line_2 = story_text::intro_controls_line_2(safe_key_name(up_key), safe_key_name(down_key));
+            dialogue.line_2 = story_text::intro_controls_line_2(
+                safe_key_name(hint_keys.up_key),
+                safe_key_name(hint_keys.down_key));
             dialogue.line_3 = story_text::intro_controls_line_3();
         } else if (story_intro_state.break_kind == StoryIntroBreak::Rules) {
             dialogue.line_1 = story_text::intro_rules_line_1();
@@ -105,7 +107,7 @@ std::size_t story_intro_dialogue_char_count(const StoryIntroDialogue& dialogue) 
 
 void update_story_intro_typewriter(
     StoryIntroState& story_intro_state,
-    const ControlBindings& controls,
+    const ControlHintBindings& controls,
     const float dt,
     const float speed_multiplier,
     const StoryIntroKeyNameFn key_name_fn,

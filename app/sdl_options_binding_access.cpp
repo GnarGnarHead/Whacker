@@ -7,47 +7,87 @@
 
 namespace whacker::app {
 
-ControllerButton controller_button_for_options_row(const ActionInputBindings& bindings, const int row) {
+namespace {
+
+InputSlot input_slot_for_options_row(const int row) {
     switch (row) {
         case OptionsMenuRowP1Up:
-            return bindings.p1_controller.move_up_button;
         case OptionsMenuRowP1Down:
-            return bindings.p1_controller.move_down_button;
+            return InputSlot::P1;
         case OptionsMenuRowP2Up:
-            return bindings.p2_controller.move_up_button;
         case OptionsMenuRowP2Down:
-            return bindings.p2_controller.move_down_button;
+            return InputSlot::P2;
         default:
-            return ControllerButton::Unbound;
+            return InputSlot::P1;
     }
+}
+
+AxisDirection axis_direction_for_options_row(const int row) {
+    switch (row) {
+        case OptionsMenuRowP1Up:
+        case OptionsMenuRowP2Up:
+            return AxisDirection::Negative;
+        case OptionsMenuRowP1Down:
+        case OptionsMenuRowP2Down:
+            return AxisDirection::Positive;
+        default:
+            return AxisDirection::Negative;
+    }
+}
+
+bool options_row_has_input_binding(const int row) {
+    switch (row) {
+        case OptionsMenuRowP1Up:
+        case OptionsMenuRowP1Down:
+        case OptionsMenuRowP2Up:
+        case OptionsMenuRowP2Down:
+            return true;
+        default:
+            return false;
+    }
+}
+
+}  // namespace
+
+bool sdl_options_binding_row(const int row, SdlOptionsBindingRow& binding_row) {
+    if (!options_row_has_input_binding(row)) {
+        return false;
+    }
+    binding_row = SdlOptionsBindingRow {
+        .slot = input_slot_for_options_row(row),
+        .direction = axis_direction_for_options_row(row),
+    };
+    return true;
+}
+
+ControllerButton controller_button_for_options_row(const ActionInputBindings& bindings, const int row) {
+    SdlOptionsBindingRow binding_row {};
+    if (!sdl_options_binding_row(row, binding_row)) {
+        return ControllerButton::Unbound;
+    }
+    return controller_button_for_move_direction(
+        bindings,
+        binding_row.slot,
+        binding_row.direction);
 }
 
 int keyboard_scancode_for_options_row(const ActionInputBindings& bindings, const int row) {
-    switch (row) {
-        case OptionsMenuRowP1Up:
-            return bindings.p1_move_up_key;
-        case OptionsMenuRowP1Down:
-            return bindings.p1_move_down_key;
-        case OptionsMenuRowP2Up:
-            return bindings.p2_move_up_key;
-        case OptionsMenuRowP2Down:
-            return bindings.p2_move_down_key;
-        default:
-            return kKeyboardScancodeUnbound;
+    SdlOptionsBindingRow binding_row {};
+    if (!sdl_options_binding_row(row, binding_row)) {
+        return kKeyboardScancodeUnbound;
     }
+    return keyboard_scancode_for_move_direction(
+        bindings,
+        binding_row.slot,
+        binding_row.direction);
 }
 
 int controller_index_for_options_row(const ActionInputBindings& bindings, const int row) {
-    switch (row) {
-        case OptionsMenuRowP1Up:
-        case OptionsMenuRowP1Down:
-            return bindings.p1_controller.controller_index;
-        case OptionsMenuRowP2Up:
-        case OptionsMenuRowP2Down:
-            return bindings.p2_controller.controller_index;
-        default:
-            return 0;
+    SdlOptionsBindingRow binding_row {};
+    if (!sdl_options_binding_row(row, binding_row)) {
+        return 0;
     }
+    return controller_index_for_input_slot(bindings, binding_row.slot);
 }
 
 ControllerButton next_bindable_controller_button(const ControllerButton current, const int direction) {

@@ -11,7 +11,7 @@ void render_story_intro_overlay(
     const RenderContext& context,
     const StoryRuntimeState& story_runtime,
     const StoryIntroState& story_intro_state,
-    const ControlBindings& controls,
+    const ControlHintBindings& controls,
     StoryIntroKeyNameFn key_name_fn,
     StoryIntroSanitizeNameFn sanitize_name_fn);
 

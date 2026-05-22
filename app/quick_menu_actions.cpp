@@ -39,42 +39,52 @@ void set_menu_row_option(MatchOptions& options, const MenuState& menu_state, con
 
 }  // namespace
 
-QuickMenuActionResult apply_quick_menu_action_frame(
+QuickMenuActionResult apply_quick_menu_action(
     MenuState& menu_state,
     MatchOptions& options,
-    const ActionInputFrame& input) {
-    if (input_pressed(input, InputAction::MenuUp)) {
+    const MenuIntent& intent) {
+    QuickMenuActionResult result {};
+    if (intent.back) {
+        result.back_requested = true;
+        return result;
+    }
+
+    const int row_before = menu_state.selected_row;
+    const MatchOptions options_before = options;
+
+    if (intent.up) {
         menu_state.selected_row = (menu_state.selected_row + MenuRowCount - 1) % MenuRowCount;
     }
-    if (input_pressed(input, InputAction::MenuDown)) {
+    if (intent.down) {
         menu_state.selected_row = (menu_state.selected_row + 1) % MenuRowCount;
     }
 
     int direction = 0;
-    if (input_pressed(input, InputAction::MenuLeft)) {
+    if (intent.left) {
         direction -= 1;
     }
-    if (input_pressed(input, InputAction::MenuRight)) {
+    if (intent.right) {
         direction += 1;
     }
     if (direction != 0) {
         set_menu_row_option(options, menu_state, direction);
     }
 
-    if (!input_pressed(input, InputAction::Confirm)) {
-        return QuickMenuActionResult::None;
+    if (intent.confirm) {
+        if (menu_state.selected_row == MenuRowStart) {
+            result.start_requested = true;
+        } else if (menu_state.selected_row == MenuRowP1Tuning) {
+            result.tune_p1_requested = true;
+        } else if (menu_state.selected_row == MenuRowP2Tuning) {
+            result.tune_p2_requested = true;
+        } else {
+            set_menu_row_option(options, menu_state, 1);
+        }
     }
-    if (menu_state.selected_row == MenuRowStart) {
-        return QuickMenuActionResult::StartMatch;
-    }
-    if (menu_state.selected_row == MenuRowP1Tuning) {
-        return QuickMenuActionResult::TuneP1;
-    }
-    if (menu_state.selected_row == MenuRowP2Tuning) {
-        return QuickMenuActionResult::TuneP2;
-    }
-    set_menu_row_option(options, menu_state, 1);
-    return QuickMenuActionResult::None;
+
+    result.row_changed = menu_state.selected_row != row_before;
+    result.options_changed = !options_equal(options_before, options);
+    return result;
 }
 
 }  // namespace whacker::app

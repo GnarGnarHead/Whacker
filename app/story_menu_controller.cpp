@@ -47,7 +47,7 @@ void continue_loaded_story(
 
 StoryMenuControllerEffects update_story_menu_controller(
     StoryMenuControllerContext context,
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     const bool has_save,
     const StoryLoadCareerCallback load_career_fn,
     const StoryResetCareerFn reset_career_fn) {
@@ -56,7 +56,7 @@ StoryMenuControllerEffects update_story_menu_controller(
     const bool confirm_before = context.menu.confirm_overwrite;
     const int confirm_selected_before = context.menu.confirm_selected;
 
-    const StoryMenuActionResult result = apply_story_menu_action_frame(context.menu, has_save, input);
+    const StoryMenuActionResult result = apply_story_menu_action(context.menu, has_save, intent);
     if (context.menu.selected_row != previous_row) {
         clear_story_menu_feedback(context);
         effects.play_move_sound = true;

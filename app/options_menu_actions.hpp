@@ -1,7 +1,7 @@
 #pragma once
 
-#include "action_input.hpp"
 #include "audio_engine.hpp"
+#include "menu_intent.hpp"
 #include "ui_state.hpp"
 
 namespace whacker::app {
@@ -23,16 +23,6 @@ bool audio_toggle_value(const AudioSettings& settings, int row);
 OptionsMenuActionResult apply_options_menu_action(
     OptionsMenuState& options_menu_state,
     AudioSettings& audio_settings,
-    bool move_up,
-    bool move_down,
-    bool move_left,
-    bool move_right,
-    bool confirm,
-    bool back);
-
-OptionsMenuActionResult apply_options_menu_action_frame(
-    OptionsMenuState& options_menu_state,
-    AudioSettings& audio_settings,
-    const ActionInputFrame& input);
+    const MenuIntent& intent);
 
 }  // namespace whacker::app

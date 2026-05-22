@@ -85,7 +85,7 @@ namespace whacker::app {
 bool load_menu_settings_file(
     const std::string& path,
     MatchOptions& options,
-    ControlBindings& controls,
+    ControlHintBindings& controls,
     ActionInputBindings& action_bindings,
     AudioSettings& audio_settings) {
     std::ifstream input(path);
@@ -94,7 +94,7 @@ bool load_menu_settings_file(
     }
 
     MatchOptions loaded_options = options;
-    ControlBindings loaded_controls = controls;
+    ControlHintBindings loaded_controls = controls;
     ActionInputBindings loaded_action_bindings = action_bindings;
     AudioSettings loaded_audio = audio_settings;
     bool loaded_left_style = false;
@@ -189,14 +189,14 @@ bool load_menu_settings_file(
     return true;
 }
 
-void load_menu_settings(MatchOptions& options, ControlBindings& controls, AudioSettings& audio_settings) {
+void load_menu_settings(MatchOptions& options, ControlHintBindings& controls, AudioSettings& audio_settings) {
     ActionInputBindings ignored_action_bindings = default_action_input_bindings();
     load_menu_settings(options, controls, ignored_action_bindings, audio_settings);
 }
 
 void load_menu_settings(
     MatchOptions& options,
-    ControlBindings& controls,
+    ControlHintBindings& controls,
     ActionInputBindings& action_bindings,
     AudioSettings& audio_settings) {
     for (const std::string& path : menu_default_paths()) {
@@ -223,7 +223,7 @@ void load_menu_settings(
 
 void save_menu_settings(
     const MatchOptions& options,
-    const ControlBindings& controls,
+    const ControlHintBindings& controls,
     const AudioSettings& audio_settings) {
     const ActionInputBindings action_bindings = default_action_input_bindings();
     save_menu_settings(options, controls, action_bindings, audio_settings);
@@ -231,7 +231,7 @@ void save_menu_settings(
 
 void save_menu_settings(
     const MatchOptions& options,
-    const ControlBindings& controls,
+    const ControlHintBindings& controls,
     const ActionInputBindings& action_bindings,
     const AudioSettings& audio_settings) {
     for (const std::string& path : menu_runtime_settings_paths()) {

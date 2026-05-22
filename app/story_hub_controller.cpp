@@ -30,7 +30,7 @@ void save_career_if_available(
 
 StoryHubControllerEffects update_story_hub_controller(
     StoryHubControllerContext context,
-    const StoryHubControllerInput input,
+    const MenuIntent& intent,
     const StorySaveCareerCallback save_career_fn) {
     StoryHubControllerEffects effects {};
     if (!context.story_runtime.career_loaded) {
@@ -49,25 +49,25 @@ StoryHubControllerEffects update_story_hub_controller(
     }
 
     const int previous_row = context.story_hub.selected_row;
-    if (input.move_up) {
+    if (intent.up) {
         context.story_hub.selected_row =
             (context.story_hub.selected_row + StoryHubRowCount - 1) % StoryHubRowCount;
     }
-    if (input.move_down) {
+    if (intent.down) {
         context.story_hub.selected_row = (context.story_hub.selected_row + 1) % StoryHubRowCount;
     }
     if (context.story_hub.selected_row != previous_row) {
         effects.play_move_sound = true;
     }
 
-    if (input.back) {
+    if (intent.back) {
         effects.play_confirm_sound = true;
         save_career_if_available(context.story_runtime, save_career_fn);
         effects.route = StoryHubRoute::MainMenu;
         return effects;
     }
 
-    if (!input.confirm) {
+    if (!intent.confirm) {
         return effects;
     }
     effects.play_confirm_sound = true;
@@ -116,21 +116,6 @@ StoryHubControllerEffects update_story_hub_controller(
     }
 
     return effects;
-}
-
-StoryHubControllerEffects update_story_hub_controller_frame(
-    StoryHubControllerContext context,
-    const ActionInputFrame& input,
-    const StorySaveCareerCallback save_career_fn) {
-    return update_story_hub_controller(
-        context,
-        StoryHubControllerInput {
-            .move_up = input_pressed(input, InputAction::MenuUp),
-            .move_down = input_pressed(input, InputAction::MenuDown),
-            .confirm = input_pressed(input, InputAction::Confirm),
-            .back = input_pressed(input, InputAction::Back),
-        },
-        save_career_fn);
 }
 
 }  // namespace whacker::app

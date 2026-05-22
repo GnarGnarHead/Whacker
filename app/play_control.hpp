@@ -1,7 +1,7 @@
 #pragma once
 
 #include "app_types.hpp"
-#include "menu_input.hpp"
+#include "control_plan.hpp"
 #include "sim/physics.hpp"
 
 namespace whacker::app {
@@ -21,8 +21,8 @@ void update_targets_for_play(
     RuntimeAiState& left_ai_state,
     RuntimeAiState& right_ai_state,
     float dt,
-    float left_human_axis,
-    float right_human_axis,
+    const MatchControlPlan& control_plan,
+    InputSlotAxes input_axes,
     const PlayControlOverrides* overrides = nullptr);
 
 void update_targets_for_ambient(

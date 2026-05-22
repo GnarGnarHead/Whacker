@@ -2,6 +2,9 @@
 
 #include <array>
 #include <cstdint>
+#include <vector>
+
+#include "control_types.hpp"
 
 namespace whacker::app {
 
@@ -30,11 +33,7 @@ constexpr int kKeyboardScancodeReturn = 40;
 constexpr int kKeyboardScancodeKpEnter = 88;
 constexpr int kKeyboardScancodeSpace = 44;
 constexpr int kKeyboardScancodeEscape = 41;
-
-enum class PlayerSlot : std::uint8_t {
-    P1,
-    P2
-};
+constexpr float kDefaultInputDeadzone = 0.35f;
 
 enum class ControllerAxis : std::uint8_t {
     LeftX = 0,
@@ -67,18 +66,25 @@ enum class ControllerButton : std::uint8_t {
 constexpr int kControllerAxisCount = static_cast<int>(ControllerAxis::Count);
 constexpr int kControllerButtonCount = static_cast<int>(ControllerButton::Count);
 
+enum class AxisDirection : std::int8_t {
+    Negative = -1,
+    Positive = 1
+};
+
+enum class InputBindingTargetKind : std::uint8_t {
+    Action,
+    MoveY
+};
+
+enum class PhysicalInputKind : std::uint8_t {
+    KeyboardScancode,
+    ControllerButton,
+    ControllerAxis,
+    ControllerAxisDirection
+};
+
 struct KeyboardPhysicalState {
     std::array<bool, kKeyboardScancodeCount> scancodes {};
-    bool key_up = false;
-    bool key_down = false;
-    bool key_left = false;
-    bool key_right = false;
-    bool key_w = false;
-    bool key_s = false;
-    bool key_enter = false;
-    bool key_kp_enter = false;
-    bool key_space = false;
-    bool key_escape = false;
 };
 
 struct ControllerPhysicalState {
@@ -92,50 +98,30 @@ struct InputPhysicalState {
     std::array<ControllerPhysicalState, kMaxInputControllers> controllers {};
 };
 
-struct ControllerPlayerBinding {
+struct InputBindingTarget {
+    InputBindingTargetKind kind = InputBindingTargetKind::Action;
+    InputAction action = InputAction::MenuUp;
+    InputSlot slot = InputSlot::P1;
+};
+
+struct PhysicalInputSource {
+    PhysicalInputKind kind = PhysicalInputKind::KeyboardScancode;
+    int keyboard_scancode = kKeyboardScancodeUnbound;
     int controller_index = 0;
-    ControllerAxis move_y_axis = ControllerAxis::LeftY;
-    bool invert_move_y_axis = false;
-    ControllerButton move_up_button = ControllerButton::DpadUp;
-    ControllerButton move_down_button = ControllerButton::DpadDown;
+    ControllerButton controller_button = ControllerButton::Unbound;
+    ControllerAxis controller_axis = ControllerAxis::LeftY;
+    AxisDirection axis_direction = AxisDirection::Positive;
+};
+
+struct ActionInputBinding {
+    InputBindingTarget target {};
+    PhysicalInputSource source {};
+    float output_scale = 1.0f;
+    float deadzone = kDefaultInputDeadzone;
 };
 
 struct ActionInputBindings {
-    float controller_axis_deadzone = 0.35f;
-    int menu_up_key = kKeyboardScancodeUp;
-    int menu_down_key = kKeyboardScancodeDown;
-    int menu_secondary_up_key = kKeyboardScancodeW;
-    int menu_secondary_down_key = kKeyboardScancodeS;
-    int menu_left_key = kKeyboardScancodeLeft;
-    int menu_right_key = kKeyboardScancodeRight;
-    int menu_confirm_key = kKeyboardScancodeReturn;
-    int menu_secondary_confirm_key = kKeyboardScancodeSpace;
-    int menu_tertiary_confirm_key = kKeyboardScancodeKpEnter;
-    int menu_back_key = kKeyboardScancodeEscape;
-    int pause_key = kKeyboardScancodeEscape;
-    int menu_controller_index = 0;
-    ControllerAxis menu_x_axis = ControllerAxis::LeftX;
-    ControllerAxis menu_y_axis = ControllerAxis::LeftY;
-    ControllerButton menu_up_button = ControllerButton::DpadUp;
-    ControllerButton menu_down_button = ControllerButton::DpadDown;
-    ControllerButton menu_left_button = ControllerButton::DpadLeft;
-    ControllerButton menu_right_button = ControllerButton::DpadRight;
-    ControllerButton menu_confirm_button = ControllerButton::A;
-    ControllerButton menu_back_button = ControllerButton::B;
-    ControllerButton menu_secondary_back_button = ControllerButton::Back;
-    ControllerButton pause_button = ControllerButton::Start;
-    int p1_move_up_key = kKeyboardScancodeW;
-    int p1_move_down_key = kKeyboardScancodeS;
-    int p2_move_up_key = kKeyboardScancodeUp;
-    int p2_move_down_key = kKeyboardScancodeDown;
-    ControllerPlayerBinding p1_controller {};
-    ControllerPlayerBinding p2_controller {
-        .controller_index = 1,
-        .move_y_axis = ControllerAxis::LeftY,
-        .invert_move_y_axis = false,
-        .move_up_button = ControllerButton::DpadUp,
-        .move_down_button = ControllerButton::DpadDown,
-    };
+    std::vector<ActionInputBinding> bindings {};
 };
 
 struct ActionInputFrame {
@@ -146,6 +132,21 @@ struct ActionInputFrame {
     float p2_move_y = 0.0f;
 };
 
+InputBindingTarget action_binding_target(InputAction action);
+InputBindingTarget move_y_binding_target(InputSlot slot);
+PhysicalInputSource keyboard_scancode_source(int scancode);
+PhysicalInputSource controller_button_source(int controller_index, ControllerButton button);
+PhysicalInputSource controller_axis_source(int controller_index, ControllerAxis axis);
+PhysicalInputSource controller_axis_direction_source(
+    int controller_index,
+    ControllerAxis axis,
+    AxisDirection direction);
+void add_action_input_binding(
+    ActionInputBindings& bindings,
+    InputBindingTarget target,
+    PhysicalInputSource source,
+    float output_scale = 1.0f,
+    float deadzone = kDefaultInputDeadzone);
 ActionInputBindings default_action_input_bindings();
 void bind_menu_controller(ActionInputBindings& bindings, int controller_index);
 void bind_menu_axes(ActionInputBindings& bindings, ControllerAxis x_axis, ControllerAxis y_axis);
@@ -155,17 +156,39 @@ void bind_menu_direction_buttons(
     ControllerButton down_button,
     ControllerButton left_button,
     ControllerButton right_button);
-void bind_player_controller(ActionInputBindings& bindings, PlayerSlot player, int controller_index);
+void bind_player_controller(ActionInputBindings& bindings, InputSlot slot, int controller_index);
 void bind_player_move_axis(
     ActionInputBindings& bindings,
-    PlayerSlot player,
+    InputSlot slot,
     ControllerAxis axis,
     bool invert_axis);
 void bind_player_move_buttons(
     ActionInputBindings& bindings,
-    PlayerSlot player,
+    InputSlot slot,
     ControllerButton up_button,
     ControllerButton down_button);
+bool bind_keyboard_scancode_for_move_direction(
+    ActionInputBindings& bindings,
+    InputSlot slot,
+    AxisDirection direction,
+    int scancode);
+bool bind_controller_button_for_move_direction(
+    ActionInputBindings& bindings,
+    InputSlot slot,
+    AxisDirection direction,
+    ControllerButton button);
+void bind_controller_index_for_input_slot(ActionInputBindings& bindings, InputSlot slot, int controller_index);
+int keyboard_scancode_for_move_direction(
+    const ActionInputBindings& bindings,
+    InputSlot slot,
+    AxisDirection direction);
+ControllerButton controller_button_for_move_direction(
+    const ActionInputBindings& bindings,
+    InputSlot slot,
+    AxisDirection direction);
+int controller_index_for_input_slot(const ActionInputBindings& bindings, InputSlot slot);
+ControllerAxis controller_axis_for_input_slot(const ActionInputBindings& bindings, InputSlot slot);
+bool controller_axis_inverted_for_input_slot(const ActionInputBindings& bindings, InputSlot slot);
 bool keyboard_scancode_bindable(int scancode);
 bool keyboard_scancode_down(const KeyboardPhysicalState& state, int scancode);
 

@@ -103,13 +103,11 @@ bool adjust_component(
     return std::abs(*selected_value - before) > 1.0e-6f;
 }
 
-int held_horizontal_direction(const ActionInputFrame& input) {
-    const bool left_down = input_held(input, InputAction::MenuLeft);
-    const bool right_down = input_held(input, InputAction::MenuRight);
-    if (left_down == right_down) {
+int held_horizontal_direction(const MenuIntent& held_intent) {
+    if (held_intent.left == held_intent.right) {
         return 0;
     }
-    return left_down ? -1 : 1;
+    return held_intent.left ? -1 : 1;
 }
 
 bool should_fire_horizontal_hold_repeat(PaddleTuningState& tuning_state, const int hold_direction) {
@@ -184,38 +182,38 @@ void begin_story_player_paddle_tuning(
         story_skill_sum(career.player_skill_caps));
 }
 
-PaddleTuningActionResult apply_paddle_tuning_action_frame(
+PaddleTuningActionResult apply_paddle_tuning_action(
     PaddleTuningState& tuning_state,
-    const ActionInputFrame& input) {
+    const PaddleTuningInputIntent& intent) {
     bool changed = false;
-    if (input_pressed(input, InputAction::MenuUp)) {
+    if (intent.pressed.up) {
         tuning_state.selected_component =
             (tuning_state.selected_component + kPaddleTuningComponentCount - 1) % kPaddleTuningComponentCount;
         changed = true;
     }
-    if (input_pressed(input, InputAction::MenuDown)) {
+    if (intent.pressed.down) {
         tuning_state.selected_component =
             (tuning_state.selected_component + 1) % kPaddleTuningComponentCount;
         changed = true;
     }
 
     int direction = 0;
-    if (input_pressed(input, InputAction::MenuLeft)) {
+    if (intent.pressed.left) {
         direction -= 1;
     }
-    if (input_pressed(input, InputAction::MenuRight)) {
+    if (intent.pressed.right) {
         direction += 1;
     }
     if (direction != 0) {
         changed = adjust_component(tuning_state, direction) || changed;
-    } else if (should_fire_horizontal_hold_repeat(tuning_state, held_horizontal_direction(input))) {
+    } else if (should_fire_horizontal_hold_repeat(tuning_state, held_horizontal_direction(intent.held))) {
         changed = adjust_component(tuning_state, tuning_state.horizontal_hold_direction) || changed;
     }
 
-    if (input_pressed(input, InputAction::Confirm)) {
+    if (intent.pressed.confirm) {
         return PaddleTuningActionResult::Commit;
     }
-    if (input_pressed(input, InputAction::Back) || input_pressed(input, InputAction::Pause)) {
+    if (intent.pressed.back || intent.pause) {
         return PaddleTuningActionResult::Cancel;
     }
     return changed ? PaddleTuningActionResult::Changed : PaddleTuningActionResult::None;

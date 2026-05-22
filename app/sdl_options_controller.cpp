@@ -7,11 +7,9 @@ namespace whacker::app {
 
 SdlOptionsUpdateEffects update_sdl_options_menu(
     SdlRuntimeState& runtime,
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     const SdlEventFrame& events) {
     SdlOptionsUpdateEffects effects {};
-    const bool left_pressed = input_pressed(input, InputAction::MenuLeft);
-    const bool right_pressed = input_pressed(input, InputAction::MenuRight);
     const int row_before = runtime.options_menu.selected_row;
     const int selected_row = runtime.options_menu.selected_row;
 
@@ -30,15 +28,15 @@ SdlOptionsUpdateEffects update_sdl_options_menu(
         }
     }
 
-    const OptionsMenuActionResult result = apply_options_menu_action_frame(
+    const OptionsMenuActionResult result = apply_options_menu_action(
         runtime.options_menu,
         runtime.audio_settings,
-        input);
+        intent);
     if (runtime.options_menu.selected_row != row_before) {
         effects.play_move_sound = true;
     }
     if (result == OptionsMenuActionResult::BindingChanged) {
-        const int direction = right_pressed ? 1 : (left_pressed ? -1 : 0);
+        const int direction = intent.right ? 1 : (intent.left ? -1 : 0);
         effects.binding_changed = cycle_sdl_options_controller_button(
             runtime.input.bindings(),
             selected_row,

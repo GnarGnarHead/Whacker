@@ -42,6 +42,57 @@ void configure_ai_match_options(whacker::app::MatchOptions& options) {
     options.right_paddle_skills = {.edge = 0.44f, .power = 0.34f, .spin_inject = 0.74f};
 }
 
+void update_quick_match_targets(
+    whacker::sim::Simulation& simulation,
+    const whacker::app::MatchOptions& options,
+    whacker::app::RuntimeAiState& left_ai_state,
+    whacker::app::RuntimeAiState& right_ai_state,
+    const whacker::app::InputSlotAxes input_axes = {},
+    const whacker::app::PlayControlOverrides* overrides = nullptr) {
+    whacker::app::update_targets_for_play(
+        simulation,
+        options,
+        left_ai_state,
+        right_ai_state,
+        whacker::sim::kFixedDt,
+        whacker::app::quick_match_control_plan(),
+        input_axes,
+        overrides);
+}
+
+void test_control_plan_maps_input_slots_to_human_paddles() {
+    whacker::sim::Simulation simulation {};
+    auto& state = simulation.mutable_state();
+    state.left.center_y = 120.0f;
+    state.left.target_y = 120.0f;
+    state.right.center_y = 180.0f;
+    state.right.target_y = 180.0f;
+
+    whacker::app::MatchOptions options {};
+    options.left_mode = whacker::app::PaddleMode::Human;
+    options.right_mode = whacker::app::PaddleMode::Human;
+
+    whacker::app::RuntimeAiState left_ai_state {};
+    whacker::app::RuntimeAiState right_ai_state {};
+    whacker::app::update_targets_for_play(
+        simulation,
+        options,
+        left_ai_state,
+        right_ai_state,
+        whacker::sim::kFixedDt,
+        whacker::app::story_player_control_plan(whacker::app::CourtSide::Right),
+        whacker::app::InputSlotAxes {
+            .p1_move_y = -1.0f,
+            .p2_move_y = 1.0f,
+        },
+        nullptr);
+
+    require(state.left.target_y > 120.0f);
+    require(state.right.target_y < 180.0f);
+    require(approx_equal(state.left.feedforward_velocity_y, simulation.config().paddle_max_speed));
+    require(approx_equal(state.right.feedforward_velocity_y, -simulation.config().paddle_max_speed));
+}
+
 void test_ai_mode_produces_bounded_targets_and_plan_state() {
     whacker::sim::Simulation simulation {};
     setup_inbound_left_state(simulation);
@@ -53,15 +104,7 @@ void test_ai_mode_produces_bounded_targets_and_plan_state() {
     whacker::app::RuntimeAiState left_ai_state {};
     whacker::app::RuntimeAiState right_ai_state {};
 
-    whacker::app::update_targets_for_play(
-        simulation,
-        options,
-        left_ai_state,
-        right_ai_state,
-        whacker::sim::kFixedDt,
-        0.0f,
-        0.0f,
-        nullptr);
+    update_quick_match_targets(simulation, options, left_ai_state, right_ai_state);
 
     const auto& state = simulation.state();
     const float min_y = config.paddle_half_height;
@@ -97,15 +140,7 @@ void test_ai_replans_when_ball_direction_flips() {
     whacker::app::RuntimeAiState left_ai_state {};
     whacker::app::RuntimeAiState right_ai_state {};
 
-    whacker::app::update_targets_for_play(
-        simulation,
-        options,
-        left_ai_state,
-        right_ai_state,
-        whacker::sim::kFixedDt,
-        0.0f,
-        0.0f,
-        nullptr);
+    update_quick_match_targets(simulation, options, left_ai_state, right_ai_state);
     require(left_ai_state.plan.has_plan);
     require(left_ai_state.plan.ball_was_inbound);
     const int created_before = left_ai_state.plan.plan_created_step;
@@ -114,15 +149,7 @@ void test_ai_replans_when_ball_direction_flips() {
     state.ball.velocity.x = 310.0f;
     state.ball.velocity.y = -40.0f;
 
-    whacker::app::update_targets_for_play(
-        simulation,
-        options,
-        left_ai_state,
-        right_ai_state,
-        whacker::sim::kFixedDt,
-        0.0f,
-        0.0f,
-        nullptr);
+    update_quick_match_targets(simulation, options, left_ai_state, right_ai_state);
 
     require(left_ai_state.plan.has_plan);
     require(!left_ai_state.plan.ball_was_inbound);
@@ -147,24 +174,8 @@ void test_same_seeded_state_produces_deterministic_control_sequence() {
     whacker::app::RuntimeAiState right_b {};
 
     for (int i = 0; i < 30; ++i) {
-        whacker::app::update_targets_for_play(
-            sim_a,
-            options,
-            left_a,
-            right_a,
-            whacker::sim::kFixedDt,
-            0.0f,
-            0.0f,
-            nullptr);
-        whacker::app::update_targets_for_play(
-            sim_b,
-            options,
-            left_b,
-            right_b,
-            whacker::sim::kFixedDt,
-            0.0f,
-            0.0f,
-            nullptr);
+        update_quick_match_targets(sim_a, options, left_a, right_a);
+        update_quick_match_targets(sim_b, options, left_b, right_b);
 
         const auto& a = sim_a.state();
         const auto& b = sim_b.state();
@@ -200,15 +211,7 @@ void test_ai_cooldown_blocks_optional_replan() {
     whacker::app::RuntimeAiState left_ai_state {};
     whacker::app::RuntimeAiState right_ai_state {};
 
-    whacker::app::update_targets_for_play(
-        simulation,
-        options,
-        left_ai_state,
-        right_ai_state,
-        whacker::sim::kFixedDt,
-        0.0f,
-        0.0f,
-        nullptr);
+    update_quick_match_targets(simulation, options, left_ai_state, right_ai_state);
 
     require(left_ai_state.plan.has_plan);
     const int created_before = left_ai_state.plan.plan_created_step;
@@ -221,15 +224,7 @@ void test_ai_cooldown_blocks_optional_replan() {
     left_ai_state.plan.intercept_time_s = 0.65f;
     left_ai_state.plan.replan_cooldown_steps = 5;
 
-    whacker::app::update_targets_for_play(
-        simulation,
-        options,
-        left_ai_state,
-        right_ai_state,
-        whacker::sim::kFixedDt,
-        0.0f,
-        0.0f,
-        nullptr);
+    update_quick_match_targets(simulation, options, left_ai_state, right_ai_state);
 
     require(left_ai_state.plan.has_plan);
     require(left_ai_state.plan.plan_created_step == created_before);
@@ -246,15 +241,7 @@ void test_ai_optional_replan_hysteresis_keeps_existing_plan() {
     whacker::app::RuntimeAiState left_ai_state {};
     whacker::app::RuntimeAiState right_ai_state {};
 
-    whacker::app::update_targets_for_play(
-        simulation,
-        options,
-        left_ai_state,
-        right_ai_state,
-        whacker::sim::kFixedDt,
-        0.0f,
-        0.0f,
-        nullptr);
+    update_quick_match_targets(simulation, options, left_ai_state, right_ai_state);
 
     require(left_ai_state.plan.has_plan);
     const int created_before = left_ai_state.plan.plan_created_step;
@@ -269,15 +256,7 @@ void test_ai_optional_replan_hysteresis_keeps_existing_plan() {
     left_ai_state.plan.replan_cooldown_steps = 0;
     left_ai_state.plan.decision_score = 1000.0f;
 
-    whacker::app::update_targets_for_play(
-        simulation,
-        options,
-        left_ai_state,
-        right_ai_state,
-        whacker::sim::kFixedDt,
-        0.0f,
-        0.0f,
-        nullptr);
+    update_quick_match_targets(simulation, options, left_ai_state, right_ai_state);
 
     require(left_ai_state.plan.has_plan);
     require(left_ai_state.plan.plan_created_step == created_before);
@@ -295,15 +274,7 @@ void test_ai_forced_replan_overrides_cooldown_on_low_confidence_near_contact() {
     whacker::app::RuntimeAiState left_ai_state {};
     whacker::app::RuntimeAiState right_ai_state {};
 
-    whacker::app::update_targets_for_play(
-        simulation,
-        options,
-        left_ai_state,
-        right_ai_state,
-        whacker::sim::kFixedDt,
-        0.0f,
-        0.0f,
-        nullptr);
+    update_quick_match_targets(simulation, options, left_ai_state, right_ai_state);
 
     require(left_ai_state.plan.has_plan);
     const int created_before = left_ai_state.plan.plan_created_step;
@@ -317,15 +288,7 @@ void test_ai_forced_replan_overrides_cooldown_on_low_confidence_near_contact() {
     left_ai_state.plan.replan_cooldown_steps = 8;
     left_ai_state.plan.decision_score = 1000.0f;
 
-    whacker::app::update_targets_for_play(
-        simulation,
-        options,
-        left_ai_state,
-        right_ai_state,
-        whacker::sim::kFixedDt,
-        0.0f,
-        0.0f,
-        nullptr);
+    update_quick_match_targets(simulation, options, left_ai_state, right_ai_state);
 
     require(left_ai_state.plan.has_plan);
     require(left_ai_state.plan.plan_created_step > created_before);
@@ -336,6 +299,7 @@ void test_ai_forced_replan_overrides_cooldown_on_low_confidence_near_contact() {
 }  // namespace
 
 int main() {
+    test_control_plan_maps_input_slots_to_human_paddles();
     test_ai_mode_produces_bounded_targets_and_plan_state();
     test_ai_replans_when_ball_direction_flips();
     test_same_seeded_state_produces_deterministic_control_sequence();

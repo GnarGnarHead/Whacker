@@ -161,6 +161,7 @@ if(WHACKER_BUILD_APP)
         app/ai_plan_state_bridge.cpp
         app/game_render.cpp
         app/input_binding_codec.cpp
+        app/input_profiles.cpp
         app/main.cpp
         app/main_menu_actions.cpp
         app/match_end_flow.cpp
@@ -422,6 +423,7 @@ if(WHACKER_BUILD_TESTS)
 
         add_executable(story_intro_text_layout_smoke
             tests/story_intro_text_layout_smoke.cpp
+            app/story_intro.cpp
             app/story_intro_text_layout.cpp
             app/story_chat_layout.cpp
             app/text_wrap.cpp
@@ -727,6 +729,14 @@ if(WHACKER_BUILD_TESTS)
         whacker_configure_smoke_test(action_input_smoke)
         add_test(NAME action_input_smoke COMMAND action_input_smoke)
 
+        add_executable(control_plan_smoke
+            tests/control_plan_smoke.cpp
+        )
+        target_link_libraries(control_plan_smoke PRIVATE whacker_core)
+        target_include_directories(control_plan_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(control_plan_smoke)
+        add_test(NAME control_plan_smoke COMMAND control_plan_smoke)
+
         add_executable(input_binding_codec_smoke
             tests/input_binding_codec_smoke.cpp
             app/action_input.cpp
@@ -735,6 +745,15 @@ if(WHACKER_BUILD_TESTS)
         target_include_directories(input_binding_codec_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
         whacker_configure_smoke_test(input_binding_codec_smoke)
         add_test(NAME input_binding_codec_smoke COMMAND input_binding_codec_smoke)
+
+        add_executable(input_profiles_smoke
+            tests/input_profiles_smoke.cpp
+            app/action_input.cpp
+            app/input_profiles.cpp
+        )
+        target_include_directories(input_profiles_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(input_profiles_smoke)
+        add_test(NAME input_profiles_smoke COMMAND input_profiles_smoke)
 
         add_executable(story_runtime_invariants_smoke
             tests/story_runtime_invariants_smoke.cpp

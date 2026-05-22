@@ -19,10 +19,6 @@ namespace whacker::app {
 
 namespace {
 
-bool key_down(const Uint8* keys, const SDL_Scancode scancode) {
-    return keys != nullptr && keys[scancode] != 0;
-}
-
 KeyboardPhysicalState sample_keyboard_physical_state() {
     int key_count = 0;
     const Uint8* keys = SDL_GetKeyboardState(&key_count);
@@ -31,16 +27,6 @@ KeyboardPhysicalState sample_keyboard_physical_state() {
     for (int i = 0; i < sampled_count; ++i) {
         state.scancodes[static_cast<std::size_t>(i)] = keys != nullptr && keys[i] != 0;
     }
-    state.key_up = key_down(keys, SDL_SCANCODE_UP);
-    state.key_down = key_down(keys, SDL_SCANCODE_DOWN);
-    state.key_left = key_down(keys, SDL_SCANCODE_LEFT);
-    state.key_right = key_down(keys, SDL_SCANCODE_RIGHT);
-    state.key_w = key_down(keys, SDL_SCANCODE_W);
-    state.key_s = key_down(keys, SDL_SCANCODE_S);
-    state.key_enter = key_down(keys, SDL_SCANCODE_RETURN);
-    state.key_kp_enter = key_down(keys, SDL_SCANCODE_KP_ENTER);
-    state.key_space = key_down(keys, SDL_SCANCODE_SPACE);
-    state.key_escape = key_down(keys, SDL_SCANCODE_ESCAPE);
     return state;
 }
 

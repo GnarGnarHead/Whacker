@@ -213,8 +213,8 @@ MatchResult run_game(
             left_ai,
             right_ai,
             sim::kFixedDt,
-            0.0f,
-            0.0f,
+            app::quick_match_control_plan(),
+            app::InputSlotAxes {},
             nullptr);
         (void)simulation.step(sim::kFixedDt);
         const auto& state = simulation.state();

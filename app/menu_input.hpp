@@ -9,7 +9,8 @@ constexpr int kNeutralKeyS = kKeyboardScancodeS;
 constexpr int kNeutralKeyUp = kKeyboardScancodeUp;
 constexpr int kNeutralKeyDown = kKeyboardScancodeDown;
 
-struct ControlBindings {
+struct ControlHintBindings {
+    // Display-only movement key hints derived from ActionInputBindings.
     int p1_up = kNeutralKeyW;
     int p1_down = kNeutralKeyS;
     int p2_up = kNeutralKeyUp;

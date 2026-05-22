@@ -2,8 +2,8 @@
 
 #include <random>
 
-#include "action_input.hpp"
 #include "match_flow.hpp"
+#include "menu_intent.hpp"
 #include "paddle_tuning.hpp"
 #include "sim/physics.hpp"
 #include "story_runtime.hpp"
@@ -11,13 +11,6 @@
 #include "ui_state.hpp"
 
 namespace whacker::app {
-
-struct StoryHubControllerInput {
-    bool move_up = false;
-    bool move_down = false;
-    bool confirm = false;
-    bool back = false;
-};
 
 struct StoryHubControllerContext {
     StoryRuntimeState& story_runtime;
@@ -47,12 +40,7 @@ struct StoryHubControllerEffects {
 
 StoryHubControllerEffects update_story_hub_controller(
     StoryHubControllerContext context,
-    StoryHubControllerInput input,
-    StorySaveCareerCallback save_career_fn);
-
-StoryHubControllerEffects update_story_hub_controller_frame(
-    StoryHubControllerContext context,
-    const ActionInputFrame& input,
+    const MenuIntent& intent,
     StorySaveCareerCallback save_career_fn);
 
 }  // namespace whacker::app

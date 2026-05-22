@@ -39,7 +39,7 @@ struct SdlRuntimeState {
     RuntimeAiState right_ai {};
     AudioSettings audio_settings {};
     AudioEngine audio_engine {};
-    ControlBindings controls {};
+    ControlHintBindings controls {};
     std::string main_menu_feedback {};
     std::string story_menu_feedback {};
     SdlInput input {};

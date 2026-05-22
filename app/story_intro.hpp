@@ -6,6 +6,7 @@
 #include <string>
 
 #include "app_types.hpp"
+#include "control_plan.hpp"
 #include "menu_input.hpp"
 #include "progression/skills.hpp"
 #include "story_state.hpp"
@@ -66,6 +67,29 @@ struct StoryIntroDialogue {
     int option_count = 0;
 };
 
+struct StoryIntroControlHintKeys {
+    int up_key = kNeutralKeyW;
+    int down_key = kNeutralKeyS;
+};
+
+inline StoryIntroControlHintKeys story_intro_control_hint_keys(
+    const StoryIntroState& story_intro_state,
+    const ControlHintBindings& controls) {
+    const CourtSide player_side = story_intro_state.player_is_right ? CourtSide::Right : CourtSide::Left;
+    const InputSlot player_slot =
+        input_slot_for_court_side(story_player_control_plan(player_side), player_side);
+    if (player_slot == InputSlot::P1) {
+        return StoryIntroControlHintKeys {
+            .up_key = controls.p1_up,
+            .down_key = controls.p1_down,
+        };
+    }
+    return StoryIntroControlHintKeys {
+        .up_key = controls.p2_up,
+        .down_key = controls.p2_down,
+    };
+}
+
 using StoryIntroSanitizeNameFn = std::string (*)(const std::string&);
 using StoryIntroKeyNameFn = const char* (*)(int);
 
@@ -73,13 +97,13 @@ void reset_story_intro_typewriter(StoryIntroState& story_intro_state);
 void reveal_story_intro_typewriter(StoryIntroState& story_intro_state);
 StoryIntroDialogue compose_story_intro_dialogue(
     const StoryIntroState& story_intro_state,
-    const ControlBindings& controls,
+    const ControlHintBindings& controls,
     StoryIntroKeyNameFn key_name_fn,
     StoryIntroSanitizeNameFn sanitize_name_fn);
 std::size_t story_intro_dialogue_char_count(const StoryIntroDialogue& dialogue);
 void update_story_intro_typewriter(
     StoryIntroState& story_intro_state,
-    const ControlBindings& controls,
+    const ControlHintBindings& controls,
     float dt,
     float speed_multiplier,
     StoryIntroKeyNameFn key_name_fn,

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "action_input.hpp"
+#include "menu_intent.hpp"
 #include "ui_state.hpp"
 
 namespace whacker::app {
@@ -15,13 +15,6 @@ enum class MainMenuActionResult {
 
 MainMenuActionResult apply_main_menu_action(
     MainMenuState& menu_state,
-    bool move_up,
-    bool move_down,
-    bool confirm,
-    bool back);
-
-MainMenuActionResult apply_main_menu_action_frame(
-    MainMenuState& menu_state,
-    const ActionInputFrame& input);
+    const MenuIntent& intent);
 
 }  // namespace whacker::app

@@ -65,8 +65,8 @@ std::vector<TraceFrame> run_trace_capture() {
             left_ai,
             right_ai,
             sim::kFixedDt,
-            0.0f,
-            0.0f,
+            app::quick_match_control_plan(),
+            app::InputSlotAxes {},
             nullptr);
 
         const auto& snapshot = simulation.state();
