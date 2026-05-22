@@ -95,7 +95,10 @@ void test_writer_emits_binding_keys() {
     whacker::app::write_input_binding_settings(output, controls, bindings);
     const std::string text = output.str();
 
-    TEST_CHECK(contains(text, "p1_up_key=265\n"));
+    TEST_CHECK(!contains(text, "p1_up_key="));
+    TEST_CHECK(!contains(text, "p1_down_key="));
+    TEST_CHECK(!contains(text, "p2_up_key="));
+    TEST_CHECK(!contains(text, "p2_down_key="));
     TEST_CHECK(contains(text, "p1_up_scancode=82\n"));
     TEST_CHECK(contains(text, "p2_down_scancode=81\n"));
     TEST_CHECK(contains(text, "p1_controller_index=2\n"));

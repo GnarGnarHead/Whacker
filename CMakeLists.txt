@@ -196,16 +196,17 @@ if(WHACKER_BUILD_APP)
         app/sdl_runtime_state.cpp
         app/sdl_runtime_transitions.cpp
         app/sdl_runtime_update.cpp
-        app/sdl_story_hub_rules.cpp
         app/story_chat_layout.cpp
         app/story_chat_portrait_overlay.cpp
         app/story_classification.cpp
         app/story_continue_resume.cpp
+        app/story_hub_controller.cpp
         app/story_intro.cpp
         app/story_intro_overlay.cpp
         app/story_intro_text_layout.cpp
         app/story_match.cpp
         app/story_menu_actions.cpp
+        app/story_menu_controller.cpp
         app/story_onboarding_sync.cpp
         app/story_overlays.cpp
         app/story_panel_layout.cpp
@@ -616,6 +617,10 @@ if(WHACKER_BUILD_TESTS)
             app/story_chat_layout.cpp
             app/story_match.cpp
             app/story_menu_actions.cpp
+            app/story_menu_controller.cpp
+            app/story_hub_controller.cpp
+            app/paddle_tuning.cpp
+            app/paddle_tuning_actions.cpp
             app/story_play_session.cpp
             app/story_onboarding_flow.cpp
             app/story_onboarding_sync.cpp

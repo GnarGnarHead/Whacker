@@ -10,9 +10,9 @@
 #include "runtime_visual_transition_render.hpp"
 #include "sdl_options_value_labels.hpp"
 #include "sdl_runtime_labels.hpp"
-#include "sdl_story_hub_rules.hpp"
 #include "story_intro_overlay.hpp"
 #include "story_overlays.hpp"
+#include "story_runtime.hpp"
 #include "story_save.hpp"
 #include "story_scene_overlay.hpp"
 #include "text_utils.hpp"
@@ -64,7 +64,7 @@ void render_runtime_frame(
             runtime.story_runtime,
             runtime.story_hub,
             story_hub_row_name,
-            sdl_story_hub_row_enabled,
+            story_hub_row_enabled,
             sanitize_player_name);
     } else if (runtime.app_state == AppState::StoryIntro) {
         if (runtime.story_intro.phase == StoryIntroPhase::PlayMatch) {

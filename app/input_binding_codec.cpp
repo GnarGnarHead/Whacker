@@ -275,10 +275,6 @@ void write_input_binding_settings(
     const ControlBindings& controls,
     const ActionInputBindings& bindings) {
     (void)controls;
-    output << "p1_up_key=" << legacy_key_from_keyboard_scancode(bindings.p1_move_up_key) << "\n";
-    output << "p1_down_key=" << legacy_key_from_keyboard_scancode(bindings.p1_move_down_key) << "\n";
-    output << "p2_up_key=" << legacy_key_from_keyboard_scancode(bindings.p2_move_up_key) << "\n";
-    output << "p2_down_key=" << legacy_key_from_keyboard_scancode(bindings.p2_move_down_key) << "\n";
     output << "p1_up_scancode=" << bindings.p1_move_up_key << "\n";
     output << "p1_down_scancode=" << bindings.p1_move_down_key << "\n";
     output << "p2_up_scancode=" << bindings.p2_move_up_key << "\n";

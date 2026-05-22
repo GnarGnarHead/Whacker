@@ -6,10 +6,11 @@
 
 #include "match_end_flow.hpp"
 #include "runtime_story_scene.hpp"
+#include "story_hub_controller.hpp"
 #include "story_continue_resume.hpp"
 #include "story_intro.hpp"
 #include "story_match.hpp"
-#include "story_menu_actions.hpp"
+#include "story_menu_controller.hpp"
 #include "story_play_session.hpp"
 #include "story_rivals.hpp"
 #include "story_runtime.hpp"
@@ -24,6 +25,10 @@ namespace {
 struct StubState {
     int save_call_count = 0;
     whacker::app::StoryCareerData saved_career {};
+    int load_call_count = 0;
+    bool load_succeeds = true;
+    std::string load_error {};
+    whacker::app::StoryCareerData loaded_career {};
     int reset_career_call_count = 0;
     bool stub_key_left = false;
     bool stub_key_right = false;
@@ -34,6 +39,10 @@ struct StubState {
     void reset_save_capture() {
         save_call_count = 0;
         saved_career = whacker::app::StoryCareerData {};
+        load_call_count = 0;
+        load_succeeds = true;
+        load_error.clear();
+        loaded_career = whacker::app::StoryCareerData {};
         reset_career_call_count = 0;
     }
 
@@ -49,6 +58,10 @@ struct StubState {
 StubState g_stub_state {};
 int& g_save_call_count = g_stub_state.save_call_count;
 whacker::app::StoryCareerData& g_saved_career = g_stub_state.saved_career;
+int& g_load_call_count = g_stub_state.load_call_count;
+bool& g_load_succeeds = g_stub_state.load_succeeds;
+std::string& g_load_error = g_stub_state.load_error;
+whacker::app::StoryCareerData& g_loaded_career = g_stub_state.loaded_career;
 int& g_reset_career_call_count = g_stub_state.reset_career_call_count;
 bool& g_stub_key_left = g_stub_state.stub_key_left;
 bool& g_stub_key_right = g_stub_state.stub_key_right;
@@ -69,6 +82,21 @@ bool capture_save(const whacker::app::StoryCareerData& career, std::string* save
     g_saved_career = career;
     if (save_error != nullptr) {
         save_error->clear();
+    }
+    return true;
+}
+
+bool capture_load(whacker::app::StoryCareerData& career, std::string* load_error) {
+    ++g_load_call_count;
+    if (!g_load_succeeds) {
+        if (load_error != nullptr) {
+            *load_error = g_load_error;
+        }
+        return false;
+    }
+    career = g_loaded_career;
+    if (load_error != nullptr) {
+        load_error->clear();
     }
     return true;
 }
@@ -129,6 +157,34 @@ bool take_input_flag(bool& flag) {
     const bool pressed = flag;
     flag = false;
     return pressed;
+}
+
+void set_action_pressed(
+    whacker::app::ActionInputFrame& input,
+    const whacker::app::InputAction action) {
+    const auto index = static_cast<int>(action);
+    input.pressed[index] = true;
+    input.held[index] = true;
+}
+
+whacker::app::ActionInputFrame take_stub_action_frame() {
+    whacker::app::ActionInputFrame input {};
+    if (take_input_flag(g_stub_menu_up)) {
+        set_action_pressed(input, whacker::app::InputAction::MenuUp);
+    }
+    if (take_input_flag(g_stub_menu_down)) {
+        set_action_pressed(input, whacker::app::InputAction::MenuDown);
+    }
+    if (take_input_flag(g_stub_key_left)) {
+        set_action_pressed(input, whacker::app::InputAction::MenuLeft);
+    }
+    if (take_input_flag(g_stub_key_right)) {
+        set_action_pressed(input, whacker::app::InputAction::MenuRight);
+    }
+    if (take_input_flag(g_stub_confirm_press)) {
+        set_action_pressed(input, whacker::app::InputAction::Confirm);
+    }
+    return input;
 }
 
 std::string sanitize_name_or_passthrough(
@@ -252,6 +308,7 @@ struct StoryIntroInputFixture {
     whacker::app::StoryRuntimeState runtime {};
     whacker::app::StoryHubState hub {};
     whacker::app::StoryIntroState intro {};
+    whacker::app::StorySceneState scene {};
     whacker::app::MatchOptions options {};
     whacker::app::ControlBindings controls {};
     whacker::app::MatchFlowState match_flow {};
@@ -329,41 +386,35 @@ struct StoryMenuInputFixture {
     whacker::app::StoryRuntimeState runtime {};
     whacker::app::StoryHubState hub {};
     whacker::app::StoryIntroState intro {};
+    whacker::app::StorySceneState scene {};
     whacker::app::MatchOptions options {};
     whacker::app::ControlBindings controls {};
     whacker::app::MatchFlowState match_flow {};
     whacker::sim::Simulation simulation {};
     whacker::app::AppState app_state = whacker::app::AppState::StoryMenu;
+    std::string feedback {};
 
     void run(
         const bool has_save,
-        const void* load_career_fn = nullptr,
+        const whacker::app::StoryLoadCareerCallback load_career_fn = capture_load,
         const whacker::app::StoryResetCareerFn reset_career_fn = nullptr) {
-        (void)load_career_fn;
-        const whacker::app::StoryMenuActionResult result = whacker::app::apply_story_menu_action(
-            menu,
+        (void)whacker::app::update_story_menu_controller(
+            whacker::app::StoryMenuControllerContext {
+                .menu = menu,
+                .story_runtime = runtime,
+                .story_hub = hub,
+                .story_intro = intro,
+                .story_scene = scene,
+                .options = options,
+                .match_flow = match_flow,
+                .simulation = simulation,
+                .app_state = app_state,
+                .feedback = &feedback,
+            },
+            take_stub_action_frame(),
             has_save,
-            take_input_flag(g_stub_menu_up),
-            take_input_flag(g_stub_menu_down),
-            take_input_flag(g_stub_key_left),
-            take_input_flag(g_stub_key_right),
-            take_input_flag(g_stub_confirm_press),
-            false);
-        if (result == whacker::app::StoryMenuActionResult::Back) {
-            app_state = whacker::app::AppState::MainMenu;
-            return;
-        }
-        if (result == whacker::app::StoryMenuActionResult::NewCareer) {
-            whacker::app::begin_new_story_intro(
-                runtime,
-                hub,
-                intro,
-                options,
-                match_flow,
-                simulation,
-                app_state,
-                reset_career_fn);
-        }
+            load_career_fn,
+            reset_career_fn);
     }
 };
 
@@ -425,6 +476,7 @@ struct StoryHubInputFixture {
     whacker::app::StoryRuntimeState runtime {};
     whacker::app::StoryHubState hub {};
     whacker::app::StorySceneState scene {};
+    whacker::app::PaddleTuningState paddle_tuning {};
     whacker::app::MatchOptions options {};
     whacker::app::ControlBindings controls {};
     whacker::app::MatchFlowState match_flow {};
@@ -437,73 +489,20 @@ struct StoryHubInputFixture {
         : rng(seed) {}
 
     void run() {
-        if (!runtime.career_loaded) {
-            app_state = whacker::app::AppState::StoryMenu;
-            return;
-        }
-
-        const bool tix_midweek_pending =
-            runtime.career.joined_club &&
-            runtime.career.tix_1967_seen &&
-            !runtime.career.tix_midweek_scene_seen &&
-            !runtime.career.tix_lunch_match_declined &&
-            !runtime.career.tix_lunch_match_completed;
-        if (tix_midweek_pending) {
-            whacker::app::queue_story_onboarding_scene(
-                runtime,
-                whacker::app::StoryOnboardingStep::TixMidweekScene);
-            whacker::app::copy_onboarding_runtime_to_career(runtime);
-            (void)capture_save(runtime.career, nullptr);
-            app_state = whacker::app::AppState::StoryScene;
-            return;
-        }
-
-        if (take_input_flag(g_stub_menu_up)) {
-            hub.selected_row = (hub.selected_row + whacker::app::StoryHubRowCount - 1) %
-                whacker::app::StoryHubRowCount;
-        }
-        if (take_input_flag(g_stub_menu_down)) {
-            hub.selected_row = (hub.selected_row + 1) % whacker::app::StoryHubRowCount;
-        }
-
-        if (!take_input_flag(g_stub_confirm_press)) {
-            return;
-        }
-
-        const whacker::app::StoryHubRow row =
-            static_cast<whacker::app::StoryHubRow>(hub.selected_row);
-        if (!whacker::app::story_hub_row_enabled(row, runtime.career)) {
-            return;
-        }
-        if (row == whacker::app::StoryHubRowBack) {
-            (void)capture_save(runtime.career, nullptr);
-            app_state = whacker::app::AppState::MainMenu;
-            return;
-        }
-        if (row == whacker::app::StoryHubRowNextWeek) {
-            whacker::app::advance_story_week(runtime, hub, capture_save);
-            return;
-        }
-        if (row == whacker::app::StoryHubRowPaddleTuning) {
-            app_state = whacker::app::AppState::PaddleTuning;
-            return;
-        }
-        if (row == whacker::app::StoryHubRowOfficialMatch ||
-            row == whacker::app::StoryHubRowTrainingMatch) {
-            const whacker::app::StoryMatchKind kind =
-                row == whacker::app::StoryHubRowOfficialMatch
-                    ? whacker::app::StoryMatchKind::Official
-                    : whacker::app::StoryMatchKind::Training;
-            whacker::app::start_story_match(
-                runtime,
-                hub,
-                options,
-                simulation,
-                match_flow,
-                rng,
-                kind);
-            app_state = whacker::app::AppState::Playing;
-        }
+        (void)whacker::app::update_story_hub_controller_frame(
+            whacker::app::StoryHubControllerContext {
+                .story_runtime = runtime,
+                .story_hub = hub,
+                .story_scene = scene,
+                .paddle_tuning = paddle_tuning,
+                .options = options,
+                .match_flow = match_flow,
+                .simulation = simulation,
+                .rng = rng,
+                .app_state = app_state,
+            },
+            take_stub_action_frame(),
+            capture_save);
     }
 
     void end_match(
@@ -764,15 +763,15 @@ void test_tix_midweek_scene_auto_routes_from_hub_and_yes_starts_lunch_match() {
     hub_fixture.run();
 
     TEST_CHECK(hub_fixture.app_state == whacker::app::AppState::StoryScene);
-    TEST_CHECK(hub_fixture.runtime.onboarding_scene_pending);
+    TEST_CHECK(!hub_fixture.runtime.onboarding_scene_pending);
+    TEST_CHECK(hub_fixture.scene.id == whacker::app::StorySceneId::TixMidweekLunchInvite);
 
     StorySceneLifecycleFixture scene_fixture(0xFACEB00CULL, whacker::app::AppState::StoryScene);
     scene_fixture.runtime = hub_fixture.runtime;
     scene_fixture.hub = hub_fixture.hub;
+    scene_fixture.scene = hub_fixture.scene;
     scene_fixture.options = hub_fixture.options;
 
-    scene_fixture.begin_scene_from_runtime();
-    scene_fixture.runtime.onboarding_scene_pending = false;
     TEST_CHECK(scene_fixture.scene.id == whacker::app::StorySceneId::TixMidweekLunchInvite);
     TEST_CHECK(scene_fixture.scene.has_binary_choice);
 
@@ -1749,6 +1748,46 @@ void test_story_menu_overwrite_accept_starts_intro_after_modal() {
     TEST_CHECK(g_save_call_count == 0);
 }
 
+void test_story_menu_continue_failure_surfaces_feedback() {
+    reset_story_integration_test_state();
+
+    StoryMenuInputFixture fixture {};
+    fixture.menu.selected_row = whacker::app::StoryMenuRowContinue;
+    g_load_succeeds = false;
+    g_load_error = "SAVE DATA BROKEN";
+
+    g_stub_confirm_press = true;
+    fixture.run(true, capture_load);
+
+    TEST_CHECK(g_load_call_count == 1);
+    TEST_CHECK(fixture.app_state == whacker::app::AppState::StoryMenu);
+    TEST_CHECK(fixture.feedback == "SAVE DATA BROKEN");
+    TEST_CHECK(!fixture.runtime.career_loaded);
+}
+
+void test_story_menu_continue_success_routes_loaded_club_career_to_hub() {
+    reset_story_integration_test_state();
+
+    StoryMenuInputFixture fixture {};
+    fixture.menu.selected_row = whacker::app::StoryMenuRowContinue;
+    g_loaded_career = whacker::app::StoryCareerData {};
+    g_loaded_career.joined_club = true;
+    g_loaded_career.week = 3;
+    g_loaded_career.player_name = "LOADED";
+
+    g_stub_confirm_press = true;
+    fixture.run(true, capture_load);
+
+    TEST_CHECK(g_load_call_count == 1);
+    TEST_CHECK(fixture.app_state == whacker::app::AppState::StoryHub);
+    TEST_CHECK(fixture.runtime.career_loaded);
+    TEST_CHECK(fixture.runtime.career.player_name == "LOADED");
+    TEST_CHECK(fixture.hub.selected_row == whacker::app::StoryHubRowOfficialMatch);
+    TEST_CHECK(!fixture.hub.feedback_line_1.empty());
+    TEST_CHECK(!fixture.hub.feedback_line_2.empty());
+    TEST_CHECK(fixture.feedback.empty());
+}
+
 }  // namespace
 
 int main() {
@@ -1782,5 +1821,7 @@ int main() {
     test_story_intro_swap_sides_confirm_swaps_scoreboard();
     test_story_menu_new_career_without_save_starts_intro_with_runtime_reset();
     test_story_menu_overwrite_accept_starts_intro_after_modal();
+    test_story_menu_continue_failure_surfaces_feedback();
+    test_story_menu_continue_success_routes_loaded_club_career_to_hub();
     return 0;
 }

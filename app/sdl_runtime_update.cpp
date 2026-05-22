@@ -17,19 +17,17 @@
 #include "sdl_options_controller.hpp"
 #include "sdl_runtime_labels.hpp"
 #include "sdl_runtime_transitions.hpp"
-#include "sdl_story_hub_rules.hpp"
 #include "sim/math.hpp"
-#include "story_continue_resume.hpp"
+#include "story_hub_controller.hpp"
 #include "story_intro_text_layout.hpp"
 #include "story_match.hpp"
-#include "story_menu_actions.hpp"
+#include "story_menu_controller.hpp"
 #include "story_play_session.hpp"
 #include "story_runtime_invariants.hpp"
 #include "story_save.hpp"
 #include "story_scene_text_layout.hpp"
 #include "story_script_catalog.hpp"
 #include "story_skill_limits.hpp"
-#include "story_text.hpp"
 #include "text_utils.hpp"
 
 namespace whacker::app {
@@ -105,57 +103,31 @@ void update_story_menu(
     const ActionInputFrame& input,
     whacker::sim::Simulation& simulation,
     SdlRuntimeState& runtime) {
-    const int previous_row = runtime.story_menu.selected_row;
-    const bool confirm_before = runtime.story_menu.confirm_overwrite;
-    const int confirm_selected_before = runtime.story_menu.confirm_selected;
-    const bool has_save = story_save_exists();
-    const StoryMenuActionResult result =
-        apply_story_menu_action_frame(runtime.story_menu, has_save, input);
-    if (runtime.story_menu.selected_row != previous_row) {
-        runtime.story_menu_feedback.clear();
+    const StoryMenuControllerEffects effects = update_story_menu_controller(
+        StoryMenuControllerContext {
+            .menu = runtime.story_menu,
+            .story_runtime = runtime.story_runtime,
+            .story_hub = runtime.story_hub,
+            .story_intro = runtime.story_intro,
+            .story_scene = runtime.story_scene,
+            .options = runtime.options,
+            .match_flow = runtime.match_flow,
+            .simulation = simulation,
+            .app_state = runtime.app_state,
+            .feedback = &runtime.story_menu_feedback,
+        },
+        input,
+        story_save_exists(),
+        load_story_career,
+        reset_story_career);
+    if (effects.play_move_sound) {
         play_menu_move_sound(runtime);
     }
-    if (runtime.story_menu.confirm_selected != confirm_selected_before) {
-        play_menu_move_sound(runtime);
-    }
-    if (result != StoryMenuActionResult::None || runtime.story_menu.confirm_overwrite != confirm_before) {
+    if (effects.play_confirm_sound) {
         play_menu_confirm_sound(runtime);
     }
-    if (result == StoryMenuActionResult::Back) {
+    if (effects.return_to_main_menu) {
         return_to_main_menu(runtime);
-    } else if (result == StoryMenuActionResult::Continue) {
-        StoryCareerData loaded {};
-        std::string load_error;
-        if (!load_story_career(loaded, &load_error)) {
-            runtime.story_menu_feedback = load_error.empty() ? "COULD NOT LOAD STORY SAVE" : load_error;
-        } else {
-            StoryRuntimeState next_story_runtime = runtime.story_runtime;
-            const AppState loaded_state = apply_continue_loaded_career(next_story_runtime, loaded);
-            if (loaded_state == AppState::StoryHub) {
-                runtime.story_runtime = next_story_runtime;
-                runtime.story_hub.selected_row = StoryHubRowOfficialMatch;
-                runtime.story_hub.feedback_line_1 = story_text::career_loaded_feedback_line_1();
-                runtime.story_hub.feedback_line_2 = story_text::career_loaded_feedback_line_2(runtime.story_runtime.career.week);
-                runtime.app_state = AppState::StoryHub;
-            } else {
-                runtime.story_runtime = next_story_runtime;
-                begin_story_onboarding_scene(runtime.story_scene, runtime.story_runtime);
-                clear_story_runtime_scene_pending_flags(runtime.story_runtime);
-                runtime.app_state = AppState::StoryScene;
-            }
-        }
-    } else if (result == StoryMenuActionResult::NewCareer) {
-        runtime.story_menu.confirm_overwrite = false;
-        runtime.story_menu.confirm_selected = 0;
-        begin_new_story_intro(
-            runtime.story_runtime,
-            runtime.story_hub,
-            runtime.story_intro,
-            runtime.options,
-            runtime.match_flow,
-            simulation,
-            runtime.app_state,
-            reset_story_career);
     }
     runtime.accumulator = 0.0;
 }
@@ -164,84 +136,31 @@ void update_story_hub(
     const ActionInputFrame& input,
     SdlRuntimeState& runtime,
     whacker::sim::Simulation& simulation) {
-    if (!runtime.story_runtime.career_loaded) {
-        enter_story_menu(runtime);
-        return;
-    }
-    const bool tix_midweek_pending =
-        runtime.story_runtime.career.joined_club &&
-        runtime.story_runtime.career.tix_1967_seen &&
-        !runtime.story_runtime.career.tix_midweek_scene_seen &&
-        !runtime.story_runtime.career.tix_lunch_match_declined &&
-        !runtime.story_runtime.career.tix_lunch_match_completed;
-    if (tix_midweek_pending) {
-        queue_story_onboarding_scene(runtime.story_runtime, StoryOnboardingStep::TixMidweekScene);
-        copy_onboarding_runtime_to_career(runtime.story_runtime);
-        (void)save_story_career(runtime.story_runtime.career, nullptr);
-        begin_story_onboarding_scene(runtime.story_scene, runtime.story_runtime);
-        clear_story_runtime_scene_pending_flags(runtime.story_runtime);
-        runtime.app_state = AppState::StoryScene;
-        return;
-    }
-    const int previous_row = runtime.story_hub.selected_row;
-    if (input_pressed(input, InputAction::MenuUp)) {
-        runtime.story_hub.selected_row =
-            (runtime.story_hub.selected_row + StoryHubRowCount - 1) % StoryHubRowCount;
-    }
-    if (input_pressed(input, InputAction::MenuDown)) {
-        runtime.story_hub.selected_row =
-            (runtime.story_hub.selected_row + 1) % StoryHubRowCount;
-    }
-    if (runtime.story_hub.selected_row != previous_row) {
+    const StoryHubControllerEffects effects = update_story_hub_controller_frame(
+        StoryHubControllerContext {
+            .story_runtime = runtime.story_runtime,
+            .story_hub = runtime.story_hub,
+            .story_scene = runtime.story_scene,
+            .paddle_tuning = runtime.paddle_tuning,
+            .options = runtime.options,
+            .match_flow = runtime.match_flow,
+            .simulation = simulation,
+            .rng = runtime.rng,
+            .app_state = runtime.app_state,
+        },
+        input,
+        save_story_career);
+    if (effects.play_move_sound) {
         play_menu_move_sound(runtime);
     }
-    if (input_pressed(input, InputAction::Back)) {
+    if (effects.play_confirm_sound) {
         play_menu_confirm_sound(runtime);
-        (void)save_story_career(runtime.story_runtime.career, nullptr);
+    }
+    if (effects.enter_story_menu) {
+        enter_story_menu(runtime);
+    }
+    if (effects.return_to_main_menu) {
         return_to_main_menu(runtime);
-        return;
-    }
-    if (!input_pressed(input, InputAction::Confirm)) {
-        return;
-    }
-    play_menu_confirm_sound(runtime);
-
-    const StoryHubRow row = static_cast<StoryHubRow>(runtime.story_hub.selected_row);
-    if (!sdl_story_hub_row_enabled(row, runtime.story_runtime.career)) {
-        runtime.story_hub.feedback_line_1 = "LOCKED FOR THIS WEEK";
-        runtime.story_hub.feedback_line_2.clear();
-        return;
-    }
-    if (row == StoryHubRowBack) {
-        (void)save_story_career(runtime.story_runtime.career, nullptr);
-        return_to_main_menu(runtime);
-        return;
-    }
-
-    if (row == StoryHubRowNextWeek) {
-        advance_story_week(runtime.story_runtime, runtime.story_hub, save_story_career);
-        return;
-    }
-    if (row == StoryHubRowPaddleTuning) {
-        normalize_story_player_skill_progress(
-            runtime.story_runtime.career.player_skills,
-            runtime.story_runtime.career.player_skill_caps);
-        begin_story_player_paddle_tuning(runtime.paddle_tuning, runtime.story_runtime.career);
-        runtime.app_state = AppState::PaddleTuning;
-        return;
-    }
-    if (row == StoryHubRowOfficialMatch || row == StoryHubRowTrainingMatch) {
-        const StoryMatchKind kind =
-            row == StoryHubRowOfficialMatch ? StoryMatchKind::Official : StoryMatchKind::Training;
-        start_story_match(
-            runtime.story_runtime,
-            runtime.story_hub,
-            runtime.options,
-            simulation,
-            runtime.match_flow,
-            runtime.rng,
-            kind);
-        runtime.app_state = AppState::Playing;
     }
 }
 

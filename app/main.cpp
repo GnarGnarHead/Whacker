@@ -39,12 +39,6 @@ int main() {
     const whacker::sim::SimulationConfig startup_config = load_startup_config();
     whacker::sim::Simulation simulation(startup_config);
 
-#ifndef WHACKER_PLATFORM_SDL2
-    std::puts("whacker: built without an app platform. Reconfigure with WHACKER_BUILD_APP=ON and SDL2 installed.");
-    const auto& state = simulation.state();
-    std::printf("sim initialized: score %d:%d\n", state.left_score, state.right_score);
-    return 0;
-#else
     whacker::app::SdlPlatform platform;
     std::string error_message;
     if (!platform.init(&error_message)) {
@@ -59,5 +53,4 @@ int main() {
     const int exit_code = whacker::app::run_app_loop(platform, simulation);
     platform.destroy_window();
     return exit_code;
-#endif
 }
