@@ -8,9 +8,13 @@ namespace whacker::app {
 
 namespace {
 
-bool set_keyboard_scancode_for_options_row(ActionInputBindings& bindings, const int row, const int scancode) {
+bool set_keyboard_scancode_for_options_row(
+    ActionInputBindings& bindings,
+    const OptionsMenuSection section,
+    const int row,
+    const int scancode) {
     SdlOptionsBindingRow binding_row {};
-    if (!sdl_options_binding_row(row, binding_row)) {
+    if (!sdl_options_binding_row(section, row, binding_row)) {
         return false;
     }
     return bind_keyboard_scancode_for_move_direction(
@@ -22,10 +26,11 @@ bool set_keyboard_scancode_for_options_row(ActionInputBindings& bindings, const 
 
 bool set_controller_button_for_options_row(
     ActionInputBindings& bindings,
+    const OptionsMenuSection section,
     const int row,
     const ControllerButton button) {
     SdlOptionsBindingRow binding_row {};
-    if (!sdl_options_binding_row(row, binding_row)) {
+    if (!sdl_options_binding_row(section, row, binding_row)) {
         return false;
     }
     return bind_controller_button_for_move_direction(
@@ -37,10 +42,11 @@ bool set_controller_button_for_options_row(
 
 bool set_controller_axis_for_options_row(
     ActionInputBindings& bindings,
+    const OptionsMenuSection section,
     const int row,
     const ControllerAxis axis) {
     InputSlot slot = InputSlot::P1;
-    if (!sdl_options_axis_row(row, slot)) {
+    if (!sdl_options_axis_row(section, row, slot)) {
         return false;
     }
     bind_player_move_axis(
@@ -53,15 +59,16 @@ bool set_controller_axis_for_options_row(
 
 bool set_controller_index_for_options_row(
     ActionInputBindings& bindings,
+    const OptionsMenuSection section,
     const int row,
     const int controller_index) {
     SdlOptionsBindingRow binding_row {};
-    if (sdl_options_binding_row(row, binding_row)) {
+    if (sdl_options_binding_row(section, row, binding_row)) {
         bind_controller_index_for_input_slot(bindings, binding_row.slot, controller_index);
         return true;
     }
     InputSlot slot = InputSlot::P1;
-    if (sdl_options_axis_row(row, slot) || sdl_options_axis_invert_row(row, slot)) {
+    if (sdl_options_axis_row(section, row, slot) || sdl_options_axis_invert_row(section, row, slot)) {
         bind_controller_index_for_input_slot(bindings, slot, controller_index);
         return true;
     }
@@ -77,17 +84,22 @@ SdlOptionsCaptureResult apply_sdl_options_capture(
     const SdlInput& input,
     const SdlEventFrame& events) {
     SdlOptionsCaptureResult result {};
+    const OptionsMenuSection selected_section = options_menu_state.section;
     const int selected_row = options_menu_state.selected_row;
 
     InputSlot axis_slot = InputSlot::P1;
-    const bool capturing_axis = sdl_options_axis_row(selected_row, axis_slot);
+    const bool capturing_axis = sdl_options_axis_row(selected_section, selected_row, axis_slot);
 
     if (events.keyboard_key_pressed) {
         if (events.keyboard_scancode == kKeyboardScancodeEscape) {
             result.finished = true;
         } else if (!capturing_axis && sdl_keyboard_scancode_bindable(events.keyboard_scancode)) {
             result.binding_changed =
-                set_keyboard_scancode_for_options_row(bindings, selected_row, events.keyboard_scancode);
+                set_keyboard_scancode_for_options_row(
+                    bindings,
+                    selected_section,
+                    selected_row,
+                    events.keyboard_scancode);
             if (result.binding_changed) {
                 sync_controls_from_action_bindings(controls, bindings);
             }
@@ -97,10 +109,18 @@ SdlOptionsCaptureResult apply_sdl_options_capture(
 
     if (!result.finished && !capturing_axis && events.controller_button_pressed) {
         if (events.controller_button != ControllerButton::Unbound &&
-            set_controller_button_for_options_row(bindings, selected_row, events.controller_button)) {
+            set_controller_button_for_options_row(
+                bindings,
+                selected_section,
+                selected_row,
+                events.controller_button)) {
             const int controller_index = input.controller_index_for_instance_id(events.controller_instance_id);
             if (controller_index >= 0) {
-                (void)set_controller_index_for_options_row(bindings, selected_row, controller_index);
+                (void)set_controller_index_for_options_row(
+                    bindings,
+                    selected_section,
+                    selected_row,
+                    controller_index);
             }
             result.binding_changed = true;
         }
@@ -108,10 +128,18 @@ SdlOptionsCaptureResult apply_sdl_options_capture(
     }
 
     if (!result.finished && capturing_axis && events.controller_axis_moved) {
-        if (set_controller_axis_for_options_row(bindings, selected_row, events.controller_axis)) {
+        if (set_controller_axis_for_options_row(
+                bindings,
+                selected_section,
+                selected_row,
+                events.controller_axis)) {
             const int controller_index = input.controller_index_for_instance_id(events.controller_axis_instance_id);
             if (controller_index >= 0) {
-                (void)set_controller_index_for_options_row(bindings, selected_row, controller_index);
+                (void)set_controller_index_for_options_row(
+                    bindings,
+                    selected_section,
+                    selected_row,
+                    controller_index);
             }
             result.binding_changed = true;
         }
@@ -119,32 +147,34 @@ SdlOptionsCaptureResult apply_sdl_options_capture(
     }
 
     if (result.finished) {
-        options_menu_state.waiting_for_key = false;
+        options_menu_state.waiting_for_input = false;
     }
     return result;
 }
 
 bool cycle_sdl_options_controller_button(
     ActionInputBindings& bindings,
+    const OptionsMenuSection section,
     const int row,
     const int direction) {
     if (direction == 0) {
         return false;
     }
-    const ControllerButton current = controller_button_for_options_row(bindings, row);
+    const ControllerButton current = controller_button_for_options_row(bindings, section, row);
     const ControllerButton next = next_bindable_controller_button(current, direction);
-    return set_controller_button_for_options_row(bindings, row, next);
+    return set_controller_button_for_options_row(bindings, section, row, next);
 }
 
 bool cycle_sdl_options_controller_axis(
     ActionInputBindings& bindings,
+    const OptionsMenuSection section,
     const int row,
     const int direction) {
     if (direction == 0) {
         return false;
     }
     InputSlot slot = InputSlot::P1;
-    if (!sdl_options_axis_row(row, slot)) {
+    if (!sdl_options_axis_row(section, row, slot)) {
         return false;
     }
     const ControllerAxis current = controller_axis_for_input_slot(bindings, slot);
@@ -159,9 +189,10 @@ bool cycle_sdl_options_controller_axis(
 
 bool toggle_sdl_options_controller_axis_invert(
     ActionInputBindings& bindings,
+    const OptionsMenuSection section,
     const int row) {
     InputSlot slot = InputSlot::P1;
-    if (!sdl_options_axis_invert_row(row, slot)) {
+    if (!sdl_options_axis_invert_row(section, row, slot)) {
         return false;
     }
     bind_player_move_axis(

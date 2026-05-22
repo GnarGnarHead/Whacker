@@ -388,54 +388,82 @@ void test_options_menu_audio_and_binding_flow() {
     whacker::app::OptionsMenuState options {};
     whacker::app::AudioSettings audio {};
 
-    options.selected_row = whacker::app::OptionsMenuRowMasterVolume;
+    TEST_CHECK(options.section == whacker::app::OptionsMenuSection::Root);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::SectionChanged);
+    TEST_CHECK(options.section == whacker::app::OptionsMenuSection::Controls);
+
+    options.selected_row = whacker::app::OptionsControlsRowP1Up;
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingCaptureStarted);
+    TEST_CHECK(options.waiting_for_input);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingChanged);
+    TEST_CHECK(options.waiting_for_input);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::None);
+    TEST_CHECK(!options.waiting_for_input);
+
+    options.selected_row = whacker::app::OptionsControlsRowP1Axis;
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingCaptureStarted);
+    TEST_CHECK(options.waiting_for_input);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingChanged);
+    TEST_CHECK(options.waiting_for_input);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::None);
+    TEST_CHECK(!options.waiting_for_input);
+
+    options.selected_row = whacker::app::OptionsControlsRowP1AxisInvert;
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingChanged);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingChanged);
+
+    options.selected_row = whacker::app::OptionsControlsRowBack;
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::SectionChanged);
+    TEST_CHECK(options.section == whacker::app::OptionsMenuSection::Root);
+
+    options.selected_row = whacker::app::OptionsRootRowAudio;
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::SectionChanged);
+    TEST_CHECK(options.section == whacker::app::OptionsMenuSection::Audio);
+
+    options.selected_row = whacker::app::OptionsAudioRowMasterVolume;
     audio.master_volume = 80;
     TEST_CHECK(
         whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, true)) ==
         whacker::app::OptionsMenuActionResult::AudioChanged);
     TEST_CHECK(audio.master_volume == 75);
 
-    options.selected_row = whacker::app::OptionsMenuRowMute;
+    options.selected_row = whacker::app::OptionsAudioRowMute;
     TEST_CHECK(
         whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
         whacker::app::OptionsMenuActionResult::AudioChanged);
     TEST_CHECK(audio.mute);
 
-    options.selected_row = whacker::app::OptionsMenuRowP1Up;
-    TEST_CHECK(
-        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
-        whacker::app::OptionsMenuActionResult::BindingCaptureStarted);
-    TEST_CHECK(options.waiting_for_key);
-    TEST_CHECK(
-        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, true)) ==
-        whacker::app::OptionsMenuActionResult::BindingChanged);
-    TEST_CHECK(options.waiting_for_key);
     TEST_CHECK(
         whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, false, true)) ==
-        whacker::app::OptionsMenuActionResult::None);
-    TEST_CHECK(!options.waiting_for_key);
+        whacker::app::OptionsMenuActionResult::SectionChanged);
+    TEST_CHECK(options.section == whacker::app::OptionsMenuSection::Root);
 
-    options.selected_row = whacker::app::OptionsMenuRowP1Axis;
+    options.selected_row = whacker::app::OptionsRootRowBack;
     TEST_CHECK(
         whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
-        whacker::app::OptionsMenuActionResult::BindingCaptureStarted);
-    TEST_CHECK(options.waiting_for_key);
-    TEST_CHECK(
-        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, true)) ==
-        whacker::app::OptionsMenuActionResult::BindingChanged);
-    TEST_CHECK(options.waiting_for_key);
-    TEST_CHECK(
-        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
-        whacker::app::OptionsMenuActionResult::None);
-    TEST_CHECK(!options.waiting_for_key);
-
-    options.selected_row = whacker::app::OptionsMenuRowP1AxisInvert;
-    TEST_CHECK(
-        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, true)) ==
-        whacker::app::OptionsMenuActionResult::BindingChanged);
-    TEST_CHECK(
-        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
-        whacker::app::OptionsMenuActionResult::BindingChanged);
+        whacker::app::OptionsMenuActionResult::Back);
 }
 
 void test_quick_menu_style_rows_cycle_defaults_and_confirm_tunes() {

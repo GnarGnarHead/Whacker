@@ -9,7 +9,8 @@
 namespace whacker::app {
 
 using RowNameFn = const char* (*)(int);
-using OptionsValueLabelFn = std::string (*)(int row, const void* context);
+using OptionsRowNameFn = const char* (*)(OptionsMenuSection section, int row);
+using OptionsValueLabelFn = std::string (*)(const OptionsMenuState& menu_state, int row, const void* context);
 
 void render_main_menu_overlay(
     const RenderContext& context,
@@ -25,7 +26,7 @@ void render_pause_overlay(
 void render_options_menu_overlay(
     const RenderContext& context,
     const OptionsMenuState& menu_state,
-    RowNameFn row_name_fn,
+    OptionsRowNameFn row_name_fn,
     OptionsValueLabelFn value_label_fn,
     const void* value_label_context);
 

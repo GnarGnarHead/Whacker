@@ -82,7 +82,9 @@ void enter_quick_match_setup(SdlRuntimeState& runtime) {
 }
 
 void enter_options_menu(SdlRuntimeState& runtime) {
-    runtime.options_menu.waiting_for_key = false;
+    runtime.options_menu.section = OptionsMenuSection::Root;
+    runtime.options_menu.selected_row = OptionsRootRowControls;
+    runtime.options_menu.waiting_for_input = false;
     push_runtime_screen(runtime, Screen::OptionsMenu);
     runtime.main_menu_feedback.clear();
     runtime.accumulator = 0.0;

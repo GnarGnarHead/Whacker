@@ -10,6 +10,7 @@
 #include "story_chat_layout.hpp"
 #include "story_intro.hpp"
 #include "story_panel_layout.hpp"
+#include "pixel_font.hpp"
 #include "text_wrap.hpp"
 
 namespace whacker::app {
@@ -24,7 +25,7 @@ constexpr int kChatEarlyWrapChars = 2;
 constexpr float kFooterScale = 1.9f;
 
 float text_line_height_pixels_local(const float scale) {
-    return 5.0f * scale;
+    return 5.0f * pixel_font_render_scale(scale);
 }
 
 StoryPanelLayout make_story_panel_layout_local(
@@ -55,7 +56,11 @@ int max_chars_for_text_width_local(const float width_px, const float scale, cons
     if (width_px <= 0.0f || scale <= 0.0f) {
         return 0;
     }
-    const int max_chars = static_cast<int>(std::floor(width_px / (4.0f * scale)));
+    const float advance_px = 4.0f * pixel_font_render_scale(scale);
+    if (advance_px <= 0.0f) {
+        return 0;
+    }
+    const int max_chars = static_cast<int>(std::floor(width_px / advance_px));
     return std::max(0, max_chars - std::max(0, reserved_chars));
 }
 

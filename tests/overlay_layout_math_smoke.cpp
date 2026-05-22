@@ -2,6 +2,7 @@
 #include <cstdlib>
 
 #include "overlay_layout_math.hpp"
+#include "pixel_font.hpp"
 
 namespace {
 
@@ -56,8 +57,10 @@ void test_make_overlay_row_layout_shrinks_when_space_is_tight() {
 }
 
 void test_max_chars_for_text_width_respects_reserved_chars() {
-    require(whacker::app::max_chars_for_text_width(160.0f, 2.0f, 0) == 20);
-    require(whacker::app::max_chars_for_text_width(160.0f, 2.0f, 3) == 17);
+    const int expected_chars = static_cast<int>(
+        std::floor(160.0f / (4.0f * whacker::app::pixel_font_render_scale(2.0f))));
+    require(whacker::app::max_chars_for_text_width(160.0f, 2.0f, 0) == expected_chars);
+    require(whacker::app::max_chars_for_text_width(160.0f, 2.0f, 3) == expected_chars - 3);
     require(whacker::app::max_chars_for_text_width(0.0f, 2.0f, 0) == 0);
     require(whacker::app::max_chars_for_text_width(160.0f, 0.0f, 0) == 0);
 }
@@ -65,8 +68,10 @@ void test_max_chars_for_text_width_respects_reserved_chars() {
 void test_inset_text_width_and_safe_budget_reduce_capacity() {
     require(nearly_equal(whacker::app::inset_text_width(200.0f, 8.0f), 184.0f));
     require(nearly_equal(whacker::app::inset_text_width(12.0f, 8.0f), 0.0f));
-    require(whacker::app::max_chars_for_safe_text_width(160.0f, 2.0f, 0, 2, 8.0f) == 16);
-    require(whacker::app::max_chars_for_safe_text_width(160.0f, 2.0f, 3, 2, 8.0f) == 13);
+    const int safe_chars = static_cast<int>(
+        std::floor(144.0f / (4.0f * whacker::app::pixel_font_render_scale(2.0f))));
+    require(whacker::app::max_chars_for_safe_text_width(160.0f, 2.0f, 0, 2, 8.0f) == safe_chars - 2);
+    require(whacker::app::max_chars_for_safe_text_width(160.0f, 2.0f, 3, 2, 8.0f) == safe_chars - 5);
 }
 
 }  // namespace

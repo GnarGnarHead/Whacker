@@ -7,6 +7,12 @@
 
 namespace whacker::app {
 
+inline constexpr float kPixelFontReadabilityScale = 1.80f;
+
+inline float pixel_font_render_scale(const float scale) {
+    return scale > 0.0f ? scale * kPixelFontReadabilityScale : 0.0f;
+}
+
 class ScopedPixelRenderContext {
 public:
     explicit ScopedPixelRenderContext(const RenderContext& context);

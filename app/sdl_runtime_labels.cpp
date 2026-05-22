@@ -20,37 +20,59 @@ const char* main_menu_row_name(const int row) {
     }
 }
 
-const char* options_menu_row_name(const int row) {
-    switch (row) {
-        case OptionsMenuRowP1Up:
-            return "P1 UP";
-        case OptionsMenuRowP1Down:
-            return "P1 DOWN";
-        case OptionsMenuRowP2Up:
-            return "P2 UP";
-        case OptionsMenuRowP2Down:
-            return "P2 DOWN";
-        case OptionsMenuRowP1Axis:
-            return "P1 STICK";
-        case OptionsMenuRowP1AxisInvert:
-            return "P1 STICK INVERT";
-        case OptionsMenuRowP2Axis:
-            return "P2 STICK";
-        case OptionsMenuRowP2AxisInvert:
-            return "P2 STICK INVERT";
-        case OptionsMenuRowMasterVolume:
-            return "MASTER VOLUME";
-        case OptionsMenuRowMusicVolume:
-            return "MUSIC VOLUME";
-        case OptionsMenuRowSfxVolume:
-            return "SFX VOLUME";
-        case OptionsMenuRowMute:
-            return "MUTE";
-        case OptionsMenuRowBack:
-            return "BACK";
-        default:
-            return "?";
+const char* options_menu_row_name(const OptionsMenuSection section, const int row) {
+    switch (section) {
+        case OptionsMenuSection::Root:
+            switch (row) {
+                case OptionsRootRowControls:
+                    return "CONTROLS";
+                case OptionsRootRowAudio:
+                    return "AUDIO";
+                case OptionsRootRowBack:
+                    return "BACK";
+                default:
+                    return "?";
+            }
+        case OptionsMenuSection::Controls:
+            switch (row) {
+                case OptionsControlsRowP1Up:
+                    return "P1 UP";
+                case OptionsControlsRowP1Down:
+                    return "P1 DOWN";
+                case OptionsControlsRowP1Axis:
+                    return "P1 STICK";
+                case OptionsControlsRowP1AxisInvert:
+                    return "P1 STICK INVERT";
+                case OptionsControlsRowP2Up:
+                    return "P2 UP";
+                case OptionsControlsRowP2Down:
+                    return "P2 DOWN";
+                case OptionsControlsRowP2Axis:
+                    return "P2 STICK";
+                case OptionsControlsRowP2AxisInvert:
+                    return "P2 STICK INVERT";
+                case OptionsControlsRowBack:
+                    return "BACK";
+                default:
+                    return "?";
+            }
+        case OptionsMenuSection::Audio:
+            switch (row) {
+                case OptionsAudioRowMasterVolume:
+                    return "MASTER VOLUME";
+                case OptionsAudioRowMusicVolume:
+                    return "MUSIC VOLUME";
+                case OptionsAudioRowSfxVolume:
+                    return "SFX VOLUME";
+                case OptionsAudioRowMute:
+                    return "MUTE";
+                case OptionsAudioRowBack:
+                    return "BACK";
+                default:
+                    return "?";
+            }
     }
+    return "?";
 }
 
 const char* story_menu_row_name(const int row) {

@@ -15,12 +15,18 @@ constexpr char kMainMenuFooter[] = "UP/DOWN MOVE  ENTER SELECT  ESC QUIT";
 constexpr char kMainMenuFooterShort[] = "ARROWS MOVE  ENTER SELECT  ESC QUIT";
 
 constexpr char kOptionsTitle[] = "OPTIONS";
-constexpr char kOptionsSubtitle[] = "CONTROLS + AUDIO";
+constexpr char kOptionsControlsTitle[] = "CONTROLS";
+constexpr char kOptionsAudioTitle[] = "AUDIO";
+constexpr char kOptionsSubtitle[] = "SETTINGS";
+constexpr char kOptionsControlsSubtitle[] = "KEYS BUTTONS STICKS";
+constexpr char kOptionsAudioSubtitle[] = "VOLUME MIX";
 constexpr char kOptionsWaitingValue[] = "PRESS INPUT...";
 constexpr char kOptionsToggleOn[] = "ON";
 constexpr char kOptionsToggleOff[] = "OFF";
 constexpr char kOptionsFooterWaiting[] = "PRESS KEY/BUTTON OR MOVE STICK  ESC CANCEL";
 constexpr char kOptionsFooterWaitingShort[] = "INPUT OR STICK  ESC CANCEL";
+constexpr char kOptionsFooterRoot[] = "UP/DOWN MOVE  ENTER SELECT  ESC BACK";
+constexpr char kOptionsFooterRootShort[] = "ARROWS MOVE  ENTER SELECT  ESC BACK";
 constexpr char kOptionsFooterDefault[] = "UP/DOWN MOVE  LEFT/RIGHT ADJUST  ENTER SELECT  ESC BACK";
 constexpr char kOptionsFooterDefaultShort[] = "ARROWS MOVE  L/R ADJUST  ENTER SELECT  ESC BACK";
 
@@ -110,8 +116,24 @@ const char* options_title() {
     return kOptionsTitle;
 }
 
+const char* options_controls_title() {
+    return kOptionsControlsTitle;
+}
+
+const char* options_audio_title() {
+    return kOptionsAudioTitle;
+}
+
 const char* options_subtitle() {
     return kOptionsSubtitle;
+}
+
+const char* options_controls_subtitle() {
+    return kOptionsControlsSubtitle;
+}
+
+const char* options_audio_subtitle() {
+    return kOptionsAudioSubtitle;
 }
 
 const char* options_waiting_value() {
@@ -132,6 +154,14 @@ const char* options_footer_waiting_for_key() {
 
 const char* options_footer_waiting_for_key_short() {
     return kOptionsFooterWaitingShort;
+}
+
+const char* options_footer_root() {
+    return kOptionsFooterRoot;
+}
+
+const char* options_footer_root_short() {
+    return kOptionsFooterRootShort;
 }
 
 const char* options_footer_default() {

@@ -43,11 +43,20 @@ void test_fit_text_to_single_line_ellipsis_limits_output_width() {
 }
 
 void test_chat_style_budget_prefers_compact_variant() {
-    const int max_chars = whacker::app::max_chars_for_safe_text_width(214.0f, 1.9f, 0, 2, 8.0f);
+    const int max_chars = whacker::app::max_chars_for_safe_text_width(360.0f, 1.9f, 0, 2, 8.0f);
     const std::string text = whacker::app::choose_best_fitting_variant(
         {"ENTER/SPACE SKIP  HOLD FAST", "ENTER SKIP  HOLD FAST"},
         max_chars);
     assert(text == "ENTER SKIP  HOLD FAST");
+}
+
+void test_chat_style_budget_ellipsizes_compact_variant_when_readable_text_is_tight() {
+    const int max_chars = whacker::app::max_chars_for_safe_text_width(214.0f, 1.9f, 0, 2, 8.0f);
+    const std::string text = whacker::app::choose_best_fitting_variant(
+        {"ENTER/SPACE SKIP  HOLD FAST", "ENTER SKIP  HOLD FAST"},
+        max_chars);
+    assert(static_cast<int>(text.size()) <= max_chars);
+    assert(ends_with(text, "..."));
 }
 
 void test_chat_style_budget_ellipsis_still_respects_limit() {
@@ -66,6 +75,7 @@ int main() {
     test_choose_best_fitting_variant_ellipsizes_when_nothing_fits();
     test_fit_text_to_single_line_ellipsis_limits_output_width();
     test_chat_style_budget_prefers_compact_variant();
+    test_chat_style_budget_ellipsizes_compact_variant_when_readable_text_is_tight();
     test_chat_style_budget_ellipsis_still_respects_limit();
     return 0;
 }

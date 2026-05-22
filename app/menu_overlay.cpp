@@ -188,7 +188,7 @@ void render_main_menu_overlay(
 void render_options_menu_overlay(
     const RenderContext& context,
     const OptionsMenuState& menu_state,
-    const RowNameFn row_name_fn,
+    const OptionsRowNameFn row_name_fn,
     const OptionsValueLabelFn value_label_fn,
     const void* value_label_context) {
     const int fb_width = context.framebuffer_width;
@@ -197,24 +197,24 @@ void render_options_menu_overlay(
         return;
     }
 
-    const auto safe_row_name = [row_name_fn](const int row) -> const char* {
-        return row_name_fn != nullptr ? row_name_fn(row) : ui_text::unknown_label();
+    const auto safe_row_name = [row_name_fn, &menu_state](const int row) -> const char* {
+        return row_name_fn != nullptr ? row_name_fn(menu_state.section, row) : ui_text::unknown_label();
     };
     const auto safe_value_label =
-        [value_label_fn, value_label_context](const int row) -> std::string {
-            return value_label_fn != nullptr ? value_label_fn(row, value_label_context) : std::string {};
+        [value_label_fn, value_label_context, &menu_state](const int row) -> std::string {
+            return value_label_fn != nullptr ? value_label_fn(menu_state, row, value_label_context) : std::string {};
         };
 
-    const float panel_x = static_cast<float>(fb_width) * 0.20f;
+    const float panel_x = static_cast<float>(fb_width) * 0.16f;
     const float panel_y = static_cast<float>(fb_height) * 0.16f;
-    const float panel_w = static_cast<float>(fb_width) * 0.60f;
+    const float panel_w = static_cast<float>(fb_width) * 0.68f;
     const float panel_h = static_cast<float>(fb_height) * 0.68f;
     draw_rect_pixels(fb_width, fb_height, panel_x, panel_y, panel_w, panel_h, 0.05f, 0.09f, 0.14f);
     draw_rect_pixels(fb_width, fb_height, panel_x + 4.0f, panel_y + 4.0f, panel_w - 8.0f, 44.0f, 0.09f, 0.16f, 0.24f);
 
     constexpr float kTitleScale = 3.0f;
     constexpr float kSubtitleScale = 1.8f;
-    constexpr float kFooterScale = 1.5f;
+    constexpr float kFooterScale = 1.6f;
     const OverlayVerticalLayout vertical = make_overlay_vertical_layout(
         panel_y,
         panel_h,
@@ -224,8 +224,17 @@ void render_options_menu_overlay(
         10.0f,
         8.0f);
 
-    const std::string title = fit_for_width(ui_text::options_title(), panel_w - 32.0f, kTitleScale);
-    const std::string subtitle = fit_for_width(ui_text::options_subtitle(), panel_w - 32.0f, kSubtitleScale);
+    const char* raw_title = ui_text::options_title();
+    const char* raw_subtitle = ui_text::options_subtitle();
+    if (menu_state.section == OptionsMenuSection::Controls) {
+        raw_title = ui_text::options_controls_title();
+        raw_subtitle = ui_text::options_controls_subtitle();
+    } else if (menu_state.section == OptionsMenuSection::Audio) {
+        raw_title = ui_text::options_audio_title();
+        raw_subtitle = ui_text::options_audio_subtitle();
+    }
+    const std::string title = fit_for_width(raw_title, panel_w - 32.0f, kTitleScale);
+    const std::string subtitle = fit_for_width(raw_subtitle, panel_w - 32.0f, kSubtitleScale);
     draw_text_pixels(
         fb_width,
         fb_height,
@@ -245,23 +254,24 @@ void render_options_menu_overlay(
 
     const float row_x = panel_x + 20.0f;
     const float row_w = panel_w - 40.0f;
+    const int row_count = options_menu_row_count(menu_state.section);
     const OverlayRowLayout rows = make_overlay_row_layout(
         vertical.body_y,
         vertical.body_h,
-        OptionsMenuRowCount,
-        34.0f,
-        24.0f,
-        6.0f,
-        2.0f);
+        row_count,
+        42.0f,
+        32.0f,
+        8.0f,
+        4.0f);
     const float rows_total_h =
-        rows.row_h * static_cast<float>(OptionsMenuRowCount) +
-        rows.row_gap * static_cast<float>(std::max(0, OptionsMenuRowCount - 1));
-    const float value_w = std::clamp(row_w * 0.34f, 130.0f, 220.0f);
+        rows.row_h * static_cast<float>(row_count) +
+        rows.row_gap * static_cast<float>(std::max(0, row_count - 1));
+    const float value_w = std::clamp(row_w * 0.40f, 170.0f, 300.0f);
 
-    for (int row = 0; row < OptionsMenuRowCount; ++row) {
+    for (int row = 0; row < row_count; ++row) {
         const bool selected = row == menu_state.selected_row;
         const float y = rows.row_start_y + static_cast<float>(row) * (rows.row_h + rows.row_gap);
-        const float label_scale = rows.row_h < 30.0f ? 1.6f : 1.8f;
+        const float label_scale = rows.row_h < 36.0f ? 1.8f : 2.0f;
         draw_rect_pixels(
             fb_width,
             fb_height,
@@ -281,8 +291,13 @@ void render_options_menu_overlay(
             selected ? ui_text::selected_marker() : ui_text::unselected_marker(),
             Color {0.96f, 0.86f, 0.34f});
 
-        const bool is_back_row = row == OptionsMenuRowBack;
-        const float label_w = is_back_row ? (row_w - 34.0f) : (row_w - value_w - 48.0f);
+        const bool is_back_row = options_row_is_back(menu_state.section, row);
+        const bool binding_row = options_row_is_binding(menu_state.section, row);
+        const bool axis_invert_row = options_row_is_axis_invert(menu_state.section, row);
+        const bool volume_row = options_row_is_volume(menu_state.section, row);
+        const bool mute_row = options_row_is_mute(menu_state.section, row);
+        const bool has_value = binding_row || axis_invert_row || volume_row || mute_row;
+        const float label_w = (is_back_row || !has_value) ? (row_w - 34.0f) : (row_w - value_w - 48.0f);
         const std::string label = fit_for_width(safe_row_name(row), label_w, label_scale);
         draw_text_pixels(
             fb_width,
@@ -293,18 +308,14 @@ void render_options_menu_overlay(
             label,
             Color {0.90f, 0.94f, 1.00f});
 
-        if (is_back_row) {
+        if (is_back_row || !has_value) {
             continue;
         }
 
-        const float value_h = std::clamp(rows.row_h - 4.0f, 20.0f, 30.0f);
+        const float value_h = std::clamp(rows.row_h - 4.0f, 20.0f, 34.0f);
         const float value_x = row_x + row_w - value_w - 14.0f;
         const float value_y = y + std::max(0.0f, 0.5f * (rows.row_h - value_h));
-        const bool binding_row = options_row_is_binding(row);
-        const bool axis_invert_row = options_row_is_axis_invert(row);
-        const bool volume_row = options_row_is_volume(row);
-        const bool mute_row = options_row_is_mute(row);
-        const bool waiting_on_row = binding_row && menu_state.waiting_for_key && selected;
+        const bool waiting_on_row = binding_row && menu_state.waiting_for_input && selected;
         draw_rect_pixels(
             fb_width,
             fb_height,
@@ -335,15 +346,20 @@ void render_options_menu_overlay(
             Color {0.94f, 0.97f, 1.00f});
     }
 
-    const std::string footer = menu_state.waiting_for_key
+    const std::string footer = menu_state.waiting_for_input
         ? choose_variant_for_width(
             {ui_text::options_footer_waiting_for_key(), ui_text::options_footer_waiting_for_key_short()},
             panel_w - 32.0f,
             kFooterScale)
-        : choose_variant_for_width(
-            {ui_text::options_footer_default(), ui_text::options_footer_default_short()},
-            panel_w - 32.0f,
-            kFooterScale);
+        : menu_state.section == OptionsMenuSection::Root
+            ? choose_variant_for_width(
+                {ui_text::options_footer_root(), ui_text::options_footer_root_short()},
+                panel_w - 32.0f,
+                kFooterScale)
+            : choose_variant_for_width(
+                {ui_text::options_footer_default(), ui_text::options_footer_default_short()},
+                panel_w - 32.0f,
+                kFooterScale);
     draw_text_pixels(
         fb_width,
         fb_height,

@@ -11,15 +11,15 @@ namespace {
 
 InputSlot input_slot_for_options_row(const int row) {
     switch (row) {
-        case OptionsMenuRowP1Up:
-        case OptionsMenuRowP1Down:
-        case OptionsMenuRowP1Axis:
-        case OptionsMenuRowP1AxisInvert:
+        case OptionsControlsRowP1Up:
+        case OptionsControlsRowP1Down:
+        case OptionsControlsRowP1Axis:
+        case OptionsControlsRowP1AxisInvert:
             return InputSlot::P1;
-        case OptionsMenuRowP2Up:
-        case OptionsMenuRowP2Down:
-        case OptionsMenuRowP2Axis:
-        case OptionsMenuRowP2AxisInvert:
+        case OptionsControlsRowP2Up:
+        case OptionsControlsRowP2Down:
+        case OptionsControlsRowP2Axis:
+        case OptionsControlsRowP2AxisInvert:
             return InputSlot::P2;
         default:
             return InputSlot::P1;
@@ -28,11 +28,11 @@ InputSlot input_slot_for_options_row(const int row) {
 
 AxisDirection axis_direction_for_options_row(const int row) {
     switch (row) {
-        case OptionsMenuRowP1Up:
-        case OptionsMenuRowP2Up:
+        case OptionsControlsRowP1Up:
+        case OptionsControlsRowP2Up:
             return AxisDirection::Negative;
-        case OptionsMenuRowP1Down:
-        case OptionsMenuRowP2Down:
+        case OptionsControlsRowP1Down:
+        case OptionsControlsRowP2Down:
             return AxisDirection::Positive;
         default:
             return AxisDirection::Negative;
@@ -41,10 +41,10 @@ AxisDirection axis_direction_for_options_row(const int row) {
 
 bool options_row_has_input_binding(const int row) {
     switch (row) {
-        case OptionsMenuRowP1Up:
-        case OptionsMenuRowP1Down:
-        case OptionsMenuRowP2Up:
-        case OptionsMenuRowP2Down:
+        case OptionsControlsRowP1Up:
+        case OptionsControlsRowP1Down:
+        case OptionsControlsRowP2Up:
+        case OptionsControlsRowP2Down:
             return true;
         default:
             return false;
@@ -52,17 +52,20 @@ bool options_row_has_input_binding(const int row) {
 }
 
 bool options_row_has_axis_binding(const int row) {
-    return row == OptionsMenuRowP1Axis || row == OptionsMenuRowP2Axis;
+    return row == OptionsControlsRowP1Axis || row == OptionsControlsRowP2Axis;
 }
 
 bool options_row_has_axis_invert(const int row) {
-    return row == OptionsMenuRowP1AxisInvert || row == OptionsMenuRowP2AxisInvert;
+    return row == OptionsControlsRowP1AxisInvert || row == OptionsControlsRowP2AxisInvert;
 }
 
 }  // namespace
 
-bool sdl_options_binding_row(const int row, SdlOptionsBindingRow& binding_row) {
-    if (!options_row_has_input_binding(row)) {
+bool sdl_options_binding_row(
+    const OptionsMenuSection section,
+    const int row,
+    SdlOptionsBindingRow& binding_row) {
+    if (section != OptionsMenuSection::Controls || !options_row_has_input_binding(row)) {
         return false;
     }
     binding_row = SdlOptionsBindingRow {
@@ -72,25 +75,28 @@ bool sdl_options_binding_row(const int row, SdlOptionsBindingRow& binding_row) {
     return true;
 }
 
-bool sdl_options_axis_row(const int row, InputSlot& slot) {
-    if (!options_row_has_axis_binding(row)) {
+bool sdl_options_axis_row(const OptionsMenuSection section, const int row, InputSlot& slot) {
+    if (section != OptionsMenuSection::Controls || !options_row_has_axis_binding(row)) {
         return false;
     }
     slot = input_slot_for_options_row(row);
     return true;
 }
 
-bool sdl_options_axis_invert_row(const int row, InputSlot& slot) {
-    if (!options_row_has_axis_invert(row)) {
+bool sdl_options_axis_invert_row(const OptionsMenuSection section, const int row, InputSlot& slot) {
+    if (section != OptionsMenuSection::Controls || !options_row_has_axis_invert(row)) {
         return false;
     }
     slot = input_slot_for_options_row(row);
     return true;
 }
 
-ControllerButton controller_button_for_options_row(const ActionInputBindings& bindings, const int row) {
+ControllerButton controller_button_for_options_row(
+    const ActionInputBindings& bindings,
+    const OptionsMenuSection section,
+    const int row) {
     SdlOptionsBindingRow binding_row {};
-    if (!sdl_options_binding_row(row, binding_row)) {
+    if (!sdl_options_binding_row(section, row, binding_row)) {
         return ControllerButton::Unbound;
     }
     return controller_button_for_move_direction(
@@ -99,9 +105,12 @@ ControllerButton controller_button_for_options_row(const ActionInputBindings& bi
         binding_row.direction);
 }
 
-int keyboard_scancode_for_options_row(const ActionInputBindings& bindings, const int row) {
+int keyboard_scancode_for_options_row(
+    const ActionInputBindings& bindings,
+    const OptionsMenuSection section,
+    const int row) {
     SdlOptionsBindingRow binding_row {};
-    if (!sdl_options_binding_row(row, binding_row)) {
+    if (!sdl_options_binding_row(section, row, binding_row)) {
         return kKeyboardScancodeUnbound;
     }
     return keyboard_scancode_for_move_direction(
@@ -110,29 +119,38 @@ int keyboard_scancode_for_options_row(const ActionInputBindings& bindings, const
         binding_row.direction);
 }
 
-int controller_index_for_options_row(const ActionInputBindings& bindings, const int row) {
+int controller_index_for_options_row(
+    const ActionInputBindings& bindings,
+    const OptionsMenuSection section,
+    const int row) {
     SdlOptionsBindingRow binding_row {};
-    if (sdl_options_binding_row(row, binding_row)) {
+    if (sdl_options_binding_row(section, row, binding_row)) {
         return controller_index_for_input_slot(bindings, binding_row.slot);
     }
     InputSlot slot = InputSlot::P1;
-    if (sdl_options_axis_row(row, slot) || sdl_options_axis_invert_row(row, slot)) {
+    if (sdl_options_axis_row(section, row, slot) || sdl_options_axis_invert_row(section, row, slot)) {
         return controller_index_for_input_slot(bindings, slot);
     }
     return 0;
 }
 
-ControllerAxis controller_axis_for_options_row(const ActionInputBindings& bindings, const int row) {
+ControllerAxis controller_axis_for_options_row(
+    const ActionInputBindings& bindings,
+    const OptionsMenuSection section,
+    const int row) {
     InputSlot slot = InputSlot::P1;
-    if (!sdl_options_axis_row(row, slot) && !sdl_options_axis_invert_row(row, slot)) {
+    if (!sdl_options_axis_row(section, row, slot) && !sdl_options_axis_invert_row(section, row, slot)) {
         return ControllerAxis::LeftY;
     }
     return controller_axis_for_input_slot(bindings, slot);
 }
 
-bool controller_axis_inverted_for_options_row(const ActionInputBindings& bindings, const int row) {
+bool controller_axis_inverted_for_options_row(
+    const ActionInputBindings& bindings,
+    const OptionsMenuSection section,
+    const int row) {
     InputSlot slot = InputSlot::P1;
-    if (!sdl_options_axis_row(row, slot) && !sdl_options_axis_invert_row(row, slot)) {
+    if (!sdl_options_axis_row(section, row, slot) && !sdl_options_axis_invert_row(section, row, slot)) {
         return false;
     }
     return controller_axis_inverted_for_input_slot(bindings, slot);

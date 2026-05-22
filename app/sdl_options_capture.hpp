@@ -22,14 +22,17 @@ SdlOptionsCaptureResult apply_sdl_options_capture(
 
 bool cycle_sdl_options_controller_button(
     ActionInputBindings& bindings,
+    OptionsMenuSection section,
     int row,
     int direction);
 bool cycle_sdl_options_controller_axis(
     ActionInputBindings& bindings,
+    OptionsMenuSection section,
     int row,
     int direction);
 bool toggle_sdl_options_controller_axis_invert(
     ActionInputBindings& bindings,
+    OptionsMenuSection section,
     int row);
 
 }  // namespace whacker::app

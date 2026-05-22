@@ -50,21 +50,39 @@ enum MenuRow : std::uint8_t {
     MenuRowCount = 5
 };
 
-enum OptionsMenuRow : std::uint8_t {
-    OptionsMenuRowP1Up = 0,
-    OptionsMenuRowP1Down = 1,
-    OptionsMenuRowP2Up = 2,
-    OptionsMenuRowP2Down = 3,
-    OptionsMenuRowP1Axis = 4,
-    OptionsMenuRowP1AxisInvert = 5,
-    OptionsMenuRowP2Axis = 6,
-    OptionsMenuRowP2AxisInvert = 7,
-    OptionsMenuRowMasterVolume = 8,
-    OptionsMenuRowMusicVolume = 9,
-    OptionsMenuRowSfxVolume = 10,
-    OptionsMenuRowMute = 11,
-    OptionsMenuRowBack = 12,
-    OptionsMenuRowCount = 13
+enum class OptionsMenuSection : std::uint8_t {
+    Root,
+    Controls,
+    Audio
+};
+
+enum OptionsRootMenuRow : std::uint8_t {
+    OptionsRootRowControls = 0,
+    OptionsRootRowAudio = 1,
+    OptionsRootRowBack = 2,
+    OptionsRootRowCount = 3
+};
+
+enum OptionsControlsMenuRow : std::uint8_t {
+    OptionsControlsRowP1Up = 0,
+    OptionsControlsRowP1Down = 1,
+    OptionsControlsRowP1Axis = 2,
+    OptionsControlsRowP1AxisInvert = 3,
+    OptionsControlsRowP2Up = 4,
+    OptionsControlsRowP2Down = 5,
+    OptionsControlsRowP2Axis = 6,
+    OptionsControlsRowP2AxisInvert = 7,
+    OptionsControlsRowBack = 8,
+    OptionsControlsRowCount = 9
+};
+
+enum OptionsAudioMenuRow : std::uint8_t {
+    OptionsAudioRowMasterVolume = 0,
+    OptionsAudioRowMusicVolume = 1,
+    OptionsAudioRowSfxVolume = 2,
+    OptionsAudioRowMute = 3,
+    OptionsAudioRowBack = 4,
+    OptionsAudioRowCount = 5
 };
 
 enum PauseMenuRow : std::uint8_t {
@@ -89,8 +107,9 @@ struct StoryMenuState {
 };
 
 struct OptionsMenuState {
+    OptionsMenuSection section = OptionsMenuSection::Root;
     int selected_row = 0;
-    bool waiting_for_key = false;
+    bool waiting_for_input = false;
 };
 
 struct PauseMenuState {

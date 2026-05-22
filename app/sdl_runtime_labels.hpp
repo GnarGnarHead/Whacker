@@ -1,11 +1,12 @@
 #pragma once
 
 #include "action_input.hpp"
+#include "ui_state.hpp"
 
 namespace whacker::app {
 
 const char* main_menu_row_name(int row);
-const char* options_menu_row_name(int row);
+const char* options_menu_row_name(OptionsMenuSection section, int row);
 const char* story_menu_row_name(int row);
 const char* story_hub_row_name(int row);
 const char* controller_button_label(ControllerButton button);

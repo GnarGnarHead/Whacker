@@ -131,7 +131,9 @@ float text_pixel_width(const std::string& text, const float scale) {
     if (text.empty()) {
         return 0.0f;
     }
-    return static_cast<float>(text.size()) * (3.0f * scale) + static_cast<float>(text.size() - 1) * scale;
+    const float render_scale = whacker::app::pixel_font_render_scale(scale);
+    return static_cast<float>(text.size()) * (3.0f * render_scale) +
+        static_cast<float>(text.size() - 1) * render_scale;
 }
 
 void draw_digit_pixels(
@@ -145,6 +147,7 @@ void draw_digit_pixels(
     if (digit < 0 || digit > 9) {
         return;
     }
+    const float render_scale = whacker::app::pixel_font_render_scale(scale);
 
     static constexpr std::array<std::array<int, 7>, 10> kSegments {
         std::array<int, 7> {1, 1, 1, 0, 1, 1, 1},
@@ -159,8 +162,8 @@ void draw_digit_pixels(
         std::array<int, 7> {1, 1, 1, 1, 0, 1, 1},
     };
 
-    const float thickness = 2.0f * scale;
-    const float length = 6.0f * scale;
+    const float thickness = 2.0f * render_scale;
+    const float length = 6.0f * render_scale;
     const auto& segments = kSegments[static_cast<std::size_t>(digit)];
 
     if (segments[0] != 0) {
@@ -173,7 +176,7 @@ void draw_digit_pixels(
             x,
             y + thickness,
             thickness,
-            3.0f * scale,
+            3.0f * render_scale,
             color.r,
             color.g,
             color.b);
@@ -185,7 +188,7 @@ void draw_digit_pixels(
             x + thickness + length,
             y + thickness,
             thickness,
-            3.0f * scale,
+            3.0f * render_scale,
             color.r,
             color.g,
             color.b);
@@ -195,7 +198,7 @@ void draw_digit_pixels(
             fb_width,
             fb_height,
             x + thickness,
-            y + 4.0f * scale,
+            y + 4.0f * render_scale,
             length,
             thickness,
             color.r,
@@ -207,9 +210,9 @@ void draw_digit_pixels(
             fb_width,
             fb_height,
             x,
-            y + 5.0f * scale,
+            y + 5.0f * render_scale,
             thickness,
-            3.0f * scale,
+            3.0f * render_scale,
             color.r,
             color.g,
             color.b);
@@ -219,9 +222,9 @@ void draw_digit_pixels(
             fb_width,
             fb_height,
             x + thickness + length,
-            y + 5.0f * scale,
+            y + 5.0f * render_scale,
             thickness,
-            3.0f * scale,
+            3.0f * render_scale,
             color.r,
             color.g,
             color.b);
@@ -231,7 +234,7 @@ void draw_digit_pixels(
             fb_width,
             fb_height,
             x + thickness,
-            y + 8.0f * scale,
+            y + 8.0f * render_scale,
             length,
             thickness,
             color.r,
@@ -317,6 +320,7 @@ void draw_text_pixels(
     const std::string& text,
     const Color color) {
     float cursor_x = x;
+    const float render_scale = pixel_font_render_scale(scale);
     for (const char ch : text) {
         const std::array<std::uint8_t, 5> rows = glyph_3x5(ch);
         for (int row = 0; row < 5; ++row) {
@@ -328,16 +332,16 @@ void draw_text_pixels(
                 draw_rect_pixels(
                     fb_width,
                     fb_height,
-                    cursor_x + static_cast<float>(col) * scale,
-                    y + static_cast<float>(row) * scale,
-                    scale,
-                    scale,
+                    cursor_x + static_cast<float>(col) * render_scale,
+                    y + static_cast<float>(row) * render_scale,
+                    render_scale,
+                    render_scale,
                     color.r,
                     color.g,
                     color.b);
             }
         }
-        cursor_x += 4.0f * scale;
+        cursor_x += 4.0f * render_scale;
     }
 }
 
@@ -352,18 +356,18 @@ void draw_text_centered(
     const std::string& text,
     const Color color) {
     const float text_w = text_pixel_width(text, scale);
-    const float text_h = 5.0f * scale;
+    const float text_h = text_line_height_pixels(scale);
     const float tx = x + std::max(0.0f, 0.5f * (w - text_w));
     const float ty = y + std::max(0.0f, 0.5f * (h - text_h));
     draw_text_pixels(fb_width, fb_height, tx, ty, scale, text, color);
 }
 
 float text_char_advance_pixels(const float scale) {
-    return 4.0f * scale;
+    return 4.0f * pixel_font_render_scale(scale);
 }
 
 float text_line_height_pixels(const float scale) {
-    return 5.0f * scale;
+    return 5.0f * pixel_font_render_scale(scale);
 }
 
 void draw_two_digits(
@@ -378,7 +382,7 @@ void draw_two_digits(
     const int tens = clamped / 10;
     const int ones = clamped % 10;
     draw_digit_pixels(fb_width, fb_height, x, y, scale, tens, color);
-    draw_digit_pixels(fb_width, fb_height, x + (12.0f * scale), y, scale, ones, color);
+    draw_digit_pixels(fb_width, fb_height, x + (12.0f * pixel_font_render_scale(scale)), y, scale, ones, color);
 }
 
 }  // namespace whacker::app

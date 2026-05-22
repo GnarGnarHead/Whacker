@@ -15,12 +15,18 @@ const char* main_menu_footer();
 const char* main_menu_footer_short();
 
 const char* options_title();
+const char* options_controls_title();
+const char* options_audio_title();
 const char* options_subtitle();
+const char* options_controls_subtitle();
+const char* options_audio_subtitle();
 const char* options_waiting_value();
 const char* options_toggle_on();
 const char* options_toggle_off();
 const char* options_footer_waiting_for_key();
 const char* options_footer_waiting_for_key_short();
+const char* options_footer_root();
+const char* options_footer_root_short();
 const char* options_footer_default();
 const char* options_footer_default_short();
 
