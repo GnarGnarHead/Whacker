@@ -365,8 +365,6 @@ struct StoryIntroInputFixture {
     std::mt19937_64 rng;
     whacker::app::Screen screen = whacker::app::Screen::StoryIntro;
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    int framebuffer_width = 960;
-    int framebuffer_height = 540;
 
     explicit StoryIntroInputFixture(const std::mt19937_64::result_type seed)
         : rng(seed) {}
@@ -385,8 +383,8 @@ struct StoryIntroInputFixture {
         const bool confirm = take_input_flag(g_stub_confirm_press);
         const whacker::app::StoryIntroBodyLayout body_layout =
             whacker::app::compute_story_intro_body_layout_for_framebuffer(
-                framebuffer_width,
-                framebuffer_height,
+                960,
+                540,
                 intro,
                 controls,
                 nullptr,
@@ -1208,16 +1206,14 @@ void test_story_intro_scroll_input_ignored_without_overflow() {
     reset_story_integration_test_state();
 
     StoryIntroInputFixture fixture(0xAC1D0FFULL);
-    fixture.framebuffer_width = 1280;
-    fixture.framebuffer_height = 720;
     fixture.intro.phase = whacker::app::StoryIntroPhase::Invite;
     fixture.intro.dialogue_writing = false;
     fixture.intro.visible_chars = std::numeric_limits<std::size_t>::max();
 
     const whacker::app::StoryIntroBodyLayout layout =
         whacker::app::compute_story_intro_body_layout_for_framebuffer(
-            fixture.framebuffer_width,
-            fixture.framebuffer_height,
+            960,
+            540,
             fixture.intro,
             fixture.controls,
             nullptr,

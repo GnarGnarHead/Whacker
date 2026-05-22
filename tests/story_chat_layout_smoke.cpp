@@ -5,7 +5,6 @@
 #include <utility>
 
 #include "overlay_layout_math.hpp"
-#include "pixel_font.hpp"
 #include "story_chat_layout.hpp"
 #include "story_panel_layout.hpp"
 
@@ -18,11 +17,11 @@ void require(const bool condition) {
 }
 
 float text_char_advance_pixels(const float scale) {
-    return 4.0f * whacker::app::pixel_font_render_scale(scale);
+    return 4.0f * scale;
 }
 
 float text_line_height_pixels(const float scale) {
-    return 5.0f * whacker::app::pixel_font_render_scale(scale);
+    return 5.0f * scale;
 }
 
 bool nearly_equal(const float a, const float b, const float epsilon = 1.0e-3f) {
@@ -34,7 +33,7 @@ void test_scene_chat_budget_stays_within_safe_width_for_common_resolutions() {
     constexpr int kEarlyWrapChars = 2;
     constexpr float kBodyScale = 2.0f;
     constexpr float kFooterScale = 1.9f;
-    const float kLineStep = text_line_height_pixels(kBodyScale) + 2.0f;
+    constexpr float kLineStep = (5.0f * kBodyScale) + 2.0f;
     const std::array<std::pair<int, int>, 3> kResolutions {{
         {1280, 720},
         {1600, 900},
@@ -113,21 +112,13 @@ void test_intro_option_rows_do_not_overlap_footer_lane() {
     }
 
     const float option_area_h = std::max(0.0f, body_bottom - cursor_y - 2.0f);
-    const float readable_option_h = text_line_height_pixels(2.0f) + 6.0f;
-    const float readable_option_gap = 4.0f;
-    const float required_option_h =
-        readable_option_h * static_cast<float>(kOptionCount) +
-        readable_option_gap * static_cast<float>(kOptionCount - 1);
-    if (option_area_h < required_option_h) {
-        return;
-    }
     const whacker::app::OverlayRowLayout option_layout = whacker::app::make_overlay_row_layout(
         cursor_y,
         option_area_h,
         kOptionCount,
-        readable_option_h,
-        text_line_height_pixels(1.8f) + 4.0f,
-        readable_option_gap,
+        22.0f,
+        16.0f,
+        4.0f,
         2.0f);
     if (option_area_h <= 0.0f || option_layout.row_h <= 0.0f) {
         return;

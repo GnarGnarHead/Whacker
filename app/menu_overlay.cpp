@@ -41,6 +41,18 @@ std::string choose_variant_for_width(
         max_chars_for_text_width(width_px, scale, reserved_chars));
 }
 
+float fit_scale_for_width(
+    const std::string_view text,
+    const float width_px,
+    const float desired_scale,
+    const float min_scale) {
+    if (text.empty() || width_px <= 0.0f || desired_scale <= 0.0f) {
+        return desired_scale;
+    }
+    const float max_scale = width_px / std::max(1.0f, static_cast<float>(text.size()) * 4.0f);
+    return std::clamp(max_scale, std::min(min_scale, desired_scale), desired_scale);
+}
+
 }  // namespace
 
 void render_main_menu_overlay(
@@ -212,13 +224,14 @@ void render_options_menu_overlay(
     draw_rect_pixels(fb_width, fb_height, panel_x, panel_y, panel_w, panel_h, 0.05f, 0.09f, 0.14f);
     draw_rect_pixels(fb_width, fb_height, panel_x + 4.0f, panel_y + 4.0f, panel_w - 8.0f, 44.0f, 0.09f, 0.16f, 0.24f);
 
-    constexpr float kTitleScale = 3.0f;
-    constexpr float kSubtitleScale = 1.8f;
-    constexpr float kFooterScale = 1.6f;
+    constexpr float kOptionsReadabilityScale = 1.30f;
+    constexpr float kTitleScale = 3.0f * kOptionsReadabilityScale;
+    constexpr float kSubtitleScale = 1.8f * kOptionsReadabilityScale;
+    constexpr float kFooterScale = 1.6f * kOptionsReadabilityScale;
     const OverlayVerticalLayout vertical = make_overlay_vertical_layout(
         panel_y,
         panel_h,
-        70.0f,
+        86.0f,
         text_line_height_pixels(kFooterScale),
         8.0f,
         10.0f,
@@ -259,19 +272,19 @@ void render_options_menu_overlay(
         vertical.body_y,
         vertical.body_h,
         row_count,
-        42.0f,
+        52.0f,
         32.0f,
         8.0f,
         4.0f);
     const float rows_total_h =
         rows.row_h * static_cast<float>(row_count) +
         rows.row_gap * static_cast<float>(std::max(0, row_count - 1));
-    const float value_w = std::clamp(row_w * 0.40f, 170.0f, 300.0f);
+    const float value_w = std::clamp(row_w * 0.50f, 220.0f, 520.0f);
 
     for (int row = 0; row < row_count; ++row) {
         const bool selected = row == menu_state.selected_row;
         const float y = rows.row_start_y + static_cast<float>(row) * (rows.row_h + rows.row_gap);
-        const float label_scale = rows.row_h < 36.0f ? 1.8f : 2.0f;
+        const float label_scale = (rows.row_h < 36.0f ? 1.8f : 2.0f) * kOptionsReadabilityScale;
         draw_rect_pixels(
             fb_width,
             fb_height,
@@ -312,7 +325,7 @@ void render_options_menu_overlay(
             continue;
         }
 
-        const float value_h = std::clamp(rows.row_h - 4.0f, 20.0f, 34.0f);
+        const float value_h = std::clamp(rows.row_h - 2.0f, 28.0f, 48.0f);
         const float value_x = row_x + row_w - value_w - 14.0f;
         const float value_y = y + std::max(0.0f, 0.5f * (rows.row_h - value_h));
         const bool waiting_on_row = binding_row && menu_state.waiting_for_input && selected;
@@ -332,8 +345,9 @@ void render_options_menu_overlay(
         } else if (binding_row || axis_invert_row || volume_row || mute_row) {
             value_label = safe_value_label(row);
         }
-        const float value_scale = value_h < 24.0f ? 1.3f : 1.5f;
-        const std::string fitted_value = fit_for_width(value_label, value_w - 10.0f, value_scale);
+        const float desired_value_scale = value_h < 40.0f ? 2.75f : 3.15f;
+        const float value_scale = fit_scale_for_width(value_label, value_w - 16.0f, desired_value_scale, 2.35f);
+        const std::string fitted_value = fit_for_width(value_label, value_w - 16.0f, value_scale);
         draw_text_centered(
             fb_width,
             fb_height,

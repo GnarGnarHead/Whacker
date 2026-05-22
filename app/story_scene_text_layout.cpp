@@ -5,7 +5,6 @@
 #include <limits>
 
 #include "overlay_layout_math.hpp"
-#include "pixel_font.hpp"
 #include "story_chat_layout.hpp"
 #include "story_panel_layout.hpp"
 #include "story_scene.hpp"
@@ -24,7 +23,7 @@ constexpr float kBodyScale = 2.0f;
 constexpr float kFooterScale = 1.9f;
 
 float text_line_height_pixels_local(const float scale) {
-    return 5.0f * pixel_font_render_scale(scale);
+    return 5.0f * scale;
 }
 
 StoryPanelLayout make_story_panel_layout_local(

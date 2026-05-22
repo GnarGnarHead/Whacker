@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <cmath>
 
-#include "pixel_font.hpp"
-
 namespace whacker::app {
 
 namespace {
@@ -104,11 +102,7 @@ int max_chars_for_text_width(const float width_px, const float scale, const int 
     if (width_px <= 0.0f || scale <= 0.0f) {
         return 0;
     }
-    const float advance_px = 4.0f * pixel_font_render_scale(scale);
-    if (advance_px <= 0.0f) {
-        return 0;
-    }
-    const int max_chars = static_cast<int>(std::floor(width_px / advance_px));
+    const int max_chars = static_cast<int>(std::floor(width_px / (4.0f * scale)));
     return std::max(0, max_chars - std::max(0, reserved_chars));
 }
 
