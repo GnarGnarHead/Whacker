@@ -24,7 +24,8 @@ void clear_story_menu_feedback(StoryMenuControllerContext& context) {
 
 void continue_loaded_story(
     StoryMenuControllerContext& context,
-    const StoryCareerData& loaded) {
+    const StoryCareerData& loaded,
+    StoryMenuControllerEffects& effects) {
     StoryRuntimeState next_story_runtime = context.story_runtime;
     const AppState loaded_state = apply_continue_loaded_career(next_story_runtime, loaded);
     context.story_runtime = next_story_runtime;
@@ -33,13 +34,13 @@ void continue_loaded_story(
         context.story_hub.feedback_line_1 = story_text::career_loaded_feedback_line_1();
         context.story_hub.feedback_line_2 =
             story_text::career_loaded_feedback_line_2(context.story_runtime.career.week);
-        context.app_state = AppState::StoryHub;
+        effects.route = StoryMenuRoute::StoryHub;
         return;
     }
 
     begin_story_onboarding_scene(context.story_scene, context.story_runtime);
     clear_story_runtime_scene_pending_flags(context.story_runtime);
-    context.app_state = AppState::StoryScene;
+    effects.route = StoryMenuRoute::StoryScene;
 }
 
 }  // namespace
@@ -68,8 +69,7 @@ StoryMenuControllerEffects update_story_menu_controller(
     }
 
     if (result == StoryMenuActionResult::Back) {
-        context.app_state = AppState::MainMenu;
-        effects.return_to_main_menu = true;
+        effects.route = StoryMenuRoute::MainMenu;
         return effects;
     }
 
@@ -83,7 +83,7 @@ StoryMenuControllerEffects update_story_menu_controller(
             return effects;
         }
         clear_story_menu_feedback(context);
-        continue_loaded_story(context, loaded);
+        continue_loaded_story(context, loaded, effects);
         return effects;
     }
 
@@ -98,8 +98,8 @@ StoryMenuControllerEffects update_story_menu_controller(
             context.options,
             context.match_flow,
             context.simulation,
-            context.app_state,
             reset_career_fn);
+        effects.route = StoryMenuRoute::StoryIntro;
     }
 
     return effects;

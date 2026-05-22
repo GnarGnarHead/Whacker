@@ -99,6 +99,27 @@ void update_options_menu(
     runtime.accumulator = 0.0;
 }
 
+void apply_story_menu_route(
+    const StoryMenuRoute route,
+    SdlRuntimeState& runtime) {
+    switch (route) {
+        case StoryMenuRoute::None:
+            return;
+        case StoryMenuRoute::MainMenu:
+            return_to_main_menu(runtime);
+            return;
+        case StoryMenuRoute::StoryIntro:
+            runtime.app_state = AppState::StoryIntro;
+            return;
+        case StoryMenuRoute::StoryHub:
+            runtime.app_state = AppState::StoryHub;
+            return;
+        case StoryMenuRoute::StoryScene:
+            runtime.app_state = AppState::StoryScene;
+            return;
+    }
+}
+
 void update_story_menu(
     const ActionInputFrame& input,
     whacker::sim::Simulation& simulation,
@@ -113,7 +134,6 @@ void update_story_menu(
             .options = runtime.options,
             .match_flow = runtime.match_flow,
             .simulation = simulation,
-            .app_state = runtime.app_state,
             .feedback = &runtime.story_menu_feedback,
         },
         input,
@@ -126,10 +146,32 @@ void update_story_menu(
     if (effects.play_confirm_sound) {
         play_menu_confirm_sound(runtime);
     }
-    if (effects.return_to_main_menu) {
-        return_to_main_menu(runtime);
-    }
+    apply_story_menu_route(effects.route, runtime);
     runtime.accumulator = 0.0;
+}
+
+void apply_story_hub_route(
+    const StoryHubRoute route,
+    SdlRuntimeState& runtime) {
+    switch (route) {
+        case StoryHubRoute::None:
+            return;
+        case StoryHubRoute::MainMenu:
+            return_to_main_menu(runtime);
+            return;
+        case StoryHubRoute::StoryMenu:
+            enter_story_menu(runtime);
+            return;
+        case StoryHubRoute::StoryScene:
+            runtime.app_state = AppState::StoryScene;
+            return;
+        case StoryHubRoute::PaddleTuning:
+            runtime.app_state = AppState::PaddleTuning;
+            return;
+        case StoryHubRoute::Playing:
+            runtime.app_state = AppState::Playing;
+            return;
+    }
 }
 
 void update_story_hub(
@@ -146,7 +188,6 @@ void update_story_hub(
             .match_flow = runtime.match_flow,
             .simulation = simulation,
             .rng = runtime.rng,
-            .app_state = runtime.app_state,
         },
         input,
         save_story_career);
@@ -156,12 +197,7 @@ void update_story_hub(
     if (effects.play_confirm_sound) {
         play_menu_confirm_sound(runtime);
     }
-    if (effects.enter_story_menu) {
-        enter_story_menu(runtime);
-    }
-    if (effects.return_to_main_menu) {
-        return_to_main_menu(runtime);
-    }
+    apply_story_hub_route(effects.route, runtime);
 }
 
 void update_quick_match_setup(

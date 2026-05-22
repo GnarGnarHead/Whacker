@@ -27,7 +27,6 @@ void begin_new_story_intro(
     MatchOptions& options,
     MatchFlowState& match_flow,
     whacker::sim::Simulation& simulation,
-    AppState& app_state,
     StoryResetCareerFn reset_career_fn = nullptr);
 
 void complete_story_intro(
@@ -36,7 +35,7 @@ void complete_story_intro(
     StoryIntroState& story_intro_state,
     MatchFlowState& match_flow,
     whacker::sim::Simulation& simulation,
-    AppState& app_state,
+    AppState& route_app_state,
     RuntimeAuthoredTransitionRequest& authored_transition_request,
     StorySanitizeNameFn sanitize_name_fn = nullptr,
     StorySaveCareerCallback save_career_fn = nullptr);

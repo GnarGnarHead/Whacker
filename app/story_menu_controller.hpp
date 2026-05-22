@@ -22,14 +22,21 @@ struct StoryMenuControllerContext {
     MatchOptions& options;
     MatchFlowState& match_flow;
     whacker::sim::Simulation& simulation;
-    AppState& app_state;
     std::string* feedback = nullptr;
+};
+
+enum class StoryMenuRoute {
+    None,
+    MainMenu,
+    StoryIntro,
+    StoryHub,
+    StoryScene,
 };
 
 struct StoryMenuControllerEffects {
     bool play_move_sound = false;
     bool play_confirm_sound = false;
-    bool return_to_main_menu = false;
+    StoryMenuRoute route = StoryMenuRoute::None;
 };
 
 StoryMenuControllerEffects update_story_menu_controller(

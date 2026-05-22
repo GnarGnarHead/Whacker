@@ -28,14 +28,21 @@ struct StoryHubControllerContext {
     MatchFlowState& match_flow;
     whacker::sim::Simulation& simulation;
     std::mt19937_64& rng;
-    AppState& app_state;
+};
+
+enum class StoryHubRoute {
+    None,
+    MainMenu,
+    StoryMenu,
+    StoryScene,
+    PaddleTuning,
+    Playing,
 };
 
 struct StoryHubControllerEffects {
     bool play_move_sound = false;
     bool play_confirm_sound = false;
-    bool enter_story_menu = false;
-    bool return_to_main_menu = false;
+    StoryHubRoute route = StoryHubRoute::None;
 };
 
 StoryHubControllerEffects update_story_hub_controller(

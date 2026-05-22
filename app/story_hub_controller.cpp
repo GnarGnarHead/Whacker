@@ -34,8 +34,7 @@ StoryHubControllerEffects update_story_hub_controller(
     const StorySaveCareerCallback save_career_fn) {
     StoryHubControllerEffects effects {};
     if (!context.story_runtime.career_loaded) {
-        context.app_state = AppState::StoryMenu;
-        effects.enter_story_menu = true;
+        effects.route = StoryHubRoute::StoryMenu;
         return effects;
     }
 
@@ -45,7 +44,7 @@ StoryHubControllerEffects update_story_hub_controller(
         save_career_if_available(context.story_runtime, save_career_fn);
         begin_story_onboarding_scene(context.story_scene, context.story_runtime);
         clear_story_runtime_scene_pending_flags(context.story_runtime);
-        context.app_state = AppState::StoryScene;
+        effects.route = StoryHubRoute::StoryScene;
         return effects;
     }
 
@@ -64,8 +63,7 @@ StoryHubControllerEffects update_story_hub_controller(
     if (input.back) {
         effects.play_confirm_sound = true;
         save_career_if_available(context.story_runtime, save_career_fn);
-        context.app_state = AppState::MainMenu;
-        effects.return_to_main_menu = true;
+        effects.route = StoryHubRoute::MainMenu;
         return effects;
     }
 
@@ -83,8 +81,7 @@ StoryHubControllerEffects update_story_hub_controller(
 
     if (row == StoryHubRowBack) {
         save_career_if_available(context.story_runtime, save_career_fn);
-        context.app_state = AppState::MainMenu;
-        effects.return_to_main_menu = true;
+        effects.route = StoryHubRoute::MainMenu;
         return effects;
     }
 
@@ -100,7 +97,7 @@ StoryHubControllerEffects update_story_hub_controller(
         begin_story_player_paddle_tuning(
             context.paddle_tuning,
             context.story_runtime.career);
-        context.app_state = AppState::PaddleTuning;
+        effects.route = StoryHubRoute::PaddleTuning;
         return effects;
     }
 
@@ -115,7 +112,7 @@ StoryHubControllerEffects update_story_hub_controller(
             context.match_flow,
             context.rng,
             kind);
-        context.app_state = AppState::Playing;
+        effects.route = StoryHubRoute::Playing;
     }
 
     return effects;
