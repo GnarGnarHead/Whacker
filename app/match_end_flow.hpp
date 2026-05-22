@@ -1,6 +1,7 @@
 #pragma once
 
 #include "match_flow.hpp"
+#include "navigation.hpp"
 #include "runtime_visual_transition.hpp"
 #include "sim/physics.hpp"
 #include "story_match.hpp"
@@ -11,14 +12,18 @@
 
 namespace whacker::app {
 
-void end_active_or_quick_match(
+struct MatchEndFlowResult {
+    Screen route = Screen::MainMenu;
+};
+
+[[nodiscard]] MatchEndFlowResult end_active_or_quick_match(
     StoryRuntimeState& story_runtime,
     StoryHubState& story_hub_state,
     MatchFlowState& match_flow,
     whacker::sim::Simulation& simulation,
     StorySceneState& story_scene_state,
     RuntimeAuthoredTransitionRequest& authored_transition_request,
-    AppState& app_state,
+    Screen from_screen,
     StoryMatchEndReason end_reason,
     int story_official_games_to_win,
     StorySaveCareerCallback save_career_fn = nullptr);

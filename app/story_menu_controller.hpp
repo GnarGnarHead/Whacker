@@ -27,7 +27,7 @@ struct StoryMenuControllerContext {
 
 enum class StoryMenuRoute {
     None,
-    MainMenu,
+    Back,
     StoryIntro,
     StoryHub,
     StoryScene,

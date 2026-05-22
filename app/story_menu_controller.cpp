@@ -69,7 +69,7 @@ StoryMenuControllerEffects update_story_menu_controller(
     }
 
     if (result == StoryMenuActionResult::Back) {
-        effects.route = StoryMenuRoute::MainMenu;
+        effects.route = StoryMenuRoute::Back;
         return effects;
     }
 

@@ -19,6 +19,8 @@ void persist_runtime_menu_settings(const SdlRuntimeState& runtime) {
 }
 
 void initialize_sdl_runtime_state(SdlRuntimeState& runtime) {
+    reset_to_root(runtime.navigation, Screen::MainMenu);
+    runtime.app_state = navigation_app_state(runtime.navigation);
     load_menu_settings(
         runtime.options,
         runtime.controls,

@@ -13,8 +13,7 @@ bool intro_first_match_phase_active(const AppState app_state, const int story_in
 }
 
 MatchProgress make_match_progress(
-    const AppState app_state,
-    const AppState pause_return_state,
+    const AppState active_state,
     const MatchFlowState& match_flow,
     const StoryRuntimeState& story_runtime,
     const int story_intro_phase_value,
@@ -22,7 +21,6 @@ MatchProgress make_match_progress(
     const int score_left,
     const int score_right) {
     MatchProgress progress {};
-    const AppState active_state = app_state == AppState::Paused ? pause_return_state : app_state;
     const int balls_played = std::max(0, score_left + score_right);
     const bool intro_first_match_active =
         intro_first_match_phase_active(active_state, story_intro_phase_value) &&

@@ -3,7 +3,6 @@
 #include <cstdint>
 
 #include "app_types.hpp"
-#include "ui_state.hpp"
 
 namespace whacker::app {
 
@@ -34,7 +33,6 @@ enum class PaddleTuningTarget : std::uint8_t {
 
 struct PaddleTuningState {
     bool active = false;
-    AppState return_state = AppState::QuickMatchSetup;
     PaddleTuningTarget target = PaddleTuningTarget::QuickLeft;
     int selected_component = 0;
     int horizontal_hold_direction = 0;

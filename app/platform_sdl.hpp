@@ -20,6 +20,11 @@ struct SdlEventFrame {
     int controller_instance_id = -1;
     int controller_index = 0;
     ControllerButton controller_button = ControllerButton::Unbound;
+    bool controller_axis_moved = false;
+    int controller_axis_instance_id = -1;
+    int controller_axis_index = 0;
+    ControllerAxis controller_axis = ControllerAxis::LeftY;
+    float controller_axis_value = 0.0f;
 };
 
 class SdlPlatform {

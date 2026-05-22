@@ -9,36 +9,32 @@ namespace {
 
 void test_completed_match_routing() {
     whacker::app::StoryRuntimeState runtime {};
-    whacker::app::AppState app_state = whacker::app::AppState::MainMenu;
 
     runtime.post_forfeit_scene_pending = true;
-    whacker::app::route_after_completed_story_match(
+    whacker::app::Screen route = whacker::app::route_after_completed_story_match(
         runtime,
-        whacker::app::StoryMatchKind::OnboardingAyaFriendly,
-        app_state);
-    assert(app_state == whacker::app::AppState::StoryScene);
+        whacker::app::StoryMatchKind::OnboardingAyaFriendly);
+    assert(route == whacker::app::Screen::StoryScene);
     assert(runtime.onboarding_step == whacker::app::StoryOnboardingStep::ClubIntroScene);
     assert(runtime.onboarding_scene_pending);
     assert(!runtime.post_forfeit_scene_pending);
 
     runtime.onboarding_scene_pending = false;
     runtime.post_forfeit_scene_pending = true;
-    whacker::app::route_after_completed_story_match(
+    route = whacker::app::route_after_completed_story_match(
         runtime,
-        whacker::app::StoryMatchKind::OnboardingEntry,
-        app_state);
-    assert(app_state == whacker::app::AppState::StoryScene);
+        whacker::app::StoryMatchKind::OnboardingEntry);
+    assert(route == whacker::app::Screen::StoryScene);
     assert(runtime.onboarding_step == whacker::app::StoryOnboardingStep::CoachBriefScene);
     assert(runtime.onboarding_scene_pending);
     assert(!runtime.post_forfeit_scene_pending);
 
     runtime.onboarding_scene_pending = true;
     runtime.post_forfeit_scene_pending = true;
-    whacker::app::route_after_completed_story_match(
+    route = whacker::app::route_after_completed_story_match(
         runtime,
-        whacker::app::StoryMatchKind::Official,
-        app_state);
-    assert(app_state == whacker::app::AppState::StoryHub);
+        whacker::app::StoryMatchKind::Official);
+    assert(route == whacker::app::Screen::StoryHub);
     assert(!runtime.onboarding_scene_pending);
     assert(!runtime.post_forfeit_scene_pending);
 }

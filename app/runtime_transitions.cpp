@@ -9,15 +9,13 @@ namespace whacker::app {
 
 MatchExitPolicy compute_runtime_match_exit_policy(
     const whacker::sim::Simulation& simulation,
-    const AppState app_state,
-    const AppState pause_return_state,
+    const Screen active_screen,
     const MatchFlowState& match_flow,
     const StoryRuntimeState& story_runtime,
     const StoryIntroState& story_intro_state) {
     const auto& state = simulation.state();
     const MatchProgress progress = make_match_progress(
-        app_state,
-        pause_return_state,
+        app_state_for_screen(active_screen),
         match_flow,
         story_runtime,
         static_cast<int>(story_intro_state.phase),
@@ -27,7 +25,7 @@ MatchExitPolicy compute_runtime_match_exit_policy(
     return evaluate_match_exit_policy(progress);
 }
 
-void execute_runtime_pause_exit(
+ScreenRoute execute_runtime_pause_exit(
     const MatchExitPolicy& policy,
     StoryRuntimeState& story_runtime,
     StoryHubState& story_hub_state,
@@ -36,7 +34,7 @@ void execute_runtime_pause_exit(
     whacker::sim::Simulation& simulation,
     StorySceneState& story_scene_state,
     RuntimeAuthoredTransitionRequest& authored_transition_request,
-    AppState& app_state,
+    const Screen active_screen,
     const int story_official_games_to_win,
     const StorySanitizeNameFn sanitize_name_fn,
     const StorySaveCareerCallback save_career_fn) {
@@ -44,31 +42,29 @@ void execute_runtime_pause_exit(
 
     switch (policy.action) {
         case MatchExitAction::ExitQuickToSetup:
-            end_active_or_quick_match(
+            return screen_route(end_active_or_quick_match(
                 story_runtime,
                 story_hub_state,
                 match_flow,
                 simulation,
                 story_scene_state,
                 authored_transition_request,
-                app_state,
+                active_screen,
                 StoryMatchEndReason::Completed,
                 story_official_games_to_win,
-                save_career_fn);
-            return;
+                save_career_fn).route);
         case MatchExitAction::ExitStoryMatch:
-            end_active_or_quick_match(
+            return screen_route(end_active_or_quick_match(
                 story_runtime,
                 story_hub_state,
                 match_flow,
                 simulation,
                 story_scene_state,
                 authored_transition_request,
-                app_state,
+                active_screen,
                 policy.story_end_reason,
                 story_official_games_to_win,
-                save_career_fn);
-            return;
+                save_career_fn).route);
         case MatchExitAction::ExitIntroContinueStory: {
             const whacker::sim::RallyState terminal_state = simulation.state();
             story_intro_state.player_won = false;
@@ -84,12 +80,11 @@ void execute_runtime_pause_exit(
             reset_match_flow(match_flow);
             simulation.reset();
             clear_authored_transition_request(authored_transition_request);
-            app_state = AppState::StoryIntro;
-            return;
+            return screen_route(Screen::StoryIntro);
         }
         case MatchExitAction::None:
         default:
-            return;
+            return no_screen_route();
     }
 }
 
@@ -100,21 +95,20 @@ void quit_runtime_to_main_menu(
     StorySceneState& story_scene_state,
     MatchFlowState& match_flow,
     PauseMenuState& pause_menu_state,
-    AppState& pause_return_state,
     whacker::sim::Simulation& simulation,
     RuntimeAuthoredTransitionRequest& authored_transition_request,
+    const Screen active_screen,
     const int story_official_games_to_win,
-    const StorySaveCareerCallback save_career_fn,
-    AppState& app_state) {
+    const StorySaveCareerCallback save_career_fn) {
     if (story_runtime.active_match == StoryMatchKind::Training) {
-        end_active_or_quick_match(
+        (void)end_active_or_quick_match(
             story_runtime,
             story_hub_state,
             match_flow,
             simulation,
             story_scene_state,
             authored_transition_request,
-            app_state,
+            active_screen,
             StoryMatchEndReason::EndTraining,
             story_official_games_to_win,
             save_career_fn);
@@ -129,11 +123,9 @@ void quit_runtime_to_main_menu(
     reset_story_match_tracking(story_runtime);
     reset_match_flow(match_flow);
     simulation.reset();
-    pause_return_state = AppState::Playing;
     pause_menu_state.selected_row = PauseMenuRowResume;
     pause_menu_state.confirm_forfeit = false;
     pause_menu_state.confirm_selected = 0;
-    app_state = AppState::MainMenu;
 }
 
 }  // namespace whacker::app

@@ -20,6 +20,30 @@ constexpr Uint32 kOwnedSubsystems =
     SDL_INIT_TIMER |
     SDL_INIT_GAMECONTROLLER;
 
+constexpr float kCaptureAxisThreshold = 0.55f;
+
+float normalize_axis(const Sint16 value) {
+    if (value < 0) {
+        return static_cast<float>(value) / 32768.0f;
+    }
+    return static_cast<float>(value) / 32767.0f;
+}
+
+ControllerAxis controller_axis_from_sdl(const SDL_GameControllerAxis axis) {
+    switch (axis) {
+        case SDL_CONTROLLER_AXIS_LEFTX:
+            return ControllerAxis::LeftX;
+        case SDL_CONTROLLER_AXIS_LEFTY:
+            return ControllerAxis::LeftY;
+        case SDL_CONTROLLER_AXIS_RIGHTX:
+            return ControllerAxis::RightX;
+        case SDL_CONTROLLER_AXIS_RIGHTY:
+            return ControllerAxis::RightY;
+        default:
+            return ControllerAxis::Count;
+    }
+}
+
 ControllerButton controller_button_from_sdl(const SDL_GameControllerButton button) {
     switch (button) {
         case SDL_CONTROLLER_BUTTON_A:
@@ -187,6 +211,20 @@ void SdlPlatform::poll_events() {
             event_frame_.controller_index = -1;
             event_frame_.controller_button = controller_button_from_sdl(
                 static_cast<SDL_GameControllerButton>(event.cbutton.button));
+            continue;
+        }
+        if (event.type == SDL_CONTROLLERAXISMOTION) {
+            const ControllerAxis axis = controller_axis_from_sdl(
+                static_cast<SDL_GameControllerAxis>(event.caxis.axis));
+            const float value = normalize_axis(event.caxis.value);
+            if (axis != ControllerAxis::Count &&
+                (value <= -kCaptureAxisThreshold || value >= kCaptureAxisThreshold)) {
+                event_frame_.controller_axis_moved = true;
+                event_frame_.controller_axis_instance_id = static_cast<int>(event.caxis.which);
+                event_frame_.controller_axis_index = -1;
+                event_frame_.controller_axis = axis;
+                event_frame_.controller_axis_value = value;
+            }
         }
     }
 }

@@ -182,6 +182,10 @@ void test_main_menu_confirm_maps_every_visible_row() {
     TEST_CHECK(
         whacker::app::apply_main_menu_action(menu_state, menu_intent(false, false, false, false, true)) ==
         whacker::app::MainMenuActionResult::Quit);
+
+    TEST_CHECK(
+        whacker::app::apply_main_menu_action(menu_state, menu_intent(false, false, false, false, false, true)) ==
+        whacker::app::MainMenuActionResult::None);
 }
 
 void test_controller_menu_button_edges_share_action_state() {
@@ -410,6 +414,28 @@ void test_options_menu_audio_and_binding_flow() {
         whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, false, true)) ==
         whacker::app::OptionsMenuActionResult::None);
     TEST_CHECK(!options.waiting_for_key);
+
+    options.selected_row = whacker::app::OptionsMenuRowP1Axis;
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingCaptureStarted);
+    TEST_CHECK(options.waiting_for_key);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingChanged);
+    TEST_CHECK(options.waiting_for_key);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::None);
+    TEST_CHECK(!options.waiting_for_key);
+
+    options.selected_row = whacker::app::OptionsMenuRowP1AxisInvert;
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingChanged);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::BindingChanged);
 }
 
 void test_quick_menu_style_rows_cycle_defaults_and_confirm_tunes() {

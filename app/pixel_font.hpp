@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <string>
 
 #include "app_types.hpp"
@@ -62,19 +61,5 @@ void draw_two_digits(
     float scale,
     int value,
     Color color);
-
-void draw_rgba_sprite_pixels(
-    int fb_width,
-    int fb_height,
-    float x,
-    float y,
-    float w,
-    float h,
-    int sprite_width,
-    int sprite_height,
-    const std::uint8_t* rgba_pixels,
-    float alpha = 1.0f,
-    float brightness = 1.0f,
-    bool mirror_x = false);
 
 }  // namespace whacker::app

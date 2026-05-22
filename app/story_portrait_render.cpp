@@ -9,15 +9,11 @@
 #include <utility>
 #include <vector>
 
-#include <GL/gl.h>
-
-#include "pixel_font.hpp"
+#include "rgba_texture.hpp"
 
 #if defined(WHACKER_HAS_PNG)
 #include <png.h>
 #endif
-
-#include "pixel_font.hpp"
 
 #ifndef WHACKER_SOURCE_DIR
 #define WHACKER_SOURCE_DIR "."
@@ -33,10 +29,10 @@ constexpr std::size_t kPortraitCount = static_cast<std::size_t>(StoryPortraitId:
 struct PortraitRaster {
     bool load_attempted = false;
     bool loaded = false;
-    bool uploaded = false;
+    bool upload_attempted = false;
     int width = 0;
     int height = 0;
-    GLuint texture_id = 0;
+    RgbaTexture texture {};
     std::vector<std::uint8_t> rgba {};
 };
 
@@ -306,10 +302,10 @@ bool load_png_rgba(
 
 bool try_load_portrait_raster(const StoryPortraitId portrait_id, PortraitRaster& out_raster) {
     out_raster.loaded = false;
-    out_raster.uploaded = false;
+    out_raster.upload_attempted = false;
     out_raster.width = 0;
     out_raster.height = 0;
-    out_raster.texture_id = 0;
+    out_raster.texture = RgbaTexture {};
     out_raster.rgba.clear();
 
     const std::filesystem::path asset_path = portrait_path_for_id(portrait_id);
@@ -375,47 +371,26 @@ bool try_load_portrait_raster(const StoryPortraitId portrait_id, PortraitRaster&
 }
 
 bool ensure_portrait_texture_uploaded(PortraitRaster& raster) {
-    if (raster.uploaded && raster.texture_id != 0) {
+    if (raster.texture.texture_id != 0) {
         return true;
+    }
+    if (raster.upload_attempted) {
+        return false;
     }
     if (!raster.loaded || raster.width <= 0 || raster.height <= 0 || raster.rgba.empty()) {
         return false;
     }
 
-    GLuint texture_id = 0;
-    glGenTextures(1, &texture_id);
-    if (texture_id == 0) {
+    raster.upload_attempted = true;
+    const RgbaTextureUploadResult result =
+        upload_rgba_texture(raster.rgba.data(), raster.width, raster.height, "story portrait");
+    if (!result.uploaded) {
         return false;
     }
-
-    GLint prev_unpack = 4;
-    glGetIntegerv(GL_UNPACK_ALIGNMENT, &prev_unpack);
-
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGBA8,
-        raster.width,
-        raster.height,
-        0,
-        GL_RGBA,
-        GL_UNSIGNED_BYTE,
-        raster.rgba.data());
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, prev_unpack);
-
-    raster.texture_id = texture_id;
-    raster.uploaded = true;
+    raster.texture = result.texture;
     // Keep GPU texture as source of truth once uploaded; drop CPU copy to bound memory.
     std::vector<std::uint8_t> {}.swap(raster.rgba);
-    return true;
+    return raster.texture.texture_id != 0;
 }
 
 const PortraitRaster& ensure_portrait_raster(const StoryPortraitId portrait_id) {
@@ -438,59 +413,6 @@ const PortraitRaster& ensure_portrait_raster(const StoryPortraitId portrait_id) 
     assert(false && "Story portrait asset failed to load.");
 #endif
     return raster;
-}
-
-void draw_story_portrait_texture(
-    const int fb_width,
-    const int fb_height,
-    const GLuint texture_id,
-    const float x,
-    const float y,
-    const float w,
-    const float h,
-    const float alpha,
-    const float brightness,
-    const bool mirror_x) {
-    const float safe_alpha = std::clamp(alpha, 0.0f, 1.0f);
-    if (safe_alpha <= 0.0f || texture_id == 0 || w <= 0.0f || h <= 0.0f) {
-        return;
-    }
-    const float safe_brightness = std::clamp(brightness, 0.0f, 2.0f);
-    const float u0 = mirror_x ? 1.0f : 0.0f;
-    const float u1 = mirror_x ? 0.0f : 1.0f;
-
-    apply_full_pixel_scissor(fb_width, fb_height);
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0.0, static_cast<double>(fb_width), static_cast<double>(fb_height), 0.0, -1.0, 1.0);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glColor4f(safe_brightness, safe_brightness, safe_brightness, safe_alpha);
-    glBegin(GL_QUADS);
-    glTexCoord2f(u0, 0.0f);
-    glVertex2f(x, y);
-    glTexCoord2f(u1, 0.0f);
-    glVertex2f(x + w, y);
-    glTexCoord2f(u1, 1.0f);
-    glVertex2f(x + w, y + h);
-    glTexCoord2f(u0, 1.0f);
-    glVertex2f(x, y + h);
-    glEnd();
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
 }
 
 }  // namespace
@@ -518,36 +440,16 @@ bool draw_story_portrait(
     auto& cache = portrait_cache();
     PortraitRaster& raster = cache[portrait_index(portrait_id)];
     if (ensure_portrait_texture_uploaded(raster)) {
-        draw_story_portrait_texture(fb_width, fb_height, raster.texture_id, x, y, w, h, alpha, brightness, mirror_x);
+        draw_rgba_texture_quad_pixels(fb_width, fb_height, raster.texture, x, y, w, h, alpha, brightness, mirror_x);
         return true;
     }
-
-    if (raster.rgba.empty() || raster.width <= 0 || raster.height <= 0) {
-        return false;
-    }
-
-    draw_rgba_sprite_pixels(
-        fb_width,
-        fb_height,
-        x,
-        y,
-        w,
-        h,
-        raster.width,
-        raster.height,
-        raster.rgba.data(),
-        alpha,
-        brightness,
-        mirror_x);
-    return true;
+    return false;
 }
 
 void release_story_portrait_resources() {
     auto& cache = portrait_cache();
     for (PortraitRaster& raster : cache) {
-        if (raster.uploaded && raster.texture_id != 0) {
-            glDeleteTextures(1, &raster.texture_id);
-        }
+        release_rgba_texture(raster.texture);
         raster = PortraitRaster {};
     }
 }

@@ -37,10 +37,21 @@ SdlOptionsUpdateEffects update_sdl_options_menu(
     }
     if (result == OptionsMenuActionResult::BindingChanged) {
         const int direction = intent.right ? 1 : (intent.left ? -1 : 0);
-        effects.binding_changed = cycle_sdl_options_controller_button(
-            runtime.input.bindings(),
-            selected_row,
-            direction);
+        if (options_row_is_axis_invert(selected_row)) {
+            effects.binding_changed = toggle_sdl_options_controller_axis_invert(
+                runtime.input.bindings(),
+                selected_row);
+        } else {
+            effects.binding_changed =
+                cycle_sdl_options_controller_axis(
+                    runtime.input.bindings(),
+                    selected_row,
+                    direction) ||
+                cycle_sdl_options_controller_button(
+                    runtime.input.bindings(),
+                    selected_row,
+                    direction);
+        }
         effects.persist_requested = effects.binding_changed;
         effects.play_move_sound = true;
     } else if (result == OptionsMenuActionResult::AudioChanged) {

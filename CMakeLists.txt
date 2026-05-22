@@ -170,6 +170,7 @@ if(WHACKER_BUILD_APP)
         app/menu_overlay.cpp
         app/menu_settings.cpp
         app/menu_sticker_render.cpp
+        app/navigation.cpp
         app/options_menu_actions.cpp
         app/overlay_layout_math.cpp
         app/paddle_tuning.cpp
@@ -182,6 +183,7 @@ if(WHACKER_BUILD_APP)
         app/pixel_font.cpp
         app/quick_menu_actions.cpp
         app/quick_menu_render.cpp
+        app/rgba_texture.cpp
         app/runtime_story_scene.cpp
         app/runtime_transitions.cpp
         app/runtime_visual_transition.cpp
@@ -745,6 +747,23 @@ if(WHACKER_BUILD_TESTS)
         whacker_configure_smoke_test(render_context_smoke)
         add_test(NAME render_context_smoke COMMAND render_context_smoke)
 
+        add_executable(navigation_smoke
+            tests/navigation_smoke.cpp
+            app/navigation.cpp
+        )
+        target_link_libraries(navigation_smoke PRIVATE whacker_core)
+        target_include_directories(navigation_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(navigation_smoke)
+        add_test(NAME navigation_smoke COMMAND navigation_smoke)
+
+        add_executable(rgba_texture_smoke
+            tests/rgba_texture_smoke.cpp
+        )
+        target_link_libraries(rgba_texture_smoke PRIVATE whacker_core)
+        target_include_directories(rgba_texture_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(rgba_texture_smoke)
+        add_test(NAME rgba_texture_smoke COMMAND rgba_texture_smoke)
+
         add_executable(input_binding_codec_smoke
             tests/input_binding_codec_smoke.cpp
             app/action_input.cpp
@@ -753,6 +772,15 @@ if(WHACKER_BUILD_TESTS)
         target_include_directories(input_binding_codec_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
         whacker_configure_smoke_test(input_binding_codec_smoke)
         add_test(NAME input_binding_codec_smoke COMMAND input_binding_codec_smoke)
+
+        add_executable(sdl_options_binding_access_smoke
+            tests/sdl_options_binding_access_smoke.cpp
+            app/action_input.cpp
+            app/sdl_options_binding_access.cpp
+        )
+        target_include_directories(sdl_options_binding_access_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(sdl_options_binding_access_smoke)
+        add_test(NAME sdl_options_binding_access_smoke COMMAND sdl_options_binding_access_smoke)
 
         add_executable(input_profiles_smoke
             tests/input_profiles_smoke.cpp

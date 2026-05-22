@@ -131,7 +131,6 @@ void test_match_exit_policy_intro_lock() {
     whacker::app::StoryRuntimeState runtime {};
     const whacker::app::MatchProgress locked = whacker::app::make_match_progress(
         whacker::app::AppState::StoryIntro,
-        whacker::app::AppState::StoryIntro,
         flow,
         runtime,
         1,
@@ -147,7 +146,6 @@ void test_match_exit_policy_intro_lock() {
     assert(!locked_policy.blocked_reason.empty());
 
     const whacker::app::MatchProgress unlocked = whacker::app::make_match_progress(
-        whacker::app::AppState::StoryIntro,
         whacker::app::AppState::StoryIntro,
         flow,
         runtime,
@@ -170,7 +168,6 @@ void test_match_exit_policy_story_modes() {
     runtime.active_match = whacker::app::StoryMatchKind::Training;
     whacker::app::MatchProgress training_progress = whacker::app::make_match_progress(
         whacker::app::AppState::Playing,
-        whacker::app::AppState::Playing,
         flow,
         runtime,
         0,
@@ -186,7 +183,6 @@ void test_match_exit_policy_story_modes() {
 
     runtime.active_match = whacker::app::StoryMatchKind::Official;
     whacker::app::MatchProgress official_progress = whacker::app::make_match_progress(
-        whacker::app::AppState::Playing,
         whacker::app::AppState::Playing,
         flow,
         runtime,
@@ -204,7 +200,6 @@ void test_match_exit_policy_story_modes() {
     runtime.active_match = whacker::app::StoryMatchKind::OnboardingAyaFriendly;
     const whacker::app::MatchProgress aya_progress = whacker::app::make_match_progress(
         whacker::app::AppState::Playing,
-        whacker::app::AppState::Playing,
         flow,
         runtime,
         0,
@@ -220,7 +215,6 @@ void test_match_exit_policy_story_modes() {
 
     runtime.active_match = whacker::app::StoryMatchKind::OnboardingEntry;
     const whacker::app::MatchProgress benji_progress = whacker::app::make_match_progress(
-        whacker::app::AppState::Playing,
         whacker::app::AppState::Playing,
         flow,
         runtime,
@@ -243,7 +237,6 @@ void test_match_exit_policy_quick_mode_from_pause() {
     runtime.active_match = whacker::app::StoryMatchKind::None;
 
     const whacker::app::MatchProgress progress = whacker::app::make_match_progress(
-        whacker::app::AppState::Paused,
         whacker::app::AppState::Playing,
         flow,
         runtime,
@@ -265,7 +258,6 @@ void test_match_exit_policy_intro_lock_from_pause() {
     whacker::app::StoryRuntimeState runtime {};
 
     const whacker::app::MatchProgress locked = whacker::app::make_match_progress(
-        whacker::app::AppState::Paused,
         whacker::app::AppState::StoryIntro,
         flow,
         runtime,
@@ -279,7 +271,6 @@ void test_match_exit_policy_intro_lock_from_pause() {
     assert(!locked_policy.can_exit_now);
 
     const whacker::app::MatchProgress unlocked = whacker::app::make_match_progress(
-        whacker::app::AppState::Paused,
         whacker::app::AppState::StoryIntro,
         flow,
         runtime,
@@ -301,7 +292,6 @@ void test_match_exit_policy_intro_uses_score_sum() {
 
     const whacker::app::MatchProgress locked = whacker::app::make_match_progress(
         whacker::app::AppState::StoryIntro,
-        whacker::app::AppState::StoryIntro,
         flow,
         runtime,
         1,
@@ -314,7 +304,6 @@ void test_match_exit_policy_intro_uses_score_sum() {
     assert(!locked_policy.can_exit_now);
 
     const whacker::app::MatchProgress unlocked = whacker::app::make_match_progress(
-        whacker::app::AppState::StoryIntro,
         whacker::app::AppState::StoryIntro,
         flow,
         runtime,

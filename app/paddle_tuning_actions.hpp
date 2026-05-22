@@ -22,7 +22,6 @@ enum class PaddleTuningActionResult {
 
 void begin_quick_paddle_tuning(
     PaddleTuningState& tuning_state,
-    AppState return_state,
     PaddleTuningTarget target,
     const whacker::progression::SkillState& skills);
 

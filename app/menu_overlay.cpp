@@ -301,6 +301,7 @@ void render_options_menu_overlay(
         const float value_x = row_x + row_w - value_w - 14.0f;
         const float value_y = y + std::max(0.0f, 0.5f * (rows.row_h - value_h));
         const bool binding_row = options_row_is_binding(row);
+        const bool axis_invert_row = options_row_is_axis_invert(row);
         const bool volume_row = options_row_is_volume(row);
         const bool mute_row = options_row_is_mute(row);
         const bool waiting_on_row = binding_row && menu_state.waiting_for_key && selected;
@@ -317,7 +318,7 @@ void render_options_menu_overlay(
         std::string value_label;
         if (waiting_on_row) {
             value_label = ui_text::options_waiting_value();
-        } else if (binding_row || volume_row || mute_row) {
+        } else if (binding_row || axis_invert_row || volume_row || mute_row) {
             value_label = safe_value_label(row);
         }
         const float value_scale = value_h < 24.0f ? 1.3f : 1.5f;

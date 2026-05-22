@@ -99,7 +99,6 @@ void test_intro_completion_awards_growth() {
     whacker::app::StoryIntroState intro {};
     whacker::app::MatchFlowState flow {};
     whacker::sim::Simulation simulation {};
-    whacker::app::AppState app_state = whacker::app::AppState::StoryIntro;
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
 
     intro.phase = whacker::app::StoryIntroPhase::RivalIntro;
@@ -113,13 +112,12 @@ void test_intro_completion_awards_growth() {
     const whacker::progression::SkillState skills_before = runtime.career.player_skills;
     const whacker::progression::SkillState caps_before = runtime.career.player_skill_caps;
 
-    whacker::app::complete_story_intro(
+    const whacker::app::StoryIntroCompleteResult result = whacker::app::complete_story_intro(
         runtime,
         hub,
         intro,
         flow,
         simulation,
-        app_state,
         authored_transition_request,
         nullptr,
         nullptr);
@@ -128,7 +126,8 @@ void test_intro_completion_awards_growth() {
     require(any_skill_component_grew(caps_before, runtime.career.player_skill_caps));
     require(total_skill_delta(skills_before, runtime.career.player_skills) >= 0.015f);
     require(total_skill_delta(caps_before, runtime.career.player_skill_caps) >= 0.015f);
-    require(app_state == whacker::app::AppState::StoryScene);
+    require(result.route.changed);
+    require(result.route.screen == whacker::app::Screen::StoryScene);
     require(authored_transition_request.armed);
 }
 

@@ -2,8 +2,8 @@
 
 #include <cstdint>
 
+#include "navigation.hpp"
 #include "story_scene.hpp"
-#include "ui_state.hpp"
 
 namespace whacker::app {
 
@@ -12,8 +12,8 @@ constexpr float kRuntimeVisualTransitionDurationSeconds = 1.5f;
 struct RuntimeVisualTransitionState {
     bool active = false;
     bool swapped_to_target = false;
-    AppState from_state = AppState::MainMenu;
-    AppState to_state = AppState::MainMenu;
+    Screen from_screen = Screen::MainMenu;
+    Screen to_screen = Screen::MainMenu;
     float elapsed_seconds = 0.0f;
     float duration_seconds = kRuntimeVisualTransitionDurationSeconds;
     double last_update_time_seconds = 0.0;
@@ -26,8 +26,8 @@ struct RuntimeVisualTransitionState {
 
 struct RuntimeAuthoredTransitionRequest {
     bool armed = false;
-    AppState from_state = AppState::MainMenu;
-    AppState to_state = AppState::MainMenu;
+    Screen from_screen = Screen::MainMenu;
+    Screen to_screen = Screen::MainMenu;
     bool has_from_story_scene = false;
     bool has_to_story_scene = false;
     StorySceneState from_story_scene {};
@@ -67,16 +67,16 @@ void clear_authored_transition_request(RuntimeAuthoredTransitionRequest& request
 
 [[nodiscard]] TransitionArmResult arm_authored_star_wipe_transition(
     RuntimeAuthoredTransitionRequest& request,
-    AppState from_state,
+    Screen from_screen,
     const StorySceneState* from_story_scene,
-    AppState to_state,
+    Screen to_screen,
     const StorySceneState* to_story_scene,
     float duration_seconds = kRuntimeVisualTransitionDurationSeconds);
 
 void begin_visual_transition_for_state_change(
     RuntimeVisualTransitionState& transition,
-    AppState from_state,
-    AppState to_state,
+    Screen from_screen,
+    Screen to_screen,
     double now_seconds,
     float duration_seconds = kRuntimeVisualTransitionDurationSeconds);
 
@@ -92,9 +92,8 @@ void begin_visual_transition_for_authored_request(
     const RuntimeAuthoredTransitionRequest& request,
     double now_seconds);
 
-void advance_visual_transition(
+[[nodiscard]] ScreenRoute advance_visual_transition(
     RuntimeVisualTransitionState& transition,
-    AppState& app_state,
     StorySceneState& story_scene_state,
     double now_seconds);
 

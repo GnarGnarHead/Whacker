@@ -1,6 +1,7 @@
 #include <cassert>
 #include <string>
 
+#include "match_end_flow.hpp"
 #include "runtime_transitions.hpp"
 
 namespace {
@@ -48,8 +49,7 @@ void test_compute_runtime_match_exit_policy_intro_gate() {
     const whacker::app::MatchExitPolicy locked_policy =
         whacker::app::compute_runtime_match_exit_policy(
             simulation,
-            whacker::app::AppState::StoryIntro,
-            whacker::app::AppState::StoryIntro,
+            whacker::app::Screen::StoryIntro,
             match_flow,
             runtime,
             intro);
@@ -62,8 +62,7 @@ void test_compute_runtime_match_exit_policy_intro_gate() {
     const whacker::app::MatchExitPolicy unlocked_policy =
         whacker::app::compute_runtime_match_exit_policy(
             simulation,
-            whacker::app::AppState::StoryIntro,
-            whacker::app::AppState::StoryIntro,
+            whacker::app::Screen::StoryIntro,
             match_flow,
             runtime,
             intro);
@@ -104,9 +103,6 @@ void test_quit_runtime_to_main_menu_resets_state() {
     pause_menu.confirm_forfeit = true;
     pause_menu.confirm_selected = 1;
 
-    whacker::app::AppState pause_return_state = whacker::app::AppState::StoryIntro;
-    whacker::app::AppState app_state = whacker::app::AppState::Playing;
-
     reset_captures();
     whacker::app::quit_runtime_to_main_menu(
         runtime,
@@ -115,16 +111,13 @@ void test_quit_runtime_to_main_menu_resets_state() {
         scene,
         match_flow,
         pause_menu,
-        pause_return_state,
         simulation,
         authored_transition_request,
+        whacker::app::Screen::Playing,
         3,
-        fake_save_career,
-        app_state);
+        fake_save_career);
 
     assert(!g_end_call.called);
-    assert(app_state == whacker::app::AppState::MainMenu);
-    assert(pause_return_state == whacker::app::AppState::Playing);
     assert(!runtime.onboarding_scene_pending);
     assert(!runtime.post_forfeit_scene_pending);
     assert(runtime.active_match == whacker::app::StoryMatchKind::None);
@@ -151,9 +144,6 @@ void test_quit_runtime_to_main_menu_training_uses_end_training_reason() {
     whacker::app::MatchFlowState match_flow {};
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
     whacker::app::PauseMenuState pause_menu {};
-    whacker::app::AppState pause_return_state = whacker::app::AppState::Playing;
-    whacker::app::AppState app_state = whacker::app::AppState::Playing;
-
     reset_captures();
     whacker::app::quit_runtime_to_main_menu(
         runtime,
@@ -162,17 +152,15 @@ void test_quit_runtime_to_main_menu_training_uses_end_training_reason() {
         scene,
         match_flow,
         pause_menu,
-        pause_return_state,
         simulation,
         authored_transition_request,
+        whacker::app::Screen::Playing,
         3,
-        fake_save_career,
-        app_state);
+        fake_save_career);
 
     assert(g_end_call.called);
     assert(g_end_call.reason == whacker::app::StoryMatchEndReason::EndTraining);
     assert(g_end_call_received_save_callback);
-    assert(app_state == whacker::app::AppState::MainMenu);
 }
 
 void test_execute_runtime_pause_exit_routes_to_match_end_flow() {
@@ -183,13 +171,11 @@ void test_execute_runtime_pause_exit_routes_to_match_end_flow() {
     whacker::app::StorySceneState scene {};
     whacker::app::MatchFlowState match_flow {};
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::AppState app_state = whacker::app::AppState::Paused;
-
     reset_captures();
     whacker::app::MatchExitPolicy policy_story {};
     policy_story.action = whacker::app::MatchExitAction::ExitStoryMatch;
     policy_story.story_end_reason = whacker::app::StoryMatchEndReason::Forfeit;
-    whacker::app::execute_runtime_pause_exit(
+    whacker::app::ScreenRoute route = whacker::app::execute_runtime_pause_exit(
         policy_story,
         runtime,
         hub,
@@ -198,18 +184,19 @@ void test_execute_runtime_pause_exit_routes_to_match_end_flow() {
         simulation,
         scene,
         authored_transition_request,
-        app_state,
+        whacker::app::Screen::Playing,
         3,
         nullptr,
         fake_save_career);
     assert(g_end_call.called);
     assert(g_end_call.reason == whacker::app::StoryMatchEndReason::Forfeit);
     assert(g_end_call_received_save_callback);
+    assert(route.changed);
 
     reset_captures();
     whacker::app::MatchExitPolicy policy_quick {};
     policy_quick.action = whacker::app::MatchExitAction::ExitQuickToSetup;
-    whacker::app::execute_runtime_pause_exit(
+    route = whacker::app::execute_runtime_pause_exit(
         policy_quick,
         runtime,
         hub,
@@ -218,13 +205,14 @@ void test_execute_runtime_pause_exit_routes_to_match_end_flow() {
         simulation,
         scene,
         authored_transition_request,
-        app_state,
+        whacker::app::Screen::Playing,
         3,
         nullptr,
         fake_save_career);
     assert(g_end_call.called);
     assert(g_end_call.reason == whacker::app::StoryMatchEndReason::Completed);
     assert(g_end_call_received_save_callback);
+    assert(route.changed);
 }
 
 void test_execute_runtime_pause_exit_intro_continue_uses_player_defaults() {
@@ -240,12 +228,10 @@ void test_execute_runtime_pause_exit_intro_continue_uses_player_defaults() {
 
     whacker::app::MatchFlowState match_flow {};
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::AppState app_state = whacker::app::AppState::Paused;
-
     reset_captures();
     whacker::app::MatchExitPolicy policy {};
     policy.action = whacker::app::MatchExitAction::ExitIntroContinueStory;
-    whacker::app::execute_runtime_pause_exit(
+    const whacker::app::ScreenRoute route = whacker::app::execute_runtime_pause_exit(
         policy,
         runtime,
         hub,
@@ -254,7 +240,7 @@ void test_execute_runtime_pause_exit_intro_continue_uses_player_defaults() {
         simulation,
         scene,
         authored_transition_request,
-        app_state,
+        whacker::app::Screen::StoryIntro,
         3,
         nullptr,
         fake_save_career);
@@ -266,7 +252,8 @@ void test_execute_runtime_pause_exit_intro_continue_uses_player_defaults() {
     assert(intro.final_right_score == 5);
     assert(intro.entered_name == "PLAYER");
     assert(intro.phase == whacker::app::StoryIntroPhase::RivalIntro);
-    assert(app_state == whacker::app::AppState::StoryIntro);
+    assert(route.changed);
+    assert(route.screen == whacker::app::Screen::StoryIntro);
     assert(simulation.state().left_score == 0);
     assert(simulation.state().right_score == 0);
 }
@@ -275,35 +262,36 @@ void test_execute_runtime_pause_exit_intro_continue_uses_player_defaults() {
 
 namespace whacker::app {
 
-void end_active_or_quick_match(
+MatchEndFlowResult end_active_or_quick_match(
     StoryRuntimeState& /*story_runtime*/,
     StoryHubState& /*story_hub_state*/,
     MatchFlowState& /*match_flow*/,
     whacker::sim::Simulation& /*simulation*/,
     StorySceneState& /*story_scene_state*/,
     RuntimeAuthoredTransitionRequest& /*authored_transition_request*/,
-    AppState& /*app_state*/,
+    Screen /*from_screen*/,
     const StoryMatchEndReason end_reason,
     int /*story_official_games_to_win*/,
     StorySaveCareerCallback save_career_fn) {
     g_end_call.called = true;
     g_end_call.reason = end_reason;
     g_end_call_received_save_callback = save_career_fn != nullptr;
+    return MatchEndFlowResult {.route = Screen::StoryHub};
 }
 
-void complete_story_intro(
+StoryIntroCompleteResult complete_story_intro(
     StoryRuntimeState& /*story_runtime*/,
     StoryHubState& /*story_hub_state*/,
     StoryIntroState& story_intro_state,
     MatchFlowState& /*match_flow*/,
     whacker::sim::Simulation& /*simulation*/,
-    AppState& /*app_state*/,
     RuntimeAuthoredTransitionRequest& /*authored_transition_request*/,
     StorySanitizeNameFn /*sanitize_name_fn*/,
     StorySaveCareerCallback save_career_fn) {
     g_complete_story_intro_called = true;
     g_complete_story_intro_capture = story_intro_state;
     g_complete_story_intro_received_save_callback = save_career_fn != nullptr;
+    return StoryIntroCompleteResult {.route = screen_route(Screen::StoryScene)};
 }
 
 void reset_story_intro_typewriter(StoryIntroState& story_intro_state) {

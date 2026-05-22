@@ -30,6 +30,14 @@ const char* options_menu_row_name(const int row) {
             return "P2 UP";
         case OptionsMenuRowP2Down:
             return "P2 DOWN";
+        case OptionsMenuRowP1Axis:
+            return "P1 STICK";
+        case OptionsMenuRowP1AxisInvert:
+            return "P1 STICK INVERT";
+        case OptionsMenuRowP2Axis:
+            return "P2 STICK";
+        case OptionsMenuRowP2AxisInvert:
+            return "P2 STICK INVERT";
         case OptionsMenuRowMasterVolume:
             return "MASTER VOLUME";
         case OptionsMenuRowMusicVolume:
@@ -109,6 +117,22 @@ const char* controller_button_label(const ControllerButton button) {
             return "DPAD RIGHT";
         case ControllerButton::Count:
         case ControllerButton::Unbound:
+            return "UNBOUND";
+    }
+    return "UNBOUND";
+}
+
+const char* controller_axis_label(const ControllerAxis axis) {
+    switch (axis) {
+        case ControllerAxis::LeftX:
+            return "LEFT X";
+        case ControllerAxis::LeftY:
+            return "LEFT Y";
+        case ControllerAxis::RightX:
+            return "RIGHT X";
+        case ControllerAxis::RightY:
+            return "RIGHT Y";
+        case ControllerAxis::Count:
             return "UNBOUND";
     }
     return "UNBOUND";

@@ -55,12 +55,16 @@ enum OptionsMenuRow : std::uint8_t {
     OptionsMenuRowP1Down = 1,
     OptionsMenuRowP2Up = 2,
     OptionsMenuRowP2Down = 3,
-    OptionsMenuRowMasterVolume = 4,
-    OptionsMenuRowMusicVolume = 5,
-    OptionsMenuRowSfxVolume = 6,
-    OptionsMenuRowMute = 7,
-    OptionsMenuRowBack = 8,
-    OptionsMenuRowCount = 9
+    OptionsMenuRowP1Axis = 4,
+    OptionsMenuRowP1AxisInvert = 5,
+    OptionsMenuRowP2Axis = 6,
+    OptionsMenuRowP2AxisInvert = 7,
+    OptionsMenuRowMasterVolume = 8,
+    OptionsMenuRowMusicVolume = 9,
+    OptionsMenuRowSfxVolume = 10,
+    OptionsMenuRowMute = 11,
+    OptionsMenuRowBack = 12,
+    OptionsMenuRowCount = 13
 };
 
 enum PauseMenuRow : std::uint8_t {

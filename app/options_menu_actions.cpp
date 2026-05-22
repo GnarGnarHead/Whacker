@@ -26,7 +26,13 @@ bool options_row_is_binding(const int row) {
         row == OptionsMenuRowP1Up ||
         row == OptionsMenuRowP1Down ||
         row == OptionsMenuRowP2Up ||
-        row == OptionsMenuRowP2Down;
+        row == OptionsMenuRowP2Down ||
+        row == OptionsMenuRowP1Axis ||
+        row == OptionsMenuRowP2Axis;
+}
+
+bool options_row_is_axis_invert(const int row) {
+    return row == OptionsMenuRowP1AxisInvert || row == OptionsMenuRowP2AxisInvert;
 }
 
 bool options_row_is_volume(const int row) {
@@ -99,6 +105,8 @@ OptionsMenuActionResult apply_options_menu_action(
                 return *slot != before ? OptionsMenuActionResult::AudioChanged : OptionsMenuActionResult::None;
             }
         }
+    } else if (options_row_is_axis_invert(options_menu_state.selected_row) && (intent.left || intent.right)) {
+        return OptionsMenuActionResult::BindingChanged;
     } else if (options_row_is_mute(options_menu_state.selected_row) && (intent.left || intent.right)) {
         audio_settings.mute = !audio_settings.mute;
         return OptionsMenuActionResult::AudioChanged;
@@ -114,6 +122,9 @@ OptionsMenuActionResult apply_options_menu_action(
     if (options_row_is_binding(options_menu_state.selected_row)) {
         options_menu_state.waiting_for_key = true;
         return OptionsMenuActionResult::BindingCaptureStarted;
+    }
+    if (options_row_is_axis_invert(options_menu_state.selected_row)) {
+        return OptionsMenuActionResult::BindingChanged;
     }
     if (options_row_is_mute(options_menu_state.selected_row)) {
         audio_settings.mute = !audio_settings.mute;

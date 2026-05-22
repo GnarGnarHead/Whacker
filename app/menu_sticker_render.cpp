@@ -17,6 +17,7 @@
 #endif
 
 #include "pixel_font.hpp"
+#include "rgba_texture.hpp"
 #include "story_pack.hpp"
 
 #ifndef WHACKER_SOURCE_DIR
@@ -37,10 +38,10 @@ constexpr float kStickerOverlapThresholdPx = 2200.0f;
 struct StickerTexture {
     bool load_attempted = false;
     bool loaded = false;
-    bool uploaded = false;
+    bool upload_attempted = false;
     int width = 0;
     int height = 0;
-    GLuint texture_id = 0;
+    RgbaTexture texture {};
     std::vector<std::uint8_t> rgba {};
 };
 
@@ -199,44 +200,25 @@ void ensure_sticker_loaded(StickerTexture& texture, const std::filesystem::path&
 }
 
 bool ensure_sticker_uploaded(StickerTexture& texture) {
-    if (texture.uploaded && texture.texture_id != 0) {
+    if (texture.texture.texture_id != 0) {
         return true;
+    }
+    if (texture.upload_attempted) {
+        return false;
     }
     if (!texture.loaded || texture.width <= 0 || texture.height <= 0 || texture.rgba.empty()) {
         return false;
     }
 
-    GLuint texture_id = 0;
-    glGenTextures(1, &texture_id);
-    if (texture_id == 0) {
+    texture.upload_attempted = true;
+    const RgbaTextureUploadResult result =
+        upload_rgba_texture(texture.rgba.data(), texture.width, texture.height, "menu sticker");
+    if (!result.uploaded) {
         return false;
     }
-
-    GLint prev_unpack_alignment = 4;
-    glGetIntegerv(GL_UNPACK_ALIGNMENT, &prev_unpack_alignment);
-
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGBA8,
-        texture.width,
-        texture.height,
-        0,
-        GL_RGBA,
-        GL_UNSIGNED_BYTE,
-        texture.rgba.data());
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, prev_unpack_alignment);
-
-    texture.texture_id = texture_id;
-    texture.uploaded = true;
-    return true;
+    texture.texture = result.texture;
+    std::vector<std::uint8_t> {}.swap(texture.rgba);
+    return texture.texture.texture_id != 0;
 }
 
 void draw_sticker_quad(
@@ -245,7 +227,7 @@ void draw_sticker_quad(
     const StickerTexture& texture,
     const MenuStickerRect& rect,
     const float rotation_deg) {
-    if (texture.texture_id == 0 || rect.w <= 0.0f || rect.h <= 0.0f || fb_width <= 0 || fb_height <= 0) {
+    if (texture.texture.texture_id == 0 || rect.w <= 0.0f || rect.h <= 0.0f || fb_width <= 0 || fb_height <= 0) {
         return;
     }
 
@@ -268,31 +250,36 @@ void draw_sticker_quad(
         rotate_pixel_point(half_w, half_h),
         rotate_pixel_point(-half_w, half_h),
     }};
-    const auto to_ndc_x = [fb_width](const float x_px) {
-        return (x_px / static_cast<float>(fb_width)) * 2.0f - 1.0f;
-    };
-    const auto to_ndc_y = [fb_height](const float y_px) {
-        return 1.0f - (y_px / static_cast<float>(fb_height)) * 2.0f;
-    };
 
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0.0, static_cast<double>(fb_width), static_cast<double>(fb_height), 0.0, -1.0, 1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture.texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture.texture.texture_id);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(to_ndc_x(corners_px[0][0]), to_ndc_y(corners_px[0][1]));
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(to_ndc_x(corners_px[1][0]), to_ndc_y(corners_px[1][1]));
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(to_ndc_x(corners_px[2][0]), to_ndc_y(corners_px[2][1]));
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(to_ndc_x(corners_px[3][0]), to_ndc_y(corners_px[3][1]));
+    glVertex2f(corners_px[0][0], corners_px[0][1]);
+    glTexCoord2f(texture.texture.u_max, 0.0f);
+    glVertex2f(corners_px[1][0], corners_px[1][1]);
+    glTexCoord2f(texture.texture.u_max, texture.texture.v_max);
+    glVertex2f(corners_px[2][0], corners_px[2][1]);
+    glTexCoord2f(0.0f, texture.texture.v_max);
+    glVertex2f(corners_px[3][0], corners_px[3][1]);
     glEnd();
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
 }
 
 MenuStickerRect anchored_sticker_rect(

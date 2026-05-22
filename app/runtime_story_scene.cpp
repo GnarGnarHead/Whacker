@@ -28,7 +28,7 @@ struct StorySceneConfirmOutcome {
     StorySceneConfirmAction action = StorySceneConfirmAction::StartMatch;
     StoryMatchKind match_kind = StoryMatchKind::None;
     StoryOnboardingStep queue_step = StoryOnboardingStep::None;
-    AppState target_state = AppState::StoryHub;
+    Screen target_screen = Screen::StoryHub;
     bool persist_career = false;
 };
 
@@ -70,7 +70,7 @@ const StorySceneConfirmRule* story_scene_confirm_rule_for_step(const StoryOnboar
                 .action = StorySceneConfirmAction::StartMatch,
                 .match_kind = StoryMatchKind::OnboardingAyaFriendly,
                 .queue_step = StoryOnboardingStep::None,
-                .target_state = AppState::Playing,
+                .target_screen = Screen::Playing,
                 .persist_career = false,
             },
         },
@@ -83,7 +83,7 @@ const StorySceneConfirmRule* story_scene_confirm_rule_for_step(const StoryOnboar
                 .action = StorySceneConfirmAction::StartMatch,
                 .match_kind = StoryMatchKind::OnboardingEntry,
                 .queue_step = StoryOnboardingStep::None,
-                .target_state = AppState::Playing,
+                .target_screen = Screen::Playing,
                 .persist_career = false,
             },
         },
@@ -96,7 +96,7 @@ const StorySceneConfirmRule* story_scene_confirm_rule_for_step(const StoryOnboar
                 .action = StorySceneConfirmAction::QueueOnboardingScene,
                 .match_kind = StoryMatchKind::None,
                 .queue_step = StoryOnboardingStep::AtHomeYoutubeScene,
-                .target_state = AppState::StoryScene,
+                .target_screen = Screen::StoryScene,
                 .persist_career = true,
             },
         },
@@ -109,7 +109,7 @@ const StorySceneConfirmRule* story_scene_confirm_rule_for_step(const StoryOnboar
                 .action = StorySceneConfirmAction::StartMatch,
                 .match_kind = StoryMatchKind::Imagination1967,
                 .queue_step = StoryOnboardingStep::None,
-                .target_state = AppState::Playing,
+                .target_screen = Screen::Playing,
                 .persist_career = false,
             },
         },
@@ -122,7 +122,7 @@ const StorySceneConfirmRule* story_scene_confirm_rule_for_step(const StoryOnboar
                 .action = StorySceneConfirmAction::StartMatch,
                 .match_kind = StoryMatchKind::OnboardingEntry,
                 .queue_step = StoryOnboardingStep::None,
-                .target_state = AppState::Playing,
+                .target_screen = Screen::Playing,
                 .persist_career = false,
             },
         },
@@ -135,7 +135,7 @@ const StorySceneConfirmRule* story_scene_confirm_rule_for_step(const StoryOnboar
                 .action = StorySceneConfirmAction::StartMatch,
                 .match_kind = StoryMatchKind::TixLunch,
                 .queue_step = StoryOnboardingStep::None,
-                .target_state = AppState::Playing,
+                .target_screen = Screen::Playing,
                 .persist_career = true,
             },
             .outcome_no = StorySceneConfirmOutcome {
@@ -143,7 +143,7 @@ const StorySceneConfirmRule* story_scene_confirm_rule_for_step(const StoryOnboar
                 .action = StorySceneConfirmAction::GoHub,
                 .match_kind = StoryMatchKind::None,
                 .queue_step = StoryOnboardingStep::None,
-                .target_state = AppState::StoryHub,
+                .target_screen = Screen::StoryHub,
                 .persist_career = true,
             },
         },
@@ -156,7 +156,7 @@ const StorySceneConfirmRule* story_scene_confirm_rule_for_step(const StoryOnboar
                 .action = StorySceneConfirmAction::StartMatch,
                 .match_kind = StoryMatchKind::Official,
                 .queue_step = StoryOnboardingStep::None,
-                .target_state = AppState::Playing,
+                .target_screen = Screen::Playing,
                 .persist_career = true,
             },
         },
@@ -172,23 +172,23 @@ const StorySceneConfirmRule* story_scene_confirm_rule_for_step(const StoryOnboar
 void maybe_arm_story_scene_transition(
     RuntimeAuthoredTransitionRequest& authored_transition_request,
     const bool trigger_wipe,
-    const AppState from_state,
+    const Screen from_screen,
     const StorySceneState& from_story_scene_state,
-    const AppState to_state,
+    const Screen to_screen,
     const StorySceneState& current_story_scene_state,
     const StoryRuntimeState& story_runtime) {
     if (!trigger_wipe) {
         return;
     }
     const StorySceneState to_story_scene_state =
-        materialize_story_scene_transition_target(current_story_scene_state, story_runtime, to_state);
-    const StorySceneState* from_scene_ptr = from_state == AppState::StoryScene ? &from_story_scene_state : nullptr;
-    const StorySceneState* to_scene_ptr = to_state == AppState::StoryScene ? &to_story_scene_state : nullptr;
+        materialize_story_scene_transition_target(current_story_scene_state, story_runtime, to_screen);
+    const StorySceneState* from_scene_ptr = from_screen == Screen::StoryScene ? &from_story_scene_state : nullptr;
+    const StorySceneState* to_scene_ptr = to_screen == Screen::StoryScene ? &to_story_scene_state : nullptr;
     const TransitionArmResult arm_result = arm_authored_star_wipe_transition(
         authored_transition_request,
-        from_state,
+        from_screen,
         from_scene_ptr,
-        to_state,
+        to_screen,
         to_scene_ptr);
     if (!arm_result.armed) {
 #ifndef NDEBUG
@@ -198,7 +198,7 @@ void maybe_arm_story_scene_transition(
     }
 }
 
-void apply_story_scene_confirm_rule(
+ScreenRoute apply_story_scene_confirm_rule(
     const StorySceneConfirmOutcome& outcome,
     StoryRuntimeState& story_runtime,
     StoryHubState& story_hub_state,
@@ -206,8 +206,7 @@ void apply_story_scene_confirm_rule(
     MatchFlowState& match_flow,
     whacker::sim::Simulation& simulation,
     std::mt19937_64& rng,
-    const StorySaveCareerCallback save_career_fn,
-    AppState& app_state) {
+    const StorySaveCareerCallback save_career_fn) {
     if (outcome.action == StorySceneConfirmAction::StartMatch) {
         story_runtime.onboarding_step = outcome.to_step_for_wipe;
         if (outcome.persist_career) {
@@ -222,8 +221,7 @@ void apply_story_scene_confirm_rule(
             match_flow,
             rng,
             outcome.match_kind);
-        app_state = outcome.target_state;
-        return;
+        return screen_route(outcome.target_screen);
     }
 
     if (outcome.action == StorySceneConfirmAction::QueueOnboardingScene) {
@@ -232,8 +230,7 @@ void apply_story_scene_confirm_rule(
             copy_onboarding_runtime_to_career(story_runtime);
             (void)persist_story_career_with_feedback(story_runtime.career, save_career_fn, &story_hub_state);
         }
-        app_state = outcome.target_state;
-        return;
+        return screen_route(outcome.target_screen);
     }
 
     if (outcome.action == StorySceneConfirmAction::GoHub) {
@@ -243,14 +240,14 @@ void apply_story_scene_confirm_rule(
             copy_onboarding_runtime_to_career(story_runtime);
             (void)persist_story_career_with_feedback(story_runtime.career, save_career_fn, &story_hub_state);
         }
-        app_state = outcome.target_state;
-        return;
+        return screen_route(outcome.target_screen);
     }
+    return no_screen_route();
 }
 
 }  // namespace
 
-void handle_story_scene_confirm(
+StorySceneConfirmResult handle_story_scene_confirm(
     StorySceneState& story_scene_state,
     StoryRuntimeState& story_runtime,
     StoryHubState& story_hub_state,
@@ -258,19 +255,18 @@ void handle_story_scene_confirm(
     MatchFlowState& match_flow,
     whacker::sim::Simulation& simulation,
     std::mt19937_64& rng,
-    AppState& app_state,
     RuntimeAuthoredTransitionRequest& authored_transition_request,
     const StorySaveCareerCallback save_career_fn) {
     if (story_scene_state.dialogue_writing) {
         reveal_story_scene_current_line(story_scene_state);
-        return;
+        return StorySceneConfirmResult {};
     }
-    const AppState from_state = app_state;
+    constexpr Screen kFromScreen = Screen::StoryScene;
     const StorySceneState from_story_scene_state = story_scene_state;
     const bool had_binary_choice = story_scene_state.has_binary_choice;
     const bool binary_choice_yes_selected = story_scene_state.binary_choice_yes_selected;
     if (!advance_story_scene(story_scene_state)) {
-        return;
+        return StorySceneConfirmResult {};
     }
 
     if (const StorySceneConfirmRule* rule = story_scene_confirm_rule_for_step(story_runtime.onboarding_step)) {
@@ -282,7 +278,7 @@ void handle_story_scene_confirm(
             ? (choose_yes ? rule->outcome_yes : rule->outcome_no)
             : rule->outcome_default;
         const bool trigger_wipe = story_onboarding_transition_triggers_wipe(rule->from_step, outcome.to_step_for_wipe);
-        apply_story_scene_confirm_rule(
+        const ScreenRoute route = apply_story_scene_confirm_rule(
             outcome,
             story_runtime,
             story_hub_state,
@@ -290,19 +286,18 @@ void handle_story_scene_confirm(
             match_flow,
             simulation,
             rng,
-            save_career_fn,
-            app_state);
+            save_career_fn);
         maybe_arm_story_scene_transition(
             authored_transition_request,
             trigger_wipe,
-            from_state,
+            kFromScreen,
             from_story_scene_state,
-            app_state,
+            route.changed ? route.screen : kFromScreen,
             story_scene_state,
             story_runtime);
-        return;
+        return StorySceneConfirmResult {.route = route};
     }
-    app_state = AppState::StoryHub;
+    return StorySceneConfirmResult {.route = screen_route(Screen::StoryHub)};
 }
 
 }  // namespace whacker::app

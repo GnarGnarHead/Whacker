@@ -4,6 +4,7 @@
 
 #include "app_types.hpp"
 #include "match_flow.hpp"
+#include "navigation.hpp"
 #include "runtime_visual_transition.hpp"
 #include "sim/physics.hpp"
 #include "story_intro.hpp"
@@ -29,13 +30,16 @@ void begin_new_story_intro(
     whacker::sim::Simulation& simulation,
     StoryResetCareerFn reset_career_fn = nullptr);
 
-void complete_story_intro(
+struct StoryIntroCompleteResult {
+    ScreenRoute route {};
+};
+
+[[nodiscard]] StoryIntroCompleteResult complete_story_intro(
     StoryRuntimeState& story_runtime,
     StoryHubState& story_hub_state,
     StoryIntroState& story_intro_state,
     MatchFlowState& match_flow,
     whacker::sim::Simulation& simulation,
-    AppState& route_app_state,
     RuntimeAuthoredTransitionRequest& authored_transition_request,
     StorySanitizeNameFn sanitize_name_fn = nullptr,
     StorySaveCareerCallback save_career_fn = nullptr);

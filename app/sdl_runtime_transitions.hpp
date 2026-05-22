@@ -10,6 +10,12 @@ namespace whacker::app {
 class SdlPlatform;
 
 int story_official_games_to_win();
+void sync_runtime_app_state(SdlRuntimeState& runtime);
+void push_runtime_screen(SdlRuntimeState& runtime, Screen screen);
+bool pop_runtime_screen(SdlRuntimeState& runtime);
+void replace_runtime_screen(SdlRuntimeState& runtime, Screen screen);
+void reset_runtime_to_root(SdlRuntimeState& runtime, Screen screen);
+Screen runtime_active_screen(const SdlRuntimeState& runtime);
 void reset_pause_menu(SdlRuntimeState& runtime);
 void return_to_main_menu(SdlRuntimeState& runtime);
 void enter_quick_match_setup(SdlRuntimeState& runtime);

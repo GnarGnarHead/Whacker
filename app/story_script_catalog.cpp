@@ -541,10 +541,8 @@ const StoryRivalSpec& story_policy_rival_spec_for_career(
 const StoryMatchPolicyDescriptor& story_match_policy_for_runtime(
     const StoryRuntimeState& story_runtime,
     const StoryIntroState& story_intro_state,
-    const AppState app_state,
-    const AppState pause_return_state,
+    const AppState active_state,
     const MatchFlowState& match_flow) {
-    const AppState active_state = app_state == AppState::Paused ? pause_return_state : app_state;
     const bool intro_first_match_active =
         active_state == AppState::StoryIntro &&
         story_intro_state.phase >= StoryIntroPhase::PlayMatch &&

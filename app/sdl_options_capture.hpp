@@ -24,5 +24,12 @@ bool cycle_sdl_options_controller_button(
     ActionInputBindings& bindings,
     int row,
     int direction);
+bool cycle_sdl_options_controller_axis(
+    ActionInputBindings& bindings,
+    int row,
+    int direction);
+bool toggle_sdl_options_controller_axis_invert(
+    ActionInputBindings& bindings,
+    int row);
 
 }  // namespace whacker::app

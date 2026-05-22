@@ -61,6 +61,12 @@ void append_story_name_text(StoryIntroState& story_intro, const std::string& tex
     }
 }
 
+void apply_replace_route(const ScreenRoute route, SdlRuntimeState& runtime) {
+    if (route.changed) {
+        replace_runtime_screen(runtime, route.screen);
+    }
+}
+
 void update_main_menu(
     const MenuIntent& intent,
     SdlRuntimeState& runtime,
@@ -96,7 +102,7 @@ void update_options_menu(
         play_menu_confirm_sound(runtime);
     }
     if (effects.back_requested) {
-        return_to_main_menu(runtime);
+        (void)pop_runtime_screen(runtime);
     }
     runtime.accumulator = 0.0;
 }
@@ -107,17 +113,17 @@ void apply_story_menu_route(
     switch (route) {
         case StoryMenuRoute::None:
             return;
-        case StoryMenuRoute::MainMenu:
-            return_to_main_menu(runtime);
+        case StoryMenuRoute::Back:
+            (void)pop_runtime_screen(runtime);
             return;
         case StoryMenuRoute::StoryIntro:
-            runtime.app_state = AppState::StoryIntro;
+            replace_runtime_screen(runtime, Screen::StoryIntro);
             return;
         case StoryMenuRoute::StoryHub:
-            runtime.app_state = AppState::StoryHub;
+            replace_runtime_screen(runtime, Screen::StoryHub);
             return;
         case StoryMenuRoute::StoryScene:
-            runtime.app_state = AppState::StoryScene;
+            push_runtime_screen(runtime, Screen::StoryScene);
             return;
     }
 }
@@ -158,20 +164,20 @@ void apply_story_hub_route(
     switch (route) {
         case StoryHubRoute::None:
             return;
-        case StoryHubRoute::MainMenu:
-            return_to_main_menu(runtime);
+        case StoryHubRoute::Back:
+            (void)pop_runtime_screen(runtime);
             return;
         case StoryHubRoute::StoryMenu:
-            enter_story_menu(runtime);
+            replace_runtime_screen(runtime, Screen::StoryMenu);
             return;
         case StoryHubRoute::StoryScene:
-            runtime.app_state = AppState::StoryScene;
+            push_runtime_screen(runtime, Screen::StoryScene);
             return;
         case StoryHubRoute::PaddleTuning:
-            runtime.app_state = AppState::PaddleTuning;
+            push_runtime_screen(runtime, Screen::PaddleTuning);
             return;
         case StoryHubRoute::Playing:
-            runtime.app_state = AppState::Playing;
+            replace_runtime_screen(runtime, Screen::Playing);
             return;
     }
 }
@@ -211,7 +217,7 @@ void update_quick_match_setup(
 
     if (result.back_requested) {
         play_menu_confirm_sound(runtime);
-        return_to_main_menu(runtime);
+        (void)pop_runtime_screen(runtime);
         return;
     }
 
@@ -225,18 +231,16 @@ void update_quick_match_setup(
         play_menu_confirm_sound(runtime);
         begin_quick_paddle_tuning(
             runtime.paddle_tuning,
-            AppState::QuickMatchSetup,
             PaddleTuningTarget::QuickLeft,
             runtime.options.left_paddle_skills);
-        runtime.app_state = AppState::PaddleTuning;
+        push_runtime_screen(runtime, Screen::PaddleTuning);
     } else if (result.tune_p2_requested) {
         play_menu_confirm_sound(runtime);
         begin_quick_paddle_tuning(
             runtime.paddle_tuning,
-            AppState::QuickMatchSetup,
             PaddleTuningTarget::QuickRight,
             runtime.options.right_paddle_skills);
-        runtime.app_state = AppState::PaddleTuning;
+        push_runtime_screen(runtime, Screen::PaddleTuning);
     }
     if (result.options_changed) {
         persist_runtime_menu_settings(runtime);
@@ -262,11 +266,11 @@ void update_paddle_tuning(
             persist_runtime_menu_settings(runtime);
         }
         runtime.paddle_tuning.active = false;
-        runtime.app_state = runtime.paddle_tuning.return_state;
+        (void)pop_runtime_screen(runtime);
     } else if (result == PaddleTuningActionResult::Cancel) {
         play_menu_confirm_sound(runtime);
         runtime.paddle_tuning.active = false;
-        runtime.app_state = runtime.paddle_tuning.return_state;
+        (void)pop_runtime_screen(runtime);
     }
     runtime.accumulator = 0.0;
 }
@@ -450,16 +454,16 @@ void update_story_intro_dialogue_input(
     }
 
     if (runtime.story_intro.phase == StoryIntroPhase::RivalIntro) {
-        complete_story_intro(
+        const StoryIntroCompleteResult result = complete_story_intro(
             runtime.story_runtime,
             runtime.story_hub,
             runtime.story_intro,
             runtime.match_flow,
             simulation,
-            runtime.app_state,
             runtime.authored_transition_request,
             sanitize_player_name,
             save_story_career);
+        apply_replace_route(result.route, runtime);
     }
 }
 
@@ -505,10 +509,11 @@ void update_story_scene_input(
     }
     if (input_pressed(input, InputAction::Back)) {
         play_menu_confirm_sound(runtime);
-        clear_story_scene(runtime.story_scene);
-        clear_story_runtime_scene_pending_flags(runtime.story_runtime);
-        runtime.app_state = AppState::StoryMenu;
-        runtime.accumulator = 0.0;
+        if (pop_runtime_screen(runtime)) {
+            clear_story_scene(runtime.story_scene);
+            clear_story_runtime_scene_pending_flags(runtime.story_runtime);
+            runtime.accumulator = 0.0;
+        }
         return;
     }
     if (!input_pressed(input, InputAction::Confirm)) {
@@ -523,7 +528,7 @@ void update_story_scene_input(
         runtime.story_scene.scroll_lines_from_bottom = 0;
         return;
     }
-    handle_story_scene_confirm(
+    const StorySceneConfirmResult result = handle_story_scene_confirm(
         runtime.story_scene,
         runtime.story_runtime,
         runtime.story_hub,
@@ -531,9 +536,9 @@ void update_story_scene_input(
         runtime.match_flow,
         simulation,
         runtime.rng,
-        runtime.app_state,
         runtime.authored_transition_request,
         save_story_career);
+    apply_replace_route(result.route, runtime);
 }
 
 void update_dialogue_step(
@@ -542,7 +547,8 @@ void update_dialogue_step(
     whacker::sim::Simulation& simulation) {
     const float dt = static_cast<float>(frame_dt);
     tick_story_typewriter_audio(runtime, dt);
-    if (runtime.app_state == AppState::StoryIntro) {
+    const Screen screen = runtime.navigation.current;
+    if (screen == Screen::StoryIntro) {
         runtime.story_intro.phase_timer += dt;
         const std::size_t visible_before = runtime.story_intro.visible_chars;
         update_story_intro_typewriter(
@@ -573,7 +579,7 @@ void update_dialogue_step(
             state.ball.spin = 0.0f;
             state.ball.speed_scalar = 1.0f;
         }
-    } else if (runtime.app_state == AppState::StoryScene) {
+    } else if (screen == Screen::StoryScene) {
         const std::size_t visible_before = runtime.story_scene.visible_chars;
         update_story_scene_typewriter(runtime.story_scene, dt, 1.0f);
         route_story_typewriter_audio(
@@ -640,7 +646,8 @@ void step_match_simulation(
     StoryMatchPolicyDescriptor story_policy = story_match_policy_fallback();
     MatchControlPlan control_plan = quick_match_control_plan();
     const bool has_active_story_match = runtime.story_runtime.active_match != StoryMatchKind::None;
-    if (runtime.app_state == AppState::StoryIntro && runtime.story_intro.phase == StoryIntroPhase::PlayMatch) {
+    const Screen screen = runtime.navigation.current;
+    if (screen == Screen::StoryIntro && runtime.story_intro.phase == StoryIntroPhase::PlayMatch) {
         control_plan = story_player_control_plan(
             runtime.story_intro.player_is_right ? CourtSide::Right : CourtSide::Left);
         overrides.force_modes = true;
@@ -717,7 +724,7 @@ void step_match_simulation(
     const whacker::sim::RallyState after = simulation.state();
     route_step_audio_events(runtime, before, after, score_event, simulation.config());
 
-    if (runtime.app_state == AppState::StoryIntro && runtime.story_intro.phase == StoryIntroPhase::PlayMatch) {
+    if (screen == Screen::StoryIntro && runtime.story_intro.phase == StoryIntroPhase::PlayMatch) {
         track_story_intro_contact_usage(runtime.story_intro, simulation.config(), before, after);
         if (score_event != whacker::sim::ScoreEvent::None) {
             const bool player_scored_point =
@@ -835,11 +842,10 @@ void update_playing(
     whacker::sim::Simulation& simulation) {
     if (input_pressed(input, InputAction::Pause)) {
         play_menu_confirm_sound(runtime);
-        runtime.pause_return_state = runtime.app_state;
         runtime.pause_menu.selected_row = PauseMenuRowResume;
         runtime.pause_menu.confirm_forfeit = false;
         runtime.pause_menu.confirm_selected = 0;
-        runtime.app_state = AppState::Paused;
+        push_runtime_screen(runtime, Screen::Paused);
         runtime.accumulator = 0.0;
         return;
     }
@@ -860,8 +866,7 @@ void update_paused(
     const int confirm_selected_before = runtime.pause_menu.confirm_selected;
     const MatchExitPolicy exit_policy = compute_runtime_match_exit_policy(
         simulation,
-        runtime.app_state,
-        runtime.pause_return_state,
+        runtime_active_screen(runtime),
         runtime.match_flow,
         runtime.story_runtime,
         runtime.story_intro);
@@ -877,9 +882,9 @@ void update_paused(
         play_menu_confirm_sound(runtime);
     }
     if (result == PauseMenuActionResult::Resume) {
-        runtime.app_state = runtime.pause_return_state;
+        (void)pop_runtime_screen(runtime);
     } else if (result == PauseMenuActionResult::ExitMatch) {
-        execute_runtime_pause_exit(
+        const ScreenRoute route = execute_runtime_pause_exit(
             exit_policy,
             runtime.story_runtime,
             runtime.story_hub,
@@ -888,10 +893,14 @@ void update_paused(
             simulation,
             runtime.story_scene,
             runtime.authored_transition_request,
-            runtime.app_state,
+            runtime_active_screen(runtime),
             story_official_games_to_win(),
             sanitize_player_name,
             save_story_career);
+        if (runtime.navigation.current == Screen::Paused) {
+            (void)pop_runtime_screen(runtime);
+        }
+        apply_replace_route(route, runtime);
     } else if (result == PauseMenuActionResult::QuitToMainMenu) {
         quit_runtime_to_main_menu(
             runtime.story_runtime,
@@ -900,12 +909,12 @@ void update_paused(
             runtime.story_scene,
             runtime.match_flow,
             runtime.pause_menu,
-            runtime.pause_return_state,
             simulation,
             runtime.authored_transition_request,
+            runtime_active_screen(runtime),
             story_official_games_to_win(),
-            save_story_career,
-            runtime.app_state);
+            save_story_career);
+        reset_runtime_to_root(runtime, Screen::MainMenu);
     }
     runtime.accumulator = 0.0;
 }
@@ -928,23 +937,24 @@ void update_runtime(
         clear_authored_transition_request(runtime.authored_transition_request);
     }
     if (runtime.visual_transition.active) {
-        advance_visual_transition(
+        const ScreenRoute route = advance_visual_transition(
             runtime.visual_transition,
-            runtime.app_state,
             runtime.story_scene,
             platform.now_seconds());
+        apply_replace_route(route, runtime);
     }
 
     const MenuInputIntent menu_input = derive_menu_input_intent(input);
     const MenuIntent& menu_intent = menu_input.pressed;
 
-    if (runtime.app_state == AppState::MainMenu) {
+    const Screen screen = runtime.navigation.current;
+    if (screen == Screen::MainMenu) {
         update_main_menu(menu_intent, runtime, platform);
-    } else if (runtime.app_state == AppState::OptionsMenu) {
+    } else if (screen == Screen::OptionsMenu) {
         update_options_menu(menu_intent, events, runtime);
-    } else if (runtime.app_state == AppState::QuickMatchSetup) {
+    } else if (screen == Screen::QuickMatchSetup) {
         update_quick_match_setup(menu_intent, runtime, simulation);
-    } else if (runtime.app_state == AppState::PaddleTuning) {
+    } else if (screen == Screen::PaddleTuning) {
         update_paddle_tuning(
             PaddleTuningInputIntent {
                 .pressed = menu_intent,
@@ -952,25 +962,26 @@ void update_runtime(
                 .pause = menu_input.pause,
             },
             runtime);
-    } else if (runtime.app_state == AppState::StoryMenu) {
+    } else if (screen == Screen::StoryMenu) {
         update_story_menu(menu_intent, simulation, runtime);
-    } else if (runtime.app_state == AppState::StoryIntro) {
+    } else if (screen == Screen::StoryIntro) {
         update_story_intro_dialogue_input(input, events, render_context, runtime, simulation);
-        if (runtime.app_state == AppState::StoryIntro && runtime.story_intro.phase == StoryIntroPhase::PlayMatch) {
+        if (runtime.navigation.current == Screen::StoryIntro &&
+            runtime.story_intro.phase == StoryIntroPhase::PlayMatch) {
             update_playing(input, frame_dt, runtime, simulation);
         } else {
             update_dialogue_step(runtime, frame_dt, simulation);
             runtime.accumulator = 0.0;
         }
-    } else if (runtime.app_state == AppState::StoryScene) {
+    } else if (screen == Screen::StoryScene) {
         update_story_scene_input(input, render_context, runtime, simulation);
         update_dialogue_step(runtime, frame_dt, simulation);
         runtime.accumulator = 0.0;
-    } else if (runtime.app_state == AppState::StoryHub) {
+    } else if (screen == Screen::StoryHub) {
         update_story_hub(menu_intent, runtime, simulation);
-    } else if (runtime.app_state == AppState::Playing) {
+    } else if (screen == Screen::Playing) {
         update_playing(input, frame_dt, runtime, simulation);
-    } else if (runtime.app_state == AppState::Paused) {
+    } else if (screen == Screen::Paused) {
         update_paused(
             PauseMenuIntent {
                 .menu = menu_intent,

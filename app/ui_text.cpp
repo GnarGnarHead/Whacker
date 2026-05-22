@@ -16,11 +16,11 @@ constexpr char kMainMenuFooterShort[] = "ARROWS MOVE  ENTER SELECT  ESC QUIT";
 
 constexpr char kOptionsTitle[] = "OPTIONS";
 constexpr char kOptionsSubtitle[] = "CONTROLS + AUDIO";
-constexpr char kOptionsWaitingValue[] = "PRESS KEY...";
+constexpr char kOptionsWaitingValue[] = "PRESS INPUT...";
 constexpr char kOptionsToggleOn[] = "ON";
 constexpr char kOptionsToggleOff[] = "OFF";
-constexpr char kOptionsFooterWaiting[] = "PRESS ANY KEY  ESC CANCEL";
-constexpr char kOptionsFooterWaitingShort[] = "PRESS KEY  ESC CANCEL";
+constexpr char kOptionsFooterWaiting[] = "PRESS KEY/BUTTON OR MOVE STICK  ESC CANCEL";
+constexpr char kOptionsFooterWaitingShort[] = "INPUT OR STICK  ESC CANCEL";
 constexpr char kOptionsFooterDefault[] = "UP/DOWN MOVE  LEFT/RIGHT ADJUST  ENTER SELECT  ESC BACK";
 constexpr char kOptionsFooterDefaultShort[] = "ARROWS MOVE  L/R ADJUST  ENTER SELECT  ESC BACK";
 

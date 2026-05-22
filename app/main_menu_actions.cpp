@@ -11,9 +11,6 @@ MainMenuActionResult apply_main_menu_action(
     if (intent.down) {
         menu_state.selected_row = (menu_state.selected_row + 1) % MainMenuRowCount;
     }
-    if (intent.back) {
-        return MainMenuActionResult::Quit;
-    }
     if (!intent.confirm) {
         return MainMenuActionResult::None;
     }

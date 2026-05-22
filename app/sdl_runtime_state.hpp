@@ -8,6 +8,7 @@
 #include "audio_engine.hpp"
 #include "match_flow.hpp"
 #include "menu_input.hpp"
+#include "navigation.hpp"
 #include "paddle_tuning.hpp"
 #include "runtime_visual_transition.hpp"
 #include "sdl_input.hpp"
@@ -20,7 +21,7 @@ namespace whacker::app {
 
 struct SdlRuntimeState {
     AppState app_state = AppState::MainMenu;
-    AppState pause_return_state = AppState::Playing;
+    NavigationState navigation {};
     MainMenuState main_menu {};
     MenuState quick_menu {};
     OptionsMenuState options_menu {};

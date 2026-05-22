@@ -131,14 +131,12 @@ bool should_fire_horizontal_hold_repeat(PaddleTuningState& tuning_state, const i
 
 void initialize_tuning_state(
     PaddleTuningState& tuning_state,
-    const AppState return_state,
     const PaddleTuningTarget target,
     const whacker::progression::SkillState& skills,
     const whacker::progression::SkillState& max_skills,
     const float max_budget) {
     const whacker::progression::SkillState clamped_max = clamp_skill_components(max_skills);
     tuning_state.active = true;
-    tuning_state.return_state = return_state;
     tuning_state.target = target;
     tuning_state.selected_component = 0;
     tuning_state.horizontal_hold_direction = 0;
@@ -153,7 +151,6 @@ void initialize_tuning_state(
 
 void begin_quick_paddle_tuning(
     PaddleTuningState& tuning_state,
-    const AppState return_state,
     const PaddleTuningTarget target,
     const whacker::progression::SkillState& skills) {
     static const whacker::progression::SkillState kQuickTuningMaxSkills {
@@ -163,7 +160,6 @@ void begin_quick_paddle_tuning(
     };
     initialize_tuning_state(
         tuning_state,
-        return_state,
         target,
         skills,
         kQuickTuningMaxSkills,
@@ -175,7 +171,6 @@ void begin_story_player_paddle_tuning(
     const StoryCareerData& career) {
     initialize_tuning_state(
         tuning_state,
-        AppState::StoryHub,
         PaddleTuningTarget::StoryPlayer,
         career.player_skills,
         career.player_skill_caps,

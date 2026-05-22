@@ -15,6 +15,7 @@ enum class OptionsMenuActionResult {
 };
 
 bool options_row_is_binding(int row);
+bool options_row_is_axis_invert(int row);
 bool options_row_is_volume(int row);
 bool options_row_is_mute(int row);
 int audio_value(const AudioSettings& settings, int row);

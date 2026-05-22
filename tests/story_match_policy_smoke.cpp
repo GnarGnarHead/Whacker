@@ -112,20 +112,19 @@ void test_runtime_policy_resolution_prefers_intro_first_match_when_active() {
     StoryRuntimeState runtime {};
     StoryIntroState intro {};
     MatchFlowState flow {};
-    AppState app_state = AppState::StoryIntro;
-    const AppState pause_return_state = AppState::Playing;
+    AppState active_state = AppState::StoryIntro;
 
     intro.phase = StoryIntroPhase::PlayMatch;
     runtime.active_match = StoryMatchKind::None;
     flow.mode = ActiveMatchMode::StoryTraining;
     const StoryMatchPolicyDescriptor& intro_policy =
-        story_match_policy_for_runtime(runtime, intro, app_state, pause_return_state, flow);
+        story_match_policy_for_runtime(runtime, intro, active_state, flow);
     require(intro_policy.scenario_id == StoryMatchScenarioId::IntroFirstMatch);
 
     runtime.active_match = StoryMatchKind::Official;
-    app_state = AppState::Playing;
+    active_state = AppState::Playing;
     const StoryMatchPolicyDescriptor& official_policy =
-        story_match_policy_for_runtime(runtime, intro, app_state, pause_return_state, flow);
+        story_match_policy_for_runtime(runtime, intro, active_state, flow);
     require(official_policy.scenario_id == StoryMatchScenarioId::Official);
 }
 

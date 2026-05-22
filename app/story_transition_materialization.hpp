@@ -1,16 +1,16 @@
 #pragma once
 
+#include "navigation.hpp"
 #include "story_runtime.hpp"
 #include "story_scene.hpp"
-#include "ui_state.hpp"
 
 namespace whacker::app {
 
 inline StorySceneState materialize_story_scene_transition_target(
     const StorySceneState& current_story_scene_state,
     const StoryRuntimeState& story_runtime,
-    const AppState target_app_state) {
-    if (target_app_state != AppState::StoryScene) {
+    const Screen target_screen) {
+    if (target_screen != Screen::StoryScene) {
         return StorySceneState {};
     }
     if (!story_runtime.onboarding_scene_pending && !story_runtime.post_forfeit_scene_pending) {

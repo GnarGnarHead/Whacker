@@ -190,8 +190,7 @@ const StoryRivalSpec& story_policy_rival_spec_for_career(
 const StoryMatchPolicyDescriptor& story_match_policy_for_runtime(
     const StoryRuntimeState& story_runtime,
     const StoryIntroState& story_intro_state,
-    AppState app_state,
-    AppState pause_return_state,
+    AppState active_state,
     const MatchFlowState& match_flow);
 
 void populate_story_onboarding_scene_script(

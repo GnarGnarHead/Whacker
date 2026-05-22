@@ -12,6 +12,7 @@
 #include <GL/gl.h>
 
 #include "pixel_font.hpp"
+#include "rgba_texture.hpp"
 
 #if defined(WHACKER_HAS_PNG)
 #include <png.h>
@@ -33,10 +34,10 @@ constexpr const char* kStarFrameSourceFilename = "magical_star_wipe_frame_source
 struct WipeFrameTexture {
     bool load_attempted = false;
     bool loaded = false;
-    bool uploaded = false;
+    bool upload_attempted = false;
     int width = 0;
     int height = 0;
-    GLuint texture_id = 0;
+    RgbaTexture texture {};
     std::vector<std::uint8_t> rgba {};
 };
 
@@ -297,47 +298,30 @@ void ensure_wipe_frame_loaded(WipeFrameTexture& frame_texture) {
 }
 
 bool ensure_wipe_frame_uploaded(WipeFrameTexture& frame_texture) {
-    if (frame_texture.uploaded && frame_texture.texture_id != 0) {
+    if (frame_texture.texture.texture_id != 0) {
         return true;
+    }
+    if (frame_texture.upload_attempted) {
+        return false;
     }
     if (!frame_texture.loaded || frame_texture.width <= 0 || frame_texture.height <= 0 || frame_texture.rgba.empty()) {
         return false;
     }
 
-    GLuint texture_id = 0;
-    glGenTextures(1, &texture_id);
-    if (texture_id == 0) {
+    frame_texture.upload_attempted = true;
+    const RgbaTextureUploadResult result =
+        upload_rgba_texture(frame_texture.rgba.data(), frame_texture.width, frame_texture.height, "star wipe frame");
+    if (!result.uploaded) {
         return false;
     }
-
-    GLint prev_unpack_alignment = 4;
-    glGetIntegerv(GL_UNPACK_ALIGNMENT, &prev_unpack_alignment);
-
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGBA8,
-        frame_texture.width,
-        frame_texture.height,
-        0,
-        GL_RGBA,
-        GL_UNSIGNED_BYTE,
-        frame_texture.rgba.data());
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, prev_unpack_alignment);
-
-    frame_texture.texture_id = texture_id;
-    frame_texture.uploaded = true;
-    return true;
+    frame_texture.texture = result.texture;
+    std::vector<std::uint8_t> {}.swap(frame_texture.rgba);
+    return frame_texture.texture.texture_id != 0;
 }
 
 void draw_wipe_frame_overlay(
+    const int fb_width,
+    const int fb_height,
     const float cx,
     const float cy,
     const float outer_radius,
@@ -354,31 +338,23 @@ void draw_wipe_frame_overlay(
     }
 
     const float size = std::max(1.0f, outer_radius * kStarFrameScale);
-    const float aspect = frame_texture.height > 0 ? static_cast<float>(frame_texture.width) / static_cast<float>(frame_texture.height)
-                                                  : 1.0f;
+    const float aspect = frame_texture.texture.source_height > 0
+        ? static_cast<float>(frame_texture.texture.source_width) / static_cast<float>(frame_texture.texture.source_height)
+        : 1.0f;
     const float width = size;
     const float height = width / std::max(1.0e-4f, aspect);
     const float x = cx - (0.5f * width);
     const float y = cy - (0.5f * height);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, frame_texture.texture_id);
-    glColor4f(1.0f, 1.0f, 1.0f, safe_alpha);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(x, y);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(x + width, y);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(x + width, y + height);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(x, y + height);
-    glEnd();
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
+    draw_rgba_texture_quad_pixels(
+        fb_width,
+        fb_height,
+        frame_texture.texture,
+        x,
+        y,
+        width,
+        height,
+        safe_alpha);
 }
 
 }  // namespace
@@ -417,15 +393,13 @@ void render_visual_transition_overlay(const RenderContext& context, const Runtim
     }
 
     WipeFrameTexture& frame_texture = wipe_frame_texture_cache();
-    draw_wipe_frame_overlay(cx, cy, outer_radius, 1.0f, frame_texture);
+    draw_wipe_frame_overlay(fb_width, fb_height, cx, cy, outer_radius, 1.0f, frame_texture);
     end_pixel_projection();
 }
 
 void release_visual_transition_render_resources() {
     WipeFrameTexture& frame_texture = wipe_frame_texture_cache();
-    if (frame_texture.uploaded && frame_texture.texture_id != 0) {
-        glDeleteTextures(1, &frame_texture.texture_id);
-    }
+    release_rgba_texture(frame_texture.texture);
     frame_texture = WipeFrameTexture {};
 }
 

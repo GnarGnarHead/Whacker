@@ -63,7 +63,7 @@ StoryHubControllerEffects update_story_hub_controller(
     if (intent.back) {
         effects.play_confirm_sound = true;
         save_career_if_available(context.story_runtime, save_career_fn);
-        effects.route = StoryHubRoute::MainMenu;
+        effects.route = StoryHubRoute::Back;
         return effects;
     }
 
@@ -81,7 +81,7 @@ StoryHubControllerEffects update_story_hub_controller(
 
     if (row == StoryHubRowBack) {
         save_career_if_available(context.story_runtime, save_career_fn);
-        effects.route = StoryHubRoute::MainMenu;
+        effects.route = StoryHubRoute::Back;
         return effects;
     }
 

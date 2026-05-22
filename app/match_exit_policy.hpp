@@ -52,8 +52,7 @@ struct MatchExitPolicy {
 bool intro_first_match_phase_active(const AppState app_state, int story_intro_phase_value);
 
 MatchProgress make_match_progress(
-    AppState app_state,
-    AppState pause_return_state,
+    AppState active_state,
     const MatchFlowState& match_flow,
     const StoryRuntimeState& story_runtime,
     int story_intro_phase_value,

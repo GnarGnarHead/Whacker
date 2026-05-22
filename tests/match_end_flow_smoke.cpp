@@ -14,27 +14,24 @@ void finalize_story_match(
     story_runtime.active_match = StoryMatchKind::None;
 }
 
-void route_after_completed_story_match(
+Screen route_after_completed_story_match(
     StoryRuntimeState& story_runtime,
-    const StoryMatchKind completed_kind,
-    AppState& app_state) {
+    const StoryMatchKind completed_kind) {
     if (completed_kind == StoryMatchKind::OnboardingAyaFriendly) {
         story_runtime.onboarding_step = StoryOnboardingStep::ClubIntroScene;
         story_runtime.onboarding_scene_pending = true;
         story_runtime.post_forfeit_scene_pending = false;
-        app_state = AppState::StoryScene;
-        return;
+        return Screen::StoryScene;
     }
     if (completed_kind == StoryMatchKind::OnboardingEntry) {
         story_runtime.onboarding_step = StoryOnboardingStep::CoachBriefScene;
         story_runtime.onboarding_scene_pending = true;
         story_runtime.post_forfeit_scene_pending = false;
-        app_state = AppState::StoryScene;
-        return;
+        return Screen::StoryScene;
     }
     story_runtime.onboarding_scene_pending = false;
     story_runtime.post_forfeit_scene_pending = false;
-    app_state = AppState::StoryHub;
+    return Screen::StoryHub;
 }
 
 }  // namespace whacker::app
@@ -106,21 +103,20 @@ void test_quick_match_completion_routes_to_setup() {
     whacker::sim::Simulation simulation {};
     whacker::app::StorySceneState story_scene {};
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::AppState app_state = whacker::app::AppState::Playing;
 
-    whacker::app::end_active_or_quick_match(
+    const whacker::app::MatchEndFlowResult result = whacker::app::end_active_or_quick_match(
         story_runtime,
         story_hub,
         match_flow,
         simulation,
         story_scene,
         authored_transition_request,
-        app_state,
+        whacker::app::Screen::Playing,
         whacker::app::StoryMatchEndReason::Completed,
         3,
         capture_save);
 
-    assert(app_state == whacker::app::AppState::QuickMatchSetup);
+    assert(result.route == whacker::app::Screen::QuickMatchSetup);
     assert(match_flow.mode == whacker::app::ActiveMatchMode::None);
     assert(g_save_call_count == 0);
 }
@@ -144,21 +140,20 @@ void test_official_forfeit_routes_to_support_scene() {
     whacker::sim::Simulation simulation {};
     whacker::app::StorySceneState story_scene {};
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::AppState app_state = whacker::app::AppState::Playing;
 
-    whacker::app::end_active_or_quick_match(
+    const whacker::app::MatchEndFlowResult result = whacker::app::end_active_or_quick_match(
         story_runtime,
         story_hub,
         match_flow,
         simulation,
         story_scene,
         authored_transition_request,
-        app_state,
+        whacker::app::Screen::Playing,
         whacker::app::StoryMatchEndReason::Forfeit,
         3,
         capture_save);
 
-    assert(app_state == whacker::app::AppState::StoryScene);
+    assert(result.route == whacker::app::Screen::StoryScene);
     assert(story_runtime.post_forfeit_scene_pending);
     assert(!story_runtime.onboarding_scene_pending);
     assert(story_runtime.active_match == whacker::app::StoryMatchKind::None);
@@ -187,21 +182,20 @@ void test_onboarding_entry_forfeit_routes_to_retry_scene() {
     whacker::sim::Simulation simulation {};
     whacker::app::StorySceneState story_scene {};
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::AppState app_state = whacker::app::AppState::Playing;
 
-    whacker::app::end_active_or_quick_match(
+    const whacker::app::MatchEndFlowResult result = whacker::app::end_active_or_quick_match(
         story_runtime,
         story_hub,
         match_flow,
         simulation,
         story_scene,
         authored_transition_request,
-        app_state,
+        whacker::app::Screen::Playing,
         whacker::app::StoryMatchEndReason::Forfeit,
         3,
         capture_save);
 
-    assert(app_state == whacker::app::AppState::StoryScene);
+    assert(result.route == whacker::app::Screen::StoryScene);
     assert(story_runtime.onboarding_scene_pending);
     assert(!story_runtime.post_forfeit_scene_pending);
     assert(story_runtime.onboarding_step == whacker::app::StoryOnboardingStep::EntryRetryScene);
@@ -223,21 +217,20 @@ void test_onboarding_entry_completion_routes_to_coach_brief_scene() {
     whacker::sim::Simulation simulation {};
     whacker::app::StorySceneState story_scene {};
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::AppState app_state = whacker::app::AppState::Playing;
 
-    whacker::app::end_active_or_quick_match(
+    const whacker::app::MatchEndFlowResult result = whacker::app::end_active_or_quick_match(
         story_runtime,
         story_hub,
         match_flow,
         simulation,
         story_scene,
         authored_transition_request,
-        app_state,
+        whacker::app::Screen::Playing,
         whacker::app::StoryMatchEndReason::Completed,
         3,
         capture_save);
 
-    assert(app_state == whacker::app::AppState::StoryScene);
+    assert(result.route == whacker::app::Screen::StoryScene);
     assert(story_runtime.onboarding_scene_pending);
     assert(story_runtime.onboarding_step == whacker::app::StoryOnboardingStep::CoachBriefScene);
     assert(story_runtime.active_match == whacker::app::StoryMatchKind::None);
@@ -266,21 +259,20 @@ void test_training_stop_routes_to_hub_and_saves_once() {
     whacker::sim::Simulation simulation {};
     whacker::app::StorySceneState story_scene {};
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::AppState app_state = whacker::app::AppState::Playing;
 
-    whacker::app::end_active_or_quick_match(
+    const whacker::app::MatchEndFlowResult result = whacker::app::end_active_or_quick_match(
         story_runtime,
         story_hub,
         match_flow,
         simulation,
         story_scene,
         authored_transition_request,
-        app_state,
+        whacker::app::Screen::Playing,
         whacker::app::StoryMatchEndReason::EndTraining,
         3,
         capture_save);
 
-    assert(app_state == whacker::app::AppState::StoryHub);
+    assert(result.route == whacker::app::Screen::StoryHub);
     assert(story_runtime.active_match == whacker::app::StoryMatchKind::None);
     assert(!story_runtime.onboarding_scene_pending);
     assert(!story_runtime.post_forfeit_scene_pending);
@@ -301,21 +293,20 @@ void test_save_failure_surfaces_feedback() {
     whacker::sim::Simulation simulation {};
     whacker::app::StorySceneState story_scene {};
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::AppState app_state = whacker::app::AppState::Playing;
 
-    whacker::app::end_active_or_quick_match(
+    const whacker::app::MatchEndFlowResult result = whacker::app::end_active_or_quick_match(
         story_runtime,
         story_hub,
         match_flow,
         simulation,
         story_scene,
         authored_transition_request,
-        app_state,
+        whacker::app::Screen::Playing,
         whacker::app::StoryMatchEndReason::EndTraining,
         3,
         capture_save_failure);
 
-    assert(app_state == whacker::app::AppState::StoryHub);
+    assert(result.route == whacker::app::Screen::StoryHub);
     assert(g_save_call_count == 1);
     assert(story_hub.feedback_line_1 == "Save failed. Progress not written.");
     assert(story_hub.feedback_line_2 == "Disk full");

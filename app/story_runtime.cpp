@@ -187,13 +187,12 @@ void begin_new_story_intro(
     state.ball.velocity.y = 0.0f;
 }
 
-void complete_story_intro(
+StoryIntroCompleteResult complete_story_intro(
     StoryRuntimeState& story_runtime,
     StoryHubState& story_hub_state,
     StoryIntroState& story_intro_state,
     MatchFlowState& match_flow,
     whacker::sim::Simulation& simulation,
-    AppState& route_app_state,
     RuntimeAuthoredTransitionRequest& authored_transition_request,
     const StorySanitizeNameFn sanitize_name_fn,
     const StorySaveCareerCallback save_career_fn) {
@@ -222,9 +221,9 @@ void complete_story_intro(
         begin_story_onboarding_scene(onboarding_target_scene, story_runtime);
         const TransitionArmResult arm_result = arm_authored_star_wipe_transition(
             authored_transition_request,
-            AppState::StoryIntro,
+            Screen::StoryIntro,
             nullptr,
-            AppState::StoryScene,
+            Screen::StoryScene,
             &onboarding_target_scene);
         if (!arm_result.armed) {
 #ifndef NDEBUG
@@ -237,7 +236,7 @@ void complete_story_intro(
     save_career_if_possible(story_runtime.career, save_career_fn, &story_hub_state);
     story_intro_state = StoryIntroState {};
     reset_match_flow_and_simulation(match_flow, simulation);
-    route_app_state = AppState::StoryScene;
+    return StoryIntroCompleteResult {.route = screen_route(Screen::StoryScene)};
 }
 
 }  // namespace whacker::app
