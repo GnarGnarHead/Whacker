@@ -5,10 +5,6 @@
 
 #include "app_types.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
-struct GLFWwindow;
-
 namespace whacker::app {
 
 struct ControlBindings;
@@ -38,13 +34,6 @@ StoryIntroBodyLayout compute_story_intro_body_layout_for_framebuffer(
     StoryIntroKeyNameFn key_name_fn,
     StoryIntroSanitizeNameFn sanitize_name_fn);
 
-StoryIntroBodyLayout compute_story_intro_body_layout_for_window(
-    GLFWwindow* window,
-    const StoryIntroState& story_intro_state,
-    const ControlBindings& controls,
-    StoryIntroKeyNameFn key_name_fn,
-    StoryIntroSanitizeNameFn sanitize_name_fn);
-
 int clamp_story_intro_scroll_from_bottom(
     const StoryIntroBodyLayout& layout,
     int requested_scroll_from_bottom);
@@ -54,6 +43,3 @@ int first_visible_story_intro_row_index(
     int scroll_from_bottom);
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW
-

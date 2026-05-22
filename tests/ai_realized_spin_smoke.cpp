@@ -2,8 +2,6 @@
 #include <cstdlib>
 #include <cstdio>
 
-#include <GLFW/glfw3.h>
-
 #include "play_control.hpp"
 
 namespace {
@@ -57,7 +55,6 @@ SpinMetrics run_style_series(
     const int win_score,
     const int max_steps) {
     SpinMetrics metrics {};
-    app::ControlBindings controls {};
 
     for (int game = 0; game < games; ++game) {
         sim::Simulation simulation {};
@@ -73,13 +70,13 @@ SpinMetrics run_style_series(
         for (int step = 0; step < max_steps; ++step) {
             const sim::RallyState before = simulation.state();
             app::update_targets_for_play(
-                nullptr,
                 simulation,
                 options,
-                controls,
                 left_ai,
                 right_ai,
                 sim::kFixedDt,
+                0.0f,
+                0.0f,
                 nullptr);
 
             (void)simulation.step(sim::kFixedDt);
@@ -194,10 +191,6 @@ void test_spin_focused_ai_converts_realized_spin() {
 }
 
 }  // namespace
-
-extern "C" int glfwGetKey(GLFWwindow* /*window*/, const int /*key*/) {
-    return GLFW_RELEASE;
-}
 
 int main() {
     test_spin_focused_ai_converts_realized_spin();

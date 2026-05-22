@@ -1,7 +1,5 @@
 #include "runtime_story_scene.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <array>
 #include <cassert>
 #include <cstdint>
@@ -308,5 +306,3 @@ void handle_story_scene_confirm(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

@@ -148,16 +148,82 @@ if(WHACKER_BUILD_APP)
         app/action_input.cpp
         app/app_runtime.cpp
         app/audio_engine.cpp
+        app/ai_core.cpp
+        app/ai_frame.cpp
+        app/ai_seed.cpp
+        app/ai_profile.cpp
+        app/ai_predict.cpp
+        app/ai_reachability.cpp
+        app/ai_candidates.cpp
+        app/ai_score.cpp
+        app/ai_execute.cpp
+        app/ai_decision_templates.cpp
+        app/ai_plan_state_bridge.cpp
         app/game_render.cpp
+        app/input_binding_codec.cpp
         app/main.cpp
         app/main_menu_actions.cpp
+        app/match_end_flow.cpp
+        app/match_exit_policy.cpp
+        app/match_flow.cpp
         app/menu_overlay.cpp
+        app/menu_settings.cpp
         app/menu_sticker_render.cpp
+        app/options_menu_actions.cpp
         app/overlay_layout_math.cpp
+        app/paddle_tuning.cpp
+        app/paddle_tuning_actions.cpp
+        app/paddle_tuning_overlay.cpp
+        app/pause_menu_actions.cpp
+        app/play_control.cpp
         app/play_control_human.cpp
         app/platform_sdl.cpp
         app/pixel_font.cpp
+        app/quick_menu_actions.cpp
+        app/quick_menu_render.cpp
+        app/runtime_story_scene.cpp
+        app/runtime_transitions.cpp
+        app/runtime_visual_transition.cpp
+        app/runtime_visual_transition_render.cpp
+        app/sdl_options_binding_access.cpp
+        app/sdl_options_capture.cpp
+        app/sdl_options_controller.cpp
+        app/sdl_options_value_labels.cpp
         app/sdl_input.cpp
+        app/sdl_runtime_audio.cpp
+        app/sdl_runtime_labels.cpp
+        app/sdl_runtime_render.cpp
+        app/sdl_runtime_state.cpp
+        app/sdl_runtime_transitions.cpp
+        app/sdl_runtime_update.cpp
+        app/sdl_story_hub_rules.cpp
+        app/story_chat_layout.cpp
+        app/story_chat_portrait_overlay.cpp
+        app/story_classification.cpp
+        app/story_continue_resume.cpp
+        app/story_intro.cpp
+        app/story_intro_overlay.cpp
+        app/story_intro_text_layout.cpp
+        app/story_match.cpp
+        app/story_menu_actions.cpp
+        app/story_onboarding_sync.cpp
+        app/story_overlays.cpp
+        app/story_panel_layout.cpp
+        app/story_play_session.cpp
+        app/story_portrait_render.cpp
+        app/story_portraits.cpp
+        app/story_runtime.cpp
+        app/story_runtime_invariants.cpp
+        app/story_save.cpp
+        app/story_script_catalog.cpp
+        app/story_scene.cpp
+        app/story_scene_overlay.cpp
+        app/story_scene_text_layout.cpp
+        app/story_text.cpp
+        app/story_text_feedback.cpp
+        app/story_text_week.cpp
+        app/story_text_week_01.cpp
+        app/text_utils.cpp
         app/text_wrap.cpp
         app/ui_text.cpp
     )
@@ -222,7 +288,6 @@ if(WHACKER_BUILD_APP)
     target_compile_definitions(
         play_control_duel
         PRIVATE
-            WHACKER_HAS_GLFW=1
             WHACKER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
     )
     whacker_apply_warnings(play_control_duel)
@@ -247,6 +312,9 @@ if(WHACKER_BUILD_TESTS)
             app/story_runtime_invariants.cpp
             app/story_onboarding_sync.cpp
             app/story_script_catalog.cpp
+            app/story_text.cpp
+            app/story_text_week.cpp
+            app/story_text_week_01.cpp
         )
         target_link_libraries(story_flow_smoke PRIVATE whacker_core story_pack_gen)
         target_include_directories(story_flow_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
@@ -306,34 +374,14 @@ if(WHACKER_BUILD_TESTS)
             app/story_runtime_invariants.cpp
             app/story_onboarding_sync.cpp
             app/story_script_catalog.cpp
+            app/story_text.cpp
+            app/story_text_week.cpp
+            app/story_text_week_01.cpp
         )
         target_link_libraries(story_continue_resume_smoke PRIVATE whacker_core story_pack_gen)
         target_include_directories(story_continue_resume_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
         whacker_configure_smoke_test(story_continue_resume_smoke)
         add_test(NAME story_continue_resume_smoke COMMAND story_continue_resume_smoke)
-
-        add_executable(story_menu_continue_smoke
-            tests/story_menu_continue_smoke.cpp
-            app/story_flow.cpp
-            app/story_intro_text_layout.cpp
-            app/story_chat_layout.cpp
-            app/story_play_session.cpp
-            app/story_continue_resume.cpp
-            app/story_runtime_invariants.cpp
-            app/story_onboarding_sync.cpp
-            app/text_wrap.cpp
-            app/story_text.cpp
-            app/story_text_feedback.cpp
-            app/story_text_week.cpp
-            app/story_text_week_01.cpp
-            app/story_script_catalog.cpp
-        )
-        target_link_libraries(story_menu_continue_smoke PRIVATE whacker_core)
-        target_link_libraries(story_menu_continue_smoke PRIVATE story_pack_gen)
-        target_include_directories(story_menu_continue_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(story_menu_continue_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(story_menu_continue_smoke)
-        add_test(NAME story_menu_continue_smoke COMMAND story_menu_continue_smoke)
 
         add_executable(story_scene_smoke
             tests/story_scene_smoke.cpp
@@ -347,7 +395,6 @@ if(WHACKER_BUILD_TESTS)
         target_link_libraries(story_scene_smoke PRIVATE whacker_core)
         target_link_libraries(story_scene_smoke PRIVATE story_pack_gen)
         target_include_directories(story_scene_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(story_scene_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(story_scene_smoke)
         add_test(NAME story_scene_smoke COMMAND story_scene_smoke)
 
@@ -369,7 +416,6 @@ if(WHACKER_BUILD_TESTS)
         )
         target_link_libraries(story_scene_text_layout_smoke PRIVATE whacker_core)
         target_include_directories(story_scene_text_layout_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(story_scene_text_layout_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(story_scene_text_layout_smoke)
         add_test(NAME story_scene_text_layout_smoke COMMAND story_scene_text_layout_smoke)
 
@@ -386,7 +432,6 @@ if(WHACKER_BUILD_TESTS)
         target_link_libraries(story_intro_text_layout_smoke PRIVATE whacker_core)
         target_link_libraries(story_intro_text_layout_smoke PRIVATE story_pack_gen)
         target_include_directories(story_intro_text_layout_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(story_intro_text_layout_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(story_intro_text_layout_smoke)
         add_test(NAME story_intro_text_layout_smoke COMMAND story_intro_text_layout_smoke)
 
@@ -440,6 +485,10 @@ if(WHACKER_BUILD_TESTS)
         add_executable(story_rivals_smoke
             tests/story_rivals_smoke.cpp
             app/story_script_catalog.cpp
+            app/story_text.cpp
+            app/story_text_feedback.cpp
+            app/story_text_week.cpp
+            app/story_text_week_01.cpp
         )
         target_link_libraries(story_rivals_smoke PRIVATE whacker_core story_pack_gen)
         target_include_directories(story_rivals_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
@@ -450,6 +499,10 @@ if(WHACKER_BUILD_TESTS)
             add_executable(story_graph_authoring_guard_smoke
                 tests/story_graph_authoring_guard_smoke.cpp
                 app/story_script_catalog.cpp
+                app/story_text.cpp
+                app/story_text_feedback.cpp
+                app/story_text_week.cpp
+                app/story_text_week_01.cpp
             )
             target_link_libraries(story_graph_authoring_guard_smoke PRIVATE whacker_core story_pack_gen)
             target_include_directories(story_graph_authoring_guard_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
@@ -467,7 +520,6 @@ if(WHACKER_BUILD_TESTS)
         target_link_libraries(story_text_week_smoke PRIVATE whacker_core)
         target_link_libraries(story_text_week_smoke PRIVATE story_pack_gen)
         target_include_directories(story_text_week_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(story_text_week_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(story_text_week_smoke)
         add_test(NAME story_text_week_smoke COMMAND story_text_week_smoke)
 
@@ -482,7 +534,6 @@ if(WHACKER_BUILD_TESTS)
         target_link_libraries(story_match_policy_smoke PRIVATE whacker_core)
         target_link_libraries(story_match_policy_smoke PRIVATE story_pack_gen)
         target_include_directories(story_match_policy_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(story_match_policy_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(story_match_policy_smoke)
         add_test(NAME story_match_policy_smoke COMMAND story_match_policy_smoke)
 
@@ -507,7 +558,6 @@ if(WHACKER_BUILD_TESTS)
         target_link_libraries(story_progression_policy_smoke PRIVATE whacker_core)
         target_link_libraries(story_progression_policy_smoke PRIVATE story_pack_gen)
         target_include_directories(story_progression_policy_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(story_progression_policy_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(story_progression_policy_smoke)
         add_test(NAME story_progression_policy_smoke COMMAND story_progression_policy_smoke)
 
@@ -515,6 +565,10 @@ if(WHACKER_BUILD_TESTS)
             tests/story_save_smoke.cpp
             app/story_save.cpp
             app/story_script_catalog.cpp
+            app/story_text.cpp
+            app/story_text_feedback.cpp
+            app/story_text_week.cpp
+            app/story_text_week_01.cpp
             app/text_utils.cpp
         )
         target_link_libraries(story_save_smoke PRIVATE whacker_core story_pack_gen)
@@ -553,16 +607,15 @@ if(WHACKER_BUILD_TESTS)
             app/main_menu_actions.cpp
             app/match_end_flow.cpp
             app/match_flow.cpp
-            app/menu_flow.cpp
             app/runtime_story_scene.cpp
             app/runtime_visual_transition.cpp
             app/story_classification.cpp
             app/story_continue_resume.cpp
-            app/story_flow.cpp
             app/story_intro.cpp
             app/story_intro_text_layout.cpp
             app/story_chat_layout.cpp
             app/story_match.cpp
+            app/story_menu_actions.cpp
             app/story_play_session.cpp
             app/story_onboarding_flow.cpp
             app/story_onboarding_sync.cpp
@@ -580,7 +633,6 @@ if(WHACKER_BUILD_TESTS)
         target_link_libraries(story_integration_smoke PRIVATE whacker_core)
         target_link_libraries(story_integration_smoke PRIVATE story_pack_gen)
         target_include_directories(story_integration_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(story_integration_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(story_integration_smoke)
         add_test(NAME story_integration_smoke COMMAND story_integration_smoke)
 
@@ -589,6 +641,10 @@ if(WHACKER_BUILD_TESTS)
             app/match_flow.cpp
             app/match_exit_policy.cpp
             app/story_script_catalog.cpp
+            app/story_text.cpp
+            app/story_text_feedback.cpp
+            app/story_text_week.cpp
+            app/story_text_week_01.cpp
         )
         target_link_libraries(match_flow_smoke PRIVATE whacker_core story_pack_gen)
         target_include_directories(match_flow_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
@@ -611,7 +667,6 @@ if(WHACKER_BUILD_TESTS)
         target_link_libraries(match_end_flow_smoke PRIVATE whacker_core)
         target_link_libraries(match_end_flow_smoke PRIVATE story_pack_gen)
         target_include_directories(match_end_flow_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(match_end_flow_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(match_end_flow_smoke)
         add_test(NAME match_end_flow_smoke COMMAND match_end_flow_smoke)
 
@@ -632,51 +687,8 @@ if(WHACKER_BUILD_TESTS)
         target_link_libraries(runtime_transitions_smoke PRIVATE whacker_core)
         target_link_libraries(runtime_transitions_smoke PRIVATE story_pack_gen)
         target_include_directories(runtime_transitions_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_transitions_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(runtime_transitions_smoke)
         add_test(NAME runtime_transitions_smoke COMMAND runtime_transitions_smoke)
-
-        add_executable(runtime_handlers_smoke
-            tests/runtime_handlers_smoke.cpp
-            app/runtime_escape.cpp
-            app/runtime_pause.cpp
-            app/runtime_story_scene.cpp
-            app/story_runtime_invariants.cpp
-        )
-        target_link_libraries(runtime_handlers_smoke PRIVATE whacker_core)
-        target_include_directories(runtime_handlers_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_handlers_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(runtime_handlers_smoke)
-        add_test(NAME runtime_handlers_smoke COMMAND runtime_handlers_smoke)
-
-        add_executable(runtime_input_phase_smoke
-            tests/runtime_input_phase_smoke.cpp
-            app/runtime_input_phase.cpp
-            app/runtime_input_phase_branches.cpp
-            app/paddle_tuning.cpp
-            app/story_scene_text_layout.cpp
-            app/overlay_layout_math.cpp
-            app/story_chat_layout.cpp
-            app/text_wrap.cpp
-            app/runtime_story_save_cache.cpp
-            app/story_runtime_invariants.cpp
-        )
-        target_link_libraries(runtime_input_phase_smoke PRIVATE whacker_core)
-        target_include_directories(runtime_input_phase_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_input_phase_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(runtime_input_phase_smoke)
-        add_test(NAME runtime_input_phase_smoke COMMAND runtime_input_phase_smoke)
-
-        add_executable(runtime_phase_drivers_smoke
-            tests/runtime_phase_drivers_smoke.cpp
-            app/runtime_phase_drivers.cpp
-            app/runtime_visual_transition.cpp
-        )
-        target_link_libraries(runtime_phase_drivers_smoke PRIVATE whacker_core)
-        target_include_directories(runtime_phase_drivers_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_phase_drivers_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(runtime_phase_drivers_smoke)
-        add_test(NAME runtime_phase_drivers_smoke COMMAND runtime_phase_drivers_smoke)
 
         add_executable(runtime_visual_transition_smoke
             tests/runtime_visual_transition_smoke.cpp
@@ -684,30 +696,8 @@ if(WHACKER_BUILD_TESTS)
         )
         target_link_libraries(runtime_visual_transition_smoke PRIVATE whacker_core)
         target_include_directories(runtime_visual_transition_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_visual_transition_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(runtime_visual_transition_smoke)
         add_test(NAME runtime_visual_transition_smoke COMMAND runtime_visual_transition_smoke)
-
-        add_executable(runtime_frame_timing_smoke
-            tests/runtime_frame_timing_smoke.cpp
-            app/runtime_frame_timing.cpp
-        )
-        target_link_libraries(runtime_frame_timing_smoke PRIVATE whacker_core)
-        target_include_directories(runtime_frame_timing_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_frame_timing_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(runtime_frame_timing_smoke)
-        add_test(NAME runtime_frame_timing_smoke COMMAND runtime_frame_timing_smoke)
-
-        add_executable(runtime_loop_state_smoke
-            tests/runtime_loop_state_smoke.cpp
-            app/runtime_loop_state.cpp
-            app/runtime_helpers.cpp
-        )
-        target_link_libraries(runtime_loop_state_smoke PRIVATE whacker_core)
-        target_include_directories(runtime_loop_state_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_loop_state_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(runtime_loop_state_smoke)
-        add_test(NAME runtime_loop_state_smoke COMMAND runtime_loop_state_smoke)
 
         add_executable(runtime_loop_policy_smoke
             tests/runtime_loop_policy_smoke.cpp
@@ -722,67 +712,24 @@ if(WHACKER_BUILD_TESTS)
             tests/action_input_smoke.cpp
             app/action_input.cpp
             app/main_menu_actions.cpp
+            app/options_menu_actions.cpp
+            app/pause_menu_actions.cpp
+            app/quick_menu_actions.cpp
+            app/story_menu_actions.cpp
         )
+        target_link_libraries(action_input_smoke PRIVATE whacker_core)
         target_include_directories(action_input_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
         whacker_configure_smoke_test(action_input_smoke)
         add_test(NAME action_input_smoke COMMAND action_input_smoke)
 
-        add_executable(runtime_render_drivers_smoke
-            tests/runtime_render_drivers_smoke.cpp
-            app/runtime_render_drivers.cpp
+        add_executable(input_binding_codec_smoke
+            tests/input_binding_codec_smoke.cpp
+            app/action_input.cpp
+            app/input_binding_codec.cpp
         )
-        target_link_libraries(runtime_render_drivers_smoke PRIVATE whacker_core)
-        target_include_directories(runtime_render_drivers_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_render_drivers_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(runtime_render_drivers_smoke)
-        add_test(NAME runtime_render_drivers_smoke COMMAND runtime_render_drivers_smoke)
-
-        add_executable(runtime_story_save_cache_smoke
-            tests/runtime_story_save_cache_smoke.cpp
-            app/runtime_story_save_cache.cpp
-        )
-        target_link_libraries(runtime_story_save_cache_smoke PRIVATE whacker_core)
-        target_include_directories(runtime_story_save_cache_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_story_save_cache_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(runtime_story_save_cache_smoke)
-        add_test(NAME runtime_story_save_cache_smoke COMMAND runtime_story_save_cache_smoke)
-
-        add_executable(menu_input_smoke
-            tests/menu_input_smoke.cpp
-            app/menu_input.cpp
-        )
-        target_include_directories(menu_input_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(menu_input_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(menu_input_smoke)
-        add_test(NAME menu_input_smoke COMMAND menu_input_smoke)
-
-        add_executable(runtime_step_input_smoke
-            tests/runtime_step_input_smoke.cpp
-            app/runtime_step_input.cpp
-        )
-        target_link_libraries(runtime_step_input_smoke PRIVATE whacker_core)
-        target_include_directories(runtime_step_input_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_step_input_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(runtime_step_input_smoke)
-        add_test(NAME runtime_step_input_smoke COMMAND runtime_step_input_smoke)
-
-        add_executable(runtime_step_phase_smoke
-            tests/runtime_step_phase_smoke.cpp
-            app/runtime_step_phase.cpp
-            app/runtime_step_phase_branches.cpp
-            app/paddle_tuning.cpp
-            app/story_script_catalog.cpp
-            app/story_text.cpp
-            app/story_text_feedback.cpp
-            app/story_text_week.cpp
-            app/story_text_week_01.cpp
-        )
-        target_link_libraries(runtime_step_phase_smoke PRIVATE whacker_core)
-        target_link_libraries(runtime_step_phase_smoke PRIVATE story_pack_gen)
-        target_include_directories(runtime_step_phase_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(runtime_step_phase_smoke PRIVATE WHACKER_HAS_GLFW=1)
-        whacker_configure_smoke_test(runtime_step_phase_smoke)
-        add_test(NAME runtime_step_phase_smoke COMMAND runtime_step_phase_smoke)
+        target_include_directories(input_binding_codec_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(input_binding_codec_smoke)
+        add_test(NAME input_binding_codec_smoke COMMAND input_binding_codec_smoke)
 
         add_executable(story_runtime_invariants_smoke
             tests/story_runtime_invariants_smoke.cpp
@@ -808,7 +755,6 @@ if(WHACKER_BUILD_TESTS)
         )
         target_link_libraries(play_control_ai_stub_smoke PRIVATE whacker_core)
         target_include_directories(play_control_ai_stub_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(play_control_ai_stub_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(play_control_ai_stub_smoke)
         add_test(NAME play_control_ai_stub_smoke COMMAND play_control_ai_stub_smoke)
 
@@ -854,7 +800,6 @@ if(WHACKER_BUILD_TESTS)
         )
         target_link_libraries(ai_realized_spin_smoke PRIVATE whacker_core)
         target_include_directories(ai_realized_spin_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(ai_realized_spin_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(ai_realized_spin_smoke)
         add_test(NAME ai_realized_spin_smoke COMMAND ai_realized_spin_smoke)
 
@@ -864,7 +809,6 @@ if(WHACKER_BUILD_TESTS)
         )
         target_link_libraries(ai_competence_ladder_smoke PRIVATE whacker_core)
         target_include_directories(ai_competence_ladder_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(ai_competence_ladder_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(ai_competence_ladder_smoke)
         add_test(NAME ai_competence_ladder_smoke COMMAND ai_competence_ladder_smoke)
 
@@ -874,7 +818,6 @@ if(WHACKER_BUILD_TESTS)
         )
         target_link_libraries(ai_determinism_trace_smoke PRIVATE whacker_core)
         target_include_directories(ai_determinism_trace_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
-        target_compile_definitions(ai_determinism_trace_smoke PRIVATE WHACKER_HAS_GLFW=1)
         whacker_configure_smoke_test(ai_determinism_trace_smoke)
         add_test(NAME ai_determinism_trace_smoke COMMAND ai_determinism_trace_smoke)
 

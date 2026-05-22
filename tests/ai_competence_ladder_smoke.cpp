@@ -3,8 +3,6 @@
 #include <cstdio>
 #include <limits>
 
-#include <GLFW/glfw3.h>
-
 #include "play_control.hpp"
 #include "sim/collision.hpp"
 #include "sim/math.hpp"
@@ -225,18 +223,17 @@ MatchResult run_game(
 
     app::RuntimeAiState left_ai {};
     app::RuntimeAiState right_ai {};
-    app::ControlBindings controls {};
 
     for (int step = 0; step < max_steps; ++step) {
         const sim::RallyState before = simulation.state();
         app::update_targets_for_play(
-            nullptr,
             simulation,
             options,
-            controls,
             left_ai,
             right_ai,
             sim::kFixedDt,
+            0.0f,
+            0.0f,
             nullptr);
 
         const sim::RallyState planned = simulation.state();
@@ -586,10 +583,6 @@ void test_competence_ladder_and_side_bias() {
 }
 
 }  // namespace
-
-extern "C" int glfwGetKey(GLFWwindow* /*window*/, const int /*key*/) {
-    return GLFW_RELEASE;
-}
 
 int main() {
     test_competence_ladder_and_side_bias();

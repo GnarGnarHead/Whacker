@@ -13,9 +13,7 @@
 namespace whacker::app {
 
 struct StorySceneState;
-#ifdef WHACKER_HAS_GLFW
 struct StoryIntroState;
-#endif
 
 enum class StoryMatchScenarioId : std::uint8_t {
     None = 0,
@@ -189,14 +187,12 @@ const StoryRivalSpec& story_policy_rival_spec_for_career(
     const StoryMatchPolicyDescriptor& policy,
     const StoryCareerData& career);
 
-#ifdef WHACKER_HAS_GLFW
 const StoryMatchPolicyDescriptor& story_match_policy_for_runtime(
     const StoryRuntimeState& story_runtime,
     const StoryIntroState& story_intro_state,
     AppState app_state,
     AppState pause_return_state,
     const MatchFlowState& match_flow);
-#endif
 
 void populate_story_onboarding_scene_script(
     StorySceneState& scene_state,

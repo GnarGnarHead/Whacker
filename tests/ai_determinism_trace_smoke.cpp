@@ -2,8 +2,6 @@
 #include <cstdlib>
 #include <vector>
 
-#include <GLFW/glfw3.h>
-
 #include "play_control.hpp"
 
 namespace {
@@ -55,7 +53,6 @@ std::vector<TraceFrame> run_trace_capture() {
     options.left_paddle_skills = {.edge = 0.57f, .power = 0.57f, .spin_inject = 0.56f};
     options.right_paddle_skills = {.edge = 0.34f, .power = 0.33f, .spin_inject = 0.33f};
 
-    app::ControlBindings controls {};
     app::RuntimeAiState left_ai {};
     app::RuntimeAiState right_ai {};
 
@@ -63,13 +60,13 @@ std::vector<TraceFrame> run_trace_capture() {
     trace.reserve(1200);
     for (int i = 0; i < 1200; ++i) {
         app::update_targets_for_play(
-            nullptr,
             simulation,
             options,
-            controls,
             left_ai,
             right_ai,
             sim::kFixedDt,
+            0.0f,
+            0.0f,
             nullptr);
 
         const auto& snapshot = simulation.state();
@@ -117,10 +114,6 @@ void test_deterministic_trace_replay() {
 }
 
 }  // namespace
-
-extern "C" int glfwGetKey(GLFWwindow* /*window*/, const int /*key*/) {
-    return GLFW_RELEASE;
-}
 
 int main() {
     test_deterministic_trace_replay();

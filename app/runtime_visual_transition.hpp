@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <cstdint>
 
 #include "story_scene.hpp"
@@ -103,5 +101,3 @@ void advance_visual_transition(
 float visual_transition_progress(const RuntimeVisualTransitionState& transition);
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

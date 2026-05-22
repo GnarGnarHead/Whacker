@@ -1,15 +1,10 @@
 #pragma once
 
-#ifdef WHACKER_HAS_GLFW
-
 #include "paddle_tuning.hpp"
-
-struct GLFWwindow;
+#include "render_context.hpp"
 
 namespace whacker::app {
 
-void render_paddle_tuning_overlay(GLFWwindow* window, const PaddleTuningState& tuning_state);
+void render_paddle_tuning_overlay(const RenderContext& context, const PaddleTuningState& tuning_state);
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

@@ -40,8 +40,6 @@ std::string week_one_player_template_or(
 
 }  // namespace
 
-#ifdef WHACKER_HAS_GLFW
-
 std::string intro_performance_line(const StoryIntroState& story_intro_state) {
     if (story_intro_state.player_forfeited) {
         return "well thanks for the game.";
@@ -201,8 +199,6 @@ std::string intro_rival_intro_line_2(
 std::string intro_rival_intro_line_3(const std::string& style_line) {
     return style_line + " We have a school club that meets on Fridays, if you're interested. Press Enter.";
 }
-
-#endif  // WHACKER_HAS_GLFW
 
 std::string onboarding_early_arrival_header() {
     return week_one_scene_text_or(

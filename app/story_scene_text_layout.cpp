@@ -1,13 +1,8 @@
 #include "story_scene_text_layout.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <cmath>
 #include <limits>
-#include <utility>
-
-#include <GLFW/glfw3.h>
 
 #include "overlay_layout_math.hpp"
 #include "story_chat_layout.hpp"
@@ -65,23 +60,6 @@ std::string story_scene_current_line_visible_no_link(const StorySceneState& scen
     return full.substr(0, scene_state.visible_chars);
 }
 
-std::pair<int, int> resolve_scene_layout_framebuffer_size(GLFWwindow* window) {
-    int fb_width = 0;
-    int fb_height = 0;
-#if !defined(WHACKER_TEST_ASSERTIONS_ACTIVE)
-    if (window != nullptr) {
-        glfwGetFramebufferSize(window, &fb_width, &fb_height);
-    }
-#else
-    (void)window;
-#endif
-    if (fb_width <= 0 || fb_height <= 0) {
-        fb_width = kFallbackFramebufferWidth;
-        fb_height = kFallbackFramebufferHeight;
-    }
-    return {fb_width, fb_height};
-}
-
 }  // namespace
 
 StorySceneBodyLayout compute_story_scene_body_layout_for_framebuffer(
@@ -135,13 +113,6 @@ StorySceneBodyLayout compute_story_scene_body_layout_for_framebuffer(
     return layout;
 }
 
-StorySceneBodyLayout compute_story_scene_body_layout_for_window(
-    GLFWwindow* window,
-    const StorySceneState& scene_state) {
-    const std::pair<int, int> fb = resolve_scene_layout_framebuffer_size(window);
-    return compute_story_scene_body_layout_for_framebuffer(fb.first, fb.second, scene_state);
-}
-
 int clamp_story_scene_scroll_from_bottom(
     const StorySceneBodyLayout& layout,
     const int requested_scroll_from_bottom) {
@@ -161,5 +132,3 @@ int first_visible_story_scene_line_index(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

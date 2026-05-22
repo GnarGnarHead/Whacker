@@ -9,10 +9,6 @@
 
 #include "play_control.hpp"
 
-extern "C" int glfwGetKey(GLFWwindow* /*window*/, const int /*key*/) {
-    return GLFW_RELEASE;
-}
-
 namespace {
 
 namespace app = whacker::app;
@@ -209,17 +205,16 @@ MatchResult run_game(
 
     app::RuntimeAiState left_ai {};
     app::RuntimeAiState right_ai {};
-    app::ControlBindings controls {};
 
     for (int step = 0; step < max_steps; ++step) {
         app::update_targets_for_play(
-            nullptr,
             simulation,
             options,
-            controls,
             left_ai,
             right_ai,
             sim::kFixedDt,
+            0.0f,
+            0.0f,
             nullptr);
         (void)simulation.step(sim::kFixedDt);
         const auto& state = simulation.state();

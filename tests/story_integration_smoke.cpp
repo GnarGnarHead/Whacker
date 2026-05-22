@@ -5,15 +5,19 @@
 #include <string>
 
 #include "match_end_flow.hpp"
-#include "menu_flow.hpp"
 #include "runtime_story_scene.hpp"
-#include "story_flow.hpp"
 #include "story_continue_resume.hpp"
+#include "story_intro.hpp"
 #include "story_match.hpp"
+#include "story_menu_actions.hpp"
+#include "story_play_session.hpp"
 #include "story_rivals.hpp"
+#include "story_runtime.hpp"
+#include "story_runtime_invariants.hpp"
 #include "story_script_catalog.hpp"
 #include "story_scene.hpp"
 #include "story_intro_text_layout.hpp"
+#include "text_utils.hpp"
 
 namespace {
 
@@ -121,6 +125,129 @@ void reset_story_integration_test_state() {
     reset_input_stubs();
 }
 
+bool take_input_flag(bool& flag) {
+    const bool pressed = flag;
+    flag = false;
+    return pressed;
+}
+
+std::string sanitize_name_or_passthrough(
+    const whacker::app::StorySanitizeNameFn sanitize_name_fn,
+    const std::string& value) {
+    return sanitize_name_fn != nullptr ? sanitize_name_fn(value) : value;
+}
+
+void apply_story_intro_confirm(
+    whacker::app::StoryRuntimeState& runtime,
+    whacker::app::StoryHubState& hub,
+    whacker::app::StoryIntroState& intro,
+    whacker::app::MatchOptions& options,
+    whacker::app::MatchFlowState& match_flow,
+    whacker::sim::Simulation& simulation,
+    std::mt19937_64& rng,
+    whacker::app::AppState& app_state,
+    whacker::app::RuntimeAuthoredTransitionRequest& authored_transition_request,
+    const whacker::app::StoryIntroBodyLayout& body_layout,
+    const whacker::app::StorySanitizeNameFn sanitize_name_fn,
+    const whacker::app::StorySaveCareerCallback save_career_fn) {
+    if (intro.dialogue_writing) {
+        whacker::app::reveal_story_intro_typewriter(intro);
+        return;
+    }
+    if (intro.scroll_lines_from_bottom > 0 && body_layout.max_scroll_rows > 0) {
+        intro.scroll_lines_from_bottom = 0;
+        return;
+    }
+
+    if (intro.phase == whacker::app::StoryIntroPhase::Invite) {
+        intro.player_is_right = false;
+        intro.phase = whacker::app::StoryIntroPhase::PlayMatch;
+        intro.break_kind = whacker::app::StoryIntroBreak::None;
+        intro.swap_choice = 0;
+        intro.phase_timer = 0.0f;
+        intro.name_prompted = false;
+        intro.name_accept_pending = false;
+        intro.name_missing_prompt = false;
+        intro.rules_hint_shown = false;
+        intro.player_scored = false;
+        intro.player_won = false;
+        intro.player_forfeited = false;
+        intro.points_played = 0;
+        intro.final_left_score = 0;
+        intro.final_right_score = 0;
+        intro.player_usage = {};
+        const whacker::app::StoryRivalSpec& intro_rival = whacker::app::story_script_intro_rival_spec();
+        intro.rival_id = intro_rival.id;
+        intro.rival_name = intro_rival.name;
+        intro.rival_style = intro_rival.style;
+        intro.rival_skills = intro_rival.skills;
+        whacker::app::start_story_play_session(
+            options,
+            simulation,
+            match_flow,
+            rng,
+            whacker::app::ActiveMatchMode::StoryTraining,
+            false,
+            intro_rival.style,
+            intro_rival.skills,
+            runtime.career.player_skills);
+        return;
+    }
+
+    if (intro.phase == whacker::app::StoryIntroPhase::BetweenBalls) {
+        if (intro.break_kind == whacker::app::StoryIntroBreak::SwapSides) {
+            const bool previous_player_is_right = intro.player_is_right;
+            const bool next_player_is_right = intro.swap_choice == 1;
+            intro.player_is_right = next_player_is_right;
+            if (next_player_is_right != previous_player_is_right) {
+                auto& state = simulation.mutable_state();
+                std::swap(state.left_score, state.right_score);
+            }
+        }
+        intro.break_kind = whacker::app::StoryIntroBreak::None;
+        intro.phase = whacker::app::StoryIntroPhase::PlayMatch;
+        intro.phase_timer = 0.0f;
+        return;
+    }
+
+    if (intro.phase == whacker::app::StoryIntroPhase::NameEntry) {
+        if (whacker::app::trim_copy(intro.entered_name).empty()) {
+            if (!intro.name_missing_prompt) {
+                intro.name_missing_prompt = true;
+                intro.name_accept_pending = false;
+                whacker::app::reset_story_intro_typewriter(intro);
+            }
+            return;
+        }
+        if (!intro.name_accept_pending) {
+            intro.name_accept_pending = true;
+            intro.name_missing_prompt = false;
+            whacker::app::reset_story_intro_typewriter(intro);
+            return;
+        }
+        intro.entered_name = sanitize_name_or_passthrough(sanitize_name_fn, intro.entered_name);
+        intro.name_accept_pending = false;
+        intro.name_missing_prompt = false;
+        intro.phase = whacker::app::StoryIntroPhase::PlayMatch;
+        intro.phase_timer = 0.0f;
+        intro.dialogue_writing = false;
+        return;
+    }
+
+    if (intro.phase == whacker::app::StoryIntroPhase::RivalIntro) {
+        whacker::app::complete_story_intro(
+            runtime,
+            hub,
+            intro,
+            match_flow,
+            simulation,
+            app_state,
+            authored_transition_request,
+            sanitize_name_fn,
+            save_career_fn);
+    }
+}
+
 struct StoryIntroInputFixture {
     whacker::app::StoryRuntimeState runtime {};
     whacker::app::StoryHubState hub {};
@@ -132,31 +259,66 @@ struct StoryIntroInputFixture {
     std::mt19937_64 rng;
     whacker::app::AppState app_state = whacker::app::AppState::StoryIntro;
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::KeyEdgeState edge {};
 
     explicit StoryIntroInputFixture(const std::mt19937_64::result_type seed)
         : rng(seed) {}
 
     void run(
-        const whacker::app::KeyToNameCharFn key_to_name_char_fn = nullptr,
-        const whacker::app::TrimCopyFn trim_copy_fn = nullptr,
+        const void* key_to_name_char_fn = nullptr,
+        const void* trim_copy_fn = nullptr,
         const whacker::app::StorySanitizeNameFn sanitize_name_fn = nullptr,
         const whacker::app::StorySaveCareerCallback save_career_fn = capture_save) {
-        whacker::app::handle_story_intro_input(
-            nullptr,
-            edge,
+        (void)key_to_name_char_fn;
+        (void)trim_copy_fn;
+        const bool move_left = take_input_flag(g_stub_key_left);
+        const bool move_right = take_input_flag(g_stub_key_right);
+        const bool move_up = take_input_flag(g_stub_menu_up);
+        const bool move_down = take_input_flag(g_stub_menu_down);
+        const bool confirm = take_input_flag(g_stub_confirm_press);
+        const whacker::app::StoryIntroBodyLayout body_layout =
+            whacker::app::compute_story_intro_body_layout_for_framebuffer(
+                960,
+                540,
+                intro,
+                controls,
+                nullptr,
+                sanitize_name_fn);
+
+        intro.scroll_lines_from_bottom = whacker::app::clamp_story_intro_scroll_from_bottom(
+            body_layout,
+            intro.scroll_lines_from_bottom);
+        if (intro.dialogue_writing || body_layout.max_scroll_rows <= 0) {
+            intro.scroll_lines_from_bottom = 0;
+        } else if (move_up != move_down) {
+            intro.scroll_lines_from_bottom = whacker::app::clamp_story_intro_scroll_from_bottom(
+                body_layout,
+                intro.scroll_lines_from_bottom + (move_up ? 1 : -1));
+        }
+
+        if (intro.phase == whacker::app::StoryIntroPhase::BetweenBalls &&
+            intro.break_kind == whacker::app::StoryIntroBreak::SwapSides) {
+            if (move_left || move_up) {
+                intro.swap_choice = 0;
+            }
+            if (move_right || move_down) {
+                intro.swap_choice = 1;
+            }
+        }
+
+        if (!confirm) {
+            return;
+        }
+        apply_story_intro_confirm(
             runtime,
             hub,
             intro,
             options,
-            controls,
             match_flow,
             simulation,
             rng,
             app_state,
             authored_transition_request,
-            key_to_name_char_fn,
-            trim_copy_fn,
+            body_layout,
             sanitize_name_fn,
             save_career_fn);
     }
@@ -172,27 +334,36 @@ struct StoryMenuInputFixture {
     whacker::app::MatchFlowState match_flow {};
     whacker::sim::Simulation simulation {};
     whacker::app::AppState app_state = whacker::app::AppState::StoryMenu;
-    whacker::app::KeyEdgeState edge {};
 
     void run(
         const bool has_save,
-        const whacker::app::StoryLoadCareerFn load_career_fn = nullptr,
+        const void* load_career_fn = nullptr,
         const whacker::app::StoryResetCareerFn reset_career_fn = nullptr) {
-        whacker::app::handle_story_menu_input(
-            nullptr,
-            edge,
+        (void)load_career_fn;
+        const whacker::app::StoryMenuActionResult result = whacker::app::apply_story_menu_action(
             menu,
-            runtime,
-            hub,
-            intro,
-            options,
-            controls,
-            match_flow,
-            simulation,
-            app_state,
             has_save,
-            load_career_fn,
-            reset_career_fn);
+            take_input_flag(g_stub_menu_up),
+            take_input_flag(g_stub_menu_down),
+            take_input_flag(g_stub_key_left),
+            take_input_flag(g_stub_key_right),
+            take_input_flag(g_stub_confirm_press),
+            false);
+        if (result == whacker::app::StoryMenuActionResult::Back) {
+            app_state = whacker::app::AppState::MainMenu;
+            return;
+        }
+        if (result == whacker::app::StoryMenuActionResult::NewCareer) {
+            whacker::app::begin_new_story_intro(
+                runtime,
+                hub,
+                intro,
+                options,
+                match_flow,
+                simulation,
+                app_state,
+                reset_career_fn);
+        }
     }
 };
 
@@ -261,24 +432,78 @@ struct StoryHubInputFixture {
     std::mt19937_64 rng;
     whacker::app::AppState app_state = whacker::app::AppState::StoryHub;
     whacker::app::RuntimeAuthoredTransitionRequest authored_transition_request {};
-    whacker::app::KeyEdgeState edge {};
 
     explicit StoryHubInputFixture(const std::mt19937_64::result_type seed)
         : rng(seed) {}
 
     void run() {
-        whacker::app::handle_story_hub_input(
-            nullptr,
-            edge,
-            runtime,
-            hub,
-            options,
-            controls,
-            match_flow,
-            app_state,
-            simulation,
-            rng,
-            capture_save);
+        if (!runtime.career_loaded) {
+            app_state = whacker::app::AppState::StoryMenu;
+            return;
+        }
+
+        const bool tix_midweek_pending =
+            runtime.career.joined_club &&
+            runtime.career.tix_1967_seen &&
+            !runtime.career.tix_midweek_scene_seen &&
+            !runtime.career.tix_lunch_match_declined &&
+            !runtime.career.tix_lunch_match_completed;
+        if (tix_midweek_pending) {
+            whacker::app::queue_story_onboarding_scene(
+                runtime,
+                whacker::app::StoryOnboardingStep::TixMidweekScene);
+            whacker::app::copy_onboarding_runtime_to_career(runtime);
+            (void)capture_save(runtime.career, nullptr);
+            app_state = whacker::app::AppState::StoryScene;
+            return;
+        }
+
+        if (take_input_flag(g_stub_menu_up)) {
+            hub.selected_row = (hub.selected_row + whacker::app::StoryHubRowCount - 1) %
+                whacker::app::StoryHubRowCount;
+        }
+        if (take_input_flag(g_stub_menu_down)) {
+            hub.selected_row = (hub.selected_row + 1) % whacker::app::StoryHubRowCount;
+        }
+
+        if (!take_input_flag(g_stub_confirm_press)) {
+            return;
+        }
+
+        const whacker::app::StoryHubRow row =
+            static_cast<whacker::app::StoryHubRow>(hub.selected_row);
+        if (!whacker::app::story_hub_row_enabled(row, runtime.career)) {
+            return;
+        }
+        if (row == whacker::app::StoryHubRowBack) {
+            (void)capture_save(runtime.career, nullptr);
+            app_state = whacker::app::AppState::MainMenu;
+            return;
+        }
+        if (row == whacker::app::StoryHubRowNextWeek) {
+            whacker::app::advance_story_week(runtime, hub, capture_save);
+            return;
+        }
+        if (row == whacker::app::StoryHubRowPaddleTuning) {
+            app_state = whacker::app::AppState::PaddleTuning;
+            return;
+        }
+        if (row == whacker::app::StoryHubRowOfficialMatch ||
+            row == whacker::app::StoryHubRowTrainingMatch) {
+            const whacker::app::StoryMatchKind kind =
+                row == whacker::app::StoryHubRowOfficialMatch
+                    ? whacker::app::StoryMatchKind::Official
+                    : whacker::app::StoryMatchKind::Training;
+            whacker::app::start_story_match(
+                runtime,
+                hub,
+                options,
+                simulation,
+                match_flow,
+                rng,
+                kind);
+            app_state = whacker::app::AppState::Playing;
+        }
     }
 
     void end_match(
@@ -885,8 +1110,9 @@ void test_story_intro_rival_scroll_input_moves_scroll_when_overflow_present() {
         "PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER";
 
     const whacker::app::StoryIntroBodyLayout layout =
-        whacker::app::compute_story_intro_body_layout_for_window(
-            nullptr,
+        whacker::app::compute_story_intro_body_layout_for_framebuffer(
+            960,
+            540,
             fixture.intro,
             fixture.controls,
             nullptr,
@@ -912,8 +1138,9 @@ void test_story_intro_scroll_input_ignored_without_overflow() {
     fixture.intro.visible_chars = std::numeric_limits<std::size_t>::max();
 
     const whacker::app::StoryIntroBodyLayout layout =
-        whacker::app::compute_story_intro_body_layout_for_window(
-            nullptr,
+        whacker::app::compute_story_intro_body_layout_for_framebuffer(
+            960,
+            540,
             fixture.intro,
             fixture.controls,
             nullptr,
@@ -939,8 +1166,9 @@ void test_story_intro_rival_confirm_when_scrolled_snaps_before_advancing() {
         "PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER PLAYER";
 
     const whacker::app::StoryIntroBodyLayout layout =
-        whacker::app::compute_story_intro_body_layout_for_window(
-            nullptr,
+        whacker::app::compute_story_intro_body_layout_for_framebuffer(
+            960,
+            540,
             fixture.intro,
             fixture.controls,
             nullptr,
@@ -1522,54 +1750,6 @@ void test_story_menu_overwrite_accept_starts_intro_after_modal() {
 }
 
 }  // namespace
-
-extern "C" void glfwSetWindowShouldClose(GLFWwindow* /*window*/, int /*value*/) {}
-
-namespace whacker::app {
-
-bool consume_key_press(GLFWwindow* /*window*/, const int key, bool& previous_down) {
-    previous_down = false;
-    if (key == GLFW_KEY_LEFT) {
-        const bool pressed = g_stub_key_left;
-        g_stub_key_left = false;
-        return pressed;
-    }
-    if (key == GLFW_KEY_RIGHT) {
-        const bool pressed = g_stub_key_right;
-        g_stub_key_right = false;
-        return pressed;
-    }
-    return false;
-}
-
-bool consume_confirm_press(GLFWwindow* /*window*/, KeyEdgeState& /*edge_state*/) {
-    const bool pressed = g_stub_confirm_press;
-    g_stub_confirm_press = false;
-    return pressed;
-}
-
-bool consume_menu_up_press(GLFWwindow* /*window*/, KeyEdgeState& /*edge_state*/, const ControlBindings& /*controls*/) {
-    const bool pressed = g_stub_menu_up;
-    g_stub_menu_up = false;
-    return pressed;
-}
-
-bool consume_menu_down_press(
-    GLFWwindow* /*window*/,
-    KeyEdgeState& /*edge_state*/,
-    const ControlBindings& /*controls*/) {
-    const bool pressed = g_stub_menu_down;
-    g_stub_menu_down = false;
-    return pressed;
-}
-
-void clear_last_pressed_key() {}
-
-int consume_last_pressed_key() {
-    return GLFW_KEY_UNKNOWN;
-}
-
-}  // namespace whacker::app
 
 int main() {
     test_early_arrival_scene_completion_routes_to_club_intro_scene();

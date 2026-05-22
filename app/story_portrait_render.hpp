@@ -2,8 +2,6 @@
 
 #include "story_portraits.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 namespace whacker::app {
 
 bool draw_story_portrait(
@@ -21,5 +19,3 @@ bool draw_story_portrait(
 void release_story_portrait_resources();
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

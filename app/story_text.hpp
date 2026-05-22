@@ -4,9 +4,7 @@
 
 #include "progression/skills.hpp"
 #include "story_state.hpp"
-#ifdef WHACKER_HAS_GLFW
 #include "story_intro.hpp"
-#endif
 
 namespace whacker::app::story_text {
 
@@ -14,8 +12,6 @@ struct FeedbackLines {
     std::string line_1;
     std::string line_2;
 };
-
-#ifdef WHACKER_HAS_GLFW
 
 std::string intro_performance_line(const StoryIntroState& story_intro_state);
 std::string intro_style_line(const StoryIntroState& story_intro_state);
@@ -54,8 +50,6 @@ std::string intro_rival_intro_line_2(
     const std::string& performance_line,
     bool player_forfeited);
 std::string intro_rival_intro_line_3(const std::string& style_line);
-
-#endif  // WHACKER_HAS_GLFW
 
 std::string onboarding_early_arrival_header();
 std::string onboarding_club_floor_header();

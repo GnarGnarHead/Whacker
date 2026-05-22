@@ -1,7 +1,5 @@
 #include "story_intro.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -157,5 +155,3 @@ void update_story_intro_typewriter(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

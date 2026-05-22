@@ -5,8 +5,6 @@
 #include "story_chat_layout.hpp"
 #include "story_portraits.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 namespace whacker::app {
 
 enum class StoryChatPortraitActiveLane : std::uint8_t {
@@ -24,5 +22,3 @@ void draw_story_chat_portrait_lanes(
     StoryChatPortraitActiveLane active_lane);
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

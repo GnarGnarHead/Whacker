@@ -1,16 +1,15 @@
 #include "story_portrait_render.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <utility>
 #include <vector>
 
-#include <GLFW/glfw3.h>
+#include <GL/gl.h>
 
 #if defined(WHACKER_HAS_PNG)
 #include <png.h>
@@ -552,5 +551,3 @@ void release_story_portrait_resources() {
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

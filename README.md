@@ -36,8 +36,8 @@ Requirements:
 
 - CMake 3.20+
 - A C++20 compiler
-- GLFW and OpenGL for the full playable app
-- Optional: SDL2 for audio
+- SDL2 for the playable app window, input, controllers, and audio
+- OpenGL for rendering
 - Optional: libpng for PNG-backed story portraits and menu stickers
 
 ```bash
@@ -51,7 +51,11 @@ If your machine is under memory pressure, use:
 cmake --build build -j1
 ```
 
-If GLFW is missing, `whacker` still builds as a stub binary and prints a setup message instead of launching the full game.
+`WHACKER_BUILD_APP=ON` requires SDL2. For a headless/test-only build on a machine without SDL2, configure with:
+
+```bash
+cmake -S . -B build -DWHACKER_BUILD_APP=OFF
+```
 
 ## Run
 
@@ -59,7 +63,7 @@ If GLFW is missing, `whacker` still builds as a stub binary and prints a setup m
 ./build/whacker
 ```
 
-At startup the game loads tuning values from `config/default.json` when available.
+At startup the game loads tuning values from `config/default.json` when available. Menu defaults are committed in `config/menu_defaults.cfg`; local runtime preferences are written to ignored files under `config/`.
 
 ## Controls
 
@@ -94,7 +98,7 @@ ctest --test-dir build --output-on-failure -R story_pack_compiler
   --input story/content/ui/menu_stickers.toml
 ```
 
-When GLFW is available, the build also produces `play_control_duel`, a deterministic AI-control duel harness for comparing skill triplets.
+The build also produces `play_control_duel`, a deterministic AI-control duel harness for comparing skill triplets.
 
 ```bash
 ./build/play_control_duel --left 0.12,0.12,0.12 --right 0.56,0.56,0.56 --games 20 --trace-hash
@@ -116,7 +120,7 @@ Skill triplets are `edge,power,spin`. Each value is in `[0,1]`, and the total bu
 
 ## Under The Hood
 
-Whacker is built in C++20 with CMake, GLFW, and OpenGL.
+Whacker is built in C++20 with CMake, SDL2, and OpenGL.
 
 The simulation is fixed-timestep and deterministic. The AI stack uses forward simulation, reachability checks, pressure scoring, and style-specific planning rather than neural-net behavior. Story content is authored as data and validated at build time so runtime behavior stays reproducible.
 

@@ -1,7 +1,5 @@
 #include "runtime_transitions.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include "match_end_flow.hpp"
 #include "story_runtime_invariants.hpp"
 #include "story_runtime.hpp"
@@ -139,5 +137,3 @@ void quit_runtime_to_main_menu(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

@@ -1,11 +1,7 @@
 #include "story_intro_overlay.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <string>
-
-#include <GLFW/glfw3.h>
 
 #include "overlay_layout_math.hpp"
 #include "pixel_font.hpp"
@@ -20,15 +16,14 @@
 namespace whacker::app {
 
 void render_story_intro_overlay(
-    GLFWwindow* window,
+    const RenderContext& context,
     const StoryRuntimeState& story_runtime,
     const StoryIntroState& story_intro_state,
     const ControlBindings& controls,
     const StoryIntroKeyNameFn key_name_fn,
     const StoryIntroSanitizeNameFn sanitize_name_fn) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -150,5 +145,3 @@ void render_story_intro_overlay(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

@@ -1,7 +1,5 @@
 #include "story_chat_portrait_overlay.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 
 #include "story_portrait_render.hpp"
@@ -77,5 +75,3 @@ void draw_story_chat_portrait_lanes(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

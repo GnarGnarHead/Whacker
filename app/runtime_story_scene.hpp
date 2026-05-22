@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <random>
 
 #include "app_types.hpp"
@@ -27,5 +25,3 @@ void handle_story_scene_confirm(
     StorySaveCareerCallback save_career_fn);
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

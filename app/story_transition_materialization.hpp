@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef WHACKER_HAS_GLFW
-
 #include "story_runtime.hpp"
 #include "story_scene.hpp"
 #include "ui_state.hpp"
@@ -24,5 +22,3 @@ inline StorySceneState materialize_story_scene_transition_target(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

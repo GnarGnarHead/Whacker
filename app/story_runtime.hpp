@@ -4,13 +4,11 @@
 
 #include "app_types.hpp"
 #include "match_flow.hpp"
+#include "runtime_visual_transition.hpp"
 #include "sim/physics.hpp"
+#include "story_intro.hpp"
 #include "story_state.hpp"
 #include "ui_state.hpp"
-#ifdef WHACKER_HAS_GLFW
-#include "runtime_visual_transition.hpp"
-#include "story_intro.hpp"
-#endif
 
 namespace whacker::app {
 
@@ -22,7 +20,6 @@ bool story_hub_row_enabled(StoryHubRow row, const StoryCareerData& career);
 void copy_onboarding_runtime_to_career(StoryRuntimeState& story_runtime);
 void copy_onboarding_career_to_runtime(StoryRuntimeState& story_runtime);
 
-#ifdef WHACKER_HAS_GLFW
 void begin_new_story_intro(
     StoryRuntimeState& story_runtime,
     StoryHubState& story_hub_state,
@@ -43,6 +40,5 @@ void complete_story_intro(
     RuntimeAuthoredTransitionRequest& authored_transition_request,
     StorySanitizeNameFn sanitize_name_fn = nullptr,
     StorySaveCareerCallback save_career_fn = nullptr);
-#endif
 
 }  // namespace whacker::app

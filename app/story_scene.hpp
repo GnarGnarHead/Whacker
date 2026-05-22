@@ -7,8 +7,6 @@
 #include "story_portraits.hpp"
 #include "story_state.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 namespace whacker::app {
 
 enum class StorySceneId : std::uint8_t {
@@ -63,5 +61,3 @@ void begin_story_onboarding_scene(
     const StoryRuntimeState& story_runtime);
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

@@ -6,12 +6,9 @@
 #include <cstddef>
 
 #include "story_pack.hpp"
-
-#ifdef WHACKER_HAS_GLFW
 #include "story_intro.hpp"
 #include "story_scene.hpp"
 #include "story_text.hpp"
-#endif
 
 namespace whacker::app {
 
@@ -347,7 +344,6 @@ const StoryGraphNodeSpec& story_graph_node_for_career_impl(const StoryCareerData
     return story_graph_node_for_week_impl(career.week);
 }
 
-#ifdef WHACKER_HAS_GLFW
 void push_line(
     StorySceneState& scene_state,
     const std::string& line,
@@ -374,7 +370,6 @@ void reset_scene_typewriter(StorySceneState& scene_state) {
     scene_state.dialogue_writing = scene_state.id != StorySceneId::None && scene_state.line_count > 0;
     scene_state.scroll_lines_from_bottom = 0;
 }
-#endif
 
 }  // namespace
 
@@ -543,7 +538,6 @@ const StoryRivalSpec& story_policy_rival_spec_for_career(
     return story_rival_spec(StoryRivalId::None);
 }
 
-#ifdef WHACKER_HAS_GLFW
 const StoryMatchPolicyDescriptor& story_match_policy_for_runtime(
     const StoryRuntimeState& story_runtime,
     const StoryIntroState& story_intro_state,
@@ -565,12 +559,10 @@ const StoryMatchPolicyDescriptor& story_match_policy_for_runtime(
     }
     return kStoryMatchPolicyFallback;
 }
-#endif
 
 void populate_story_onboarding_scene_script(
     StorySceneState& scene_state,
     const StoryRuntimeState& story_runtime) {
-#ifdef WHACKER_HAS_GLFW
     // Source of truth for onboarding dialogue composition.
     clear_scene(scene_state);
     scene_state.player_is_right = story_runtime.career.prefers_right_side;
@@ -800,10 +792,6 @@ void populate_story_onboarding_scene_script(
     }
 
     clear_scene(scene_state);
-#else
-    (void)scene_state;
-    (void)story_runtime;
-#endif
 }
 
 }  // namespace whacker::app

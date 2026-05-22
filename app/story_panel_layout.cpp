@@ -2,11 +2,9 @@
 
 #include <algorithm>
 
-#ifdef WHACKER_HAS_GLFW
-
+#if defined(WHACKER_PLATFORM_SDL2)
 #include "pixel_font.hpp"
-
-#endif  // WHACKER_HAS_GLFW
+#endif
 
 namespace whacker::app {
 
@@ -33,8 +31,7 @@ StoryPanelLayout make_story_panel_layout(const int fb_width, const int fb_height
     return layout;
 }
 
-#ifdef WHACKER_HAS_GLFW
-
+#if defined(WHACKER_PLATFORM_SDL2)
 void draw_story_panel_background(
     const int fb_width,
     const int fb_height,
@@ -62,8 +59,6 @@ void draw_story_panel_background(
         palette.panel_header.g,
         palette.panel_header.b);
 }
-
-#endif  // WHACKER_HAS_GLFW
+#endif
 
 }  // namespace whacker::app
-

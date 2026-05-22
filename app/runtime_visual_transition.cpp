@@ -1,7 +1,5 @@
 #include "runtime_visual_transition.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <cassert>
 
@@ -211,5 +209,3 @@ float visual_transition_progress(const RuntimeVisualTransitionState& transition)
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

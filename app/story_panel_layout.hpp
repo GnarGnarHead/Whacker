@@ -34,16 +34,13 @@ StoryPanelLayoutSpec story_dialogue_panel_layout_spec();
 StoryPanelPalette story_panel_palette();
 StoryPanelLayout make_story_panel_layout(int fb_width, int fb_height, const StoryPanelLayoutSpec& spec);
 
-#ifdef WHACKER_HAS_GLFW
-
+#if defined(WHACKER_PLATFORM_SDL2)
 void draw_story_panel_background(
     int fb_width,
     int fb_height,
     const StoryPanelLayout& layout,
     const StoryPanelLayoutSpec& spec,
     const StoryPanelPalette& palette);
-
-#endif  // WHACKER_HAS_GLFW
+#endif
 
 }  // namespace whacker::app
-

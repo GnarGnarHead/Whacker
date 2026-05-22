@@ -35,8 +35,8 @@ constexpr char kPauseConfirmFooter[] = "LEFT/RIGHT CHOOSE  ENTER CONFIRM  ESC CA
 constexpr char kPauseConfirmFooterShort[] = "L/R CHOOSE  ENTER OK  ESC CANCEL";
 
 constexpr char kQuickMenuTitle[] = "MATCH SETUP";
-constexpr char kQuickMenuFooter[] = "ARROWS MOVE  ENTER SELECT  ESC BACK";
-constexpr char kQuickMenuFooterShort[] = "ARROWS MOVE  ENTER  ESC BACK";
+constexpr char kQuickMenuFooter[] = "UP/DOWN MOVE  LEFT/RIGHT ADJUST  ENTER SELECT  ESC BACK";
+constexpr char kQuickMenuFooterShort[] = "ARROWS MOVE/ADJUST  ENTER  ESC BACK";
 constexpr char kQuickMenuRowP1Mode[] = "P1 MODE";
 constexpr char kQuickMenuRowP2Mode[] = "P2 MODE";
 constexpr char kQuickMenuRowP1Style[] = "P1 TUNING";

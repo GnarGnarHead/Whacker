@@ -1,15 +1,11 @@
 #include "story_overlays.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <initializer_list>
 #include <string>
 #include <string_view>
-
-#include <GLFW/glfw3.h>
 
 #include "menu_sticker_render.hpp"
 #include "overlay_layout_math.hpp"
@@ -54,13 +50,13 @@ std::string choose_variant_for_width(
 namespace whacker::app {
 
 void render_story_menu_overlay(
-    GLFWwindow* window,
+    const RenderContext& context,
     const StoryMenuState& menu_state,
     const bool has_save,
-    const StoryRowNameFn story_menu_row_name_fn) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    const StoryRowNameFn story_menu_row_name_fn,
+    const std::string& status_message) {
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -169,10 +165,13 @@ void render_story_menu_overlay(
             disabled ? Color {0.54f, 0.60f, 0.66f} : Color {0.90f, 0.94f, 1.00f});
     }
 
-    const std::string footer = choose_variant_for_width(
-        {ui_text::story_menu_footer(), ui_text::story_menu_footer_short()},
-        panel_w - 32.0f,
-        kFooterScale);
+    const bool has_status = !status_message.empty();
+    const std::string footer = has_status
+        ? fit_for_width(status_message, panel_w - 32.0f, kFooterScale)
+        : choose_variant_for_width(
+            {ui_text::story_menu_footer(), ui_text::story_menu_footer_short()},
+            panel_w - 32.0f,
+            kFooterScale);
     draw_text_pixels(
         fb_width,
         fb_height,
@@ -180,7 +179,7 @@ void render_story_menu_overlay(
         vertical.footer_y,
         kFooterScale,
         footer,
-        Color {0.70f, 0.78f, 0.88f});
+        has_status ? Color {0.96f, 0.86f, 0.34f} : Color {0.70f, 0.78f, 0.88f});
 
     const std::array<MenuStickerRect, 3> base_protected_regions {{
         MenuStickerRect {panel.text_x - 2.0f, vertical.header_y + 6.0f, panel.text_w + 4.0f, 58.0f},
@@ -302,15 +301,14 @@ void render_story_menu_overlay(
 }
 
 void render_story_hub_overlay(
-    GLFWwindow* window,
+    const RenderContext& context,
     const StoryRuntimeState& story_runtime,
     const StoryHubState& story_hub_state,
     const StoryRowNameFn story_hub_row_name_fn,
     const StoryHubRowEnabledFn story_hub_row_enabled_fn,
     const StorySanitizeNameCallback sanitize_name_fn) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -573,5 +571,3 @@ void render_story_hub_overlay(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

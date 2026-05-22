@@ -6,13 +6,9 @@
 #include <string>
 #include <string_view>
 
-#ifdef WHACKER_HAS_GLFW
-#include <GLFW/glfw3.h>
-#endif
-
 #include "menu_sticker_render.hpp"
 #include "overlay_layout_math.hpp"
-#include "options_menu_input.hpp"
+#include "options_menu_actions.hpp"
 #include "pixel_font.hpp"
 #include "text_wrap.hpp"
 #include "ui_text.hpp"
@@ -189,33 +185,14 @@ void render_main_menu_overlay(
         protected_regions);
 }
 
-#ifdef WHACKER_HAS_GLFW
-
-void render_main_menu_overlay(
-    GLFWwindow* window,
-    const MainMenuState& menu_state,
-    const RowNameFn row_name_fn) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
-    render_main_menu_overlay(
-        RenderContext {.framebuffer_width = fb_width, .framebuffer_height = fb_height},
-        menu_state,
-        row_name_fn,
-        {});
-}
-
 void render_options_menu_overlay(
-    GLFWwindow* window,
+    const RenderContext& context,
     const OptionsMenuState& menu_state,
-    const ControlBindings& controls,
-    const AudioSettings& audio_settings,
     const RowNameFn row_name_fn,
-    const KeyNameFn key_name_fn,
-    const BindingValueFn binding_value_fn) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    const OptionsValueLabelFn value_label_fn,
+    const void* value_label_context) {
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -223,12 +200,9 @@ void render_options_menu_overlay(
     const auto safe_row_name = [row_name_fn](const int row) -> const char* {
         return row_name_fn != nullptr ? row_name_fn(row) : ui_text::unknown_label();
     };
-    const auto safe_key_name = [key_name_fn](const int key) -> const char* {
-        return key_name_fn != nullptr ? key_name_fn(key) : ui_text::unknown_label();
-    };
-    const auto safe_binding_value =
-        [binding_value_fn](const ControlBindings& b, const int row) -> int {
-            return binding_value_fn != nullptr ? binding_value_fn(b, row) : 0;
+    const auto safe_value_label =
+        [value_label_fn, value_label_context](const int row) -> std::string {
+            return value_label_fn != nullptr ? value_label_fn(row, value_label_context) : std::string {};
         };
 
     const float panel_x = static_cast<float>(fb_width) * 0.20f;
@@ -343,13 +317,8 @@ void render_options_menu_overlay(
         std::string value_label;
         if (waiting_on_row) {
             value_label = ui_text::options_waiting_value();
-        } else if (binding_row) {
-            value_label = safe_key_name(safe_binding_value(controls, row));
-        } else if (volume_row) {
-            value_label = std::to_string(std::clamp(audio_value(audio_settings, row), 0, 100)) + "%";
-        } else if (mute_row) {
-            value_label =
-                audio_toggle_value(audio_settings, row) ? ui_text::options_toggle_on() : ui_text::options_toggle_off();
+        } else if (binding_row || volume_row || mute_row) {
+            value_label = safe_value_label(row);
         }
         const float value_scale = value_h < 24.0f ? 1.3f : 1.5f;
         const std::string fitted_value = fit_for_width(value_label, value_w - 10.0f, value_scale);
@@ -403,12 +372,11 @@ void render_options_menu_overlay(
 }
 
 void render_pause_overlay(
-    GLFWwindow* window,
+    const RenderContext& context,
     const PauseMenuState& pause_menu_state,
     const MatchExitPolicy& exit_policy) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -634,7 +602,5 @@ void render_pause_overlay(
         panel_rect,
         protected_regions);
 }
-
-#endif  // WHACKER_HAS_GLFW
 
 }  // namespace whacker::app

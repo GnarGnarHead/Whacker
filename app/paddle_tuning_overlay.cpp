@@ -1,13 +1,9 @@
 #include "paddle_tuning_overlay.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <string>
-
-#include <GLFW/glfw3.h>
 
 #include "ai_style_catalog.hpp"
 #include "pixel_font.hpp"
@@ -140,10 +136,9 @@ void draw_stat_bar(
 
 }  // namespace
 
-void render_paddle_tuning_overlay(GLFWwindow* window, const PaddleTuningState& tuning_state) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+void render_paddle_tuning_overlay(const RenderContext& context, const PaddleTuningState& tuning_state) {
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -268,5 +263,3 @@ void render_paddle_tuning_overlay(GLFWwindow* window, const PaddleTuningState& t
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

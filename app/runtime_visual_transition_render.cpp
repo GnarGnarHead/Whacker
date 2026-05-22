@@ -1,17 +1,15 @@
 #include "runtime_visual_transition_render.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <utility>
 #include <vector>
 
 #include <GL/gl.h>
-#include <GLFW/glfw3.h>
 
 #if defined(WHACKER_HAS_PNG)
 #include <png.h>
@@ -383,14 +381,13 @@ void draw_wipe_frame_overlay(
 
 }  // namespace
 
-void render_visual_transition_overlay(GLFWwindow* window, const RuntimeVisualTransitionState& transition) {
-    if (!transition.active || window == nullptr) {
+void render_visual_transition_overlay(const RenderContext& context, const RuntimeVisualTransitionState& transition) {
+    if (!transition.active) {
         return;
     }
 
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -431,5 +428,3 @@ void release_visual_transition_render_resources() {
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

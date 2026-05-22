@@ -1,15 +1,11 @@
 #include "quick_menu_render.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <array>
 #include <cctype>
 #include <initializer_list>
 #include <string>
 #include <string_view>
-
-#include <GLFW/glfw3.h>
 
 #include "ai_style_catalog.hpp"
 #include "menu_sticker_render.hpp"
@@ -97,10 +93,9 @@ void draw_binary_option_row(
 
 namespace whacker::app {
 
-void render_menu_overlay(GLFWwindow* window, const MatchOptions& options, const MenuState& menu_state) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+void render_menu_overlay(const RenderContext& context, const MatchOptions& options, const MenuState& menu_state) {
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -346,5 +341,3 @@ void render_menu_overlay(GLFWwindow* window, const MatchOptions& options, const 
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

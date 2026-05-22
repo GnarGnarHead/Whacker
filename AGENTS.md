@@ -22,15 +22,16 @@ Use this file for execution standards and `MEMORY.md` for historical continuity.
 - Technical execution authority: `Codex`, aligned to `VISION.md` and user directives
 - Working model: Codex proposes and implements; user can override any decision
 
-## Current Technical Direction (2026-02-15)
+## Current Technical Direction (2026-05-22)
 - Language: `C++20`
-- Windowing/Input: `GLFW`
-- Rendering: `OpenGL` (minimal visuals)
+- Windowing/Input: `SDL2`
+- Rendering: `OpenGL`
 - Build system: `CMake`
 - Likely dependencies:
-  - `glad` (OpenGL loader)
-  - `nlohmann/json` or `toml++` (runtime tuning config)
-  - `doctest` (sim determinism/unit tests)
+  - `SDL2` (desktop app platform and audio backend)
+  - `OpenGL`
+  - `libpng` (optional story portraits and menu stickers)
+  - `toml++`-style authored content handling through local tooling
   - `libserialport` (optional hardware knob input)
 
 ## Engineering Rules

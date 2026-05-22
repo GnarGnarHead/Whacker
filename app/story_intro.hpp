@@ -10,8 +10,6 @@
 #include "progression/skills.hpp"
 #include "story_state.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 namespace whacker::app {
 
 enum class StoryIntroPhase : std::uint8_t {
@@ -88,5 +86,3 @@ void update_story_intro_typewriter(
     StoryIntroSanitizeNameFn sanitize_name_fn);
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

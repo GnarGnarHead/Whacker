@@ -1,15 +1,11 @@
 #include "story_intro_text_layout.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <GLFW/glfw3.h>
 
 #include "story_chat_layout.hpp"
 #include "story_intro.hpp"
@@ -75,23 +71,6 @@ int max_chars_for_safe_text_width_local(
         scale,
         reserved_chars);
     return std::max(0, base_chars - std::max(0, early_wrap_chars));
-}
-
-std::pair<int, int> resolve_intro_layout_framebuffer_size(GLFWwindow* window) {
-    int fb_width = 0;
-    int fb_height = 0;
-#if !defined(WHACKER_TEST_ASSERTIONS_ACTIVE)
-    if (window != nullptr) {
-        glfwGetFramebufferSize(window, &fb_width, &fb_height);
-    }
-#else
-    (void)window;
-#endif
-    if (fb_width <= 0 || fb_height <= 0) {
-        fb_width = kFallbackFramebufferWidth;
-        fb_height = kFallbackFramebufferHeight;
-    }
-    return {fb_width, fb_height};
 }
 
 StoryIntroDialogue compose_intro_dialogue_local(
@@ -341,22 +320,6 @@ StoryIntroBodyLayout compute_story_intro_body_layout_for_framebuffer(
     return layout;
 }
 
-StoryIntroBodyLayout compute_story_intro_body_layout_for_window(
-    GLFWwindow* window,
-    const StoryIntroState& story_intro_state,
-    const ControlBindings& controls,
-    const StoryIntroKeyNameFn key_name_fn,
-    const StoryIntroSanitizeNameFn sanitize_name_fn) {
-    const std::pair<int, int> fb = resolve_intro_layout_framebuffer_size(window);
-    return compute_story_intro_body_layout_for_framebuffer(
-        fb.first,
-        fb.second,
-        story_intro_state,
-        controls,
-        key_name_fn,
-        sanitize_name_fn);
-}
-
 int clamp_story_intro_scroll_from_bottom(
     const StoryIntroBodyLayout& layout,
     const int requested_scroll_from_bottom) {
@@ -371,5 +334,3 @@ int first_visible_story_intro_row_index(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

@@ -1,13 +1,9 @@
 #include "story_scene_overlay.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>
-
-#include <GLFW/glfw3.h>
 
 #include "overlay_layout_math.hpp"
 #include "pixel_font.hpp"
@@ -22,11 +18,10 @@
 namespace whacker::app {
 
 void render_story_scene_overlay(
-    GLFWwindow* window,
+    const RenderContext& context,
     const StorySceneState& scene_state) {
-    int fb_width = 0;
-    int fb_height = 0;
-    glfwGetFramebufferSize(window, &fb_width, &fb_height);
+    const int fb_width = context.framebuffer_width;
+    const int fb_height = context.framebuffer_height;
     if (fb_width <= 0 || fb_height <= 0) {
         return;
     }
@@ -218,5 +213,3 @@ void render_story_scene_overlay(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

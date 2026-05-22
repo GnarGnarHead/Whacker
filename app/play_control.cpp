@@ -1,11 +1,7 @@
 #include "play_control.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 #include <cmath>
-
-#include <GLFW/glfw3.h>
 
 #include "ai_core.hpp"
 #include "ai_plan_state_bridge.hpp"
@@ -204,13 +200,13 @@ void sync_runtime_ai_style(RuntimeAiState& ai_state, const AiStyle style) {
 }
 
 void update_targets_for_play(
-    GLFWwindow* window,
     whacker::sim::Simulation& simulation,
     const MatchOptions& options,
-    const ControlBindings& controls,
     RuntimeAiState& left_ai_state,
     RuntimeAiState& right_ai_state,
     const float dt,
+    const float left_human_axis,
+    const float right_human_axis,
     const PlayControlOverrides* overrides) {
     auto& state = simulation.mutable_state();
     const auto& config = simulation.config();
@@ -243,18 +239,14 @@ void update_targets_for_play(
     set_paddle_execution_from_skills(state.right, right_ai_state.skills);
 
     if (left_mode == PaddleMode::Human) {
-        const bool left_up = glfwGetKey(window, controls.p1_up) == GLFW_PRESS;
-        const bool left_down = glfwGetKey(window, controls.p1_down) == GLFW_PRESS;
-        set_human_target(state.left, config, left_up, left_down, dt);
+        set_human_axis_target(state.left, config, left_human_axis, dt);
         reset_runtime_ai_plan(left_ai_state);
     } else {
         set_ai_target_from_plan(simulation, true, left_ai_state, dt, false);
     }
 
     if (right_mode == PaddleMode::Human) {
-        const bool right_up = glfwGetKey(window, controls.p2_up) == GLFW_PRESS;
-        const bool right_down = glfwGetKey(window, controls.p2_down) == GLFW_PRESS;
-        set_human_target(state.right, config, right_up, right_down, dt);
+        set_human_axis_target(state.right, config, right_human_axis, dt);
         reset_runtime_ai_plan(right_ai_state);
     } else {
         set_ai_target_from_plan(simulation, false, right_ai_state, dt, false);
@@ -285,5 +277,3 @@ void update_targets_for_ambient(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW

@@ -1,0 +1,23 @@
+#pragma once
+
+#include "action_input.hpp"
+#include "platform_sdl.hpp"
+#include "sdl_runtime_state.hpp"
+
+namespace whacker::app {
+
+struct SdlOptionsUpdateEffects {
+    bool binding_changed = false;
+    bool audio_changed = false;
+    bool back_requested = false;
+    bool play_move_sound = false;
+    bool play_confirm_sound = false;
+    bool persist_requested = false;
+};
+
+SdlOptionsUpdateEffects update_sdl_options_menu(
+    SdlRuntimeState& runtime,
+    const ActionInputFrame& input,
+    const SdlEventFrame& events);
+
+}  // namespace whacker::app

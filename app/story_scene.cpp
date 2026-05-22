@@ -1,7 +1,5 @@
 #include "story_scene.hpp"
 
-#ifdef WHACKER_HAS_GLFW
-
 #include <algorithm>
 
 #include "story_script_catalog.hpp"
@@ -140,5 +138,3 @@ void begin_story_onboarding_scene(
 }
 
 }  // namespace whacker::app
-
-#endif  // WHACKER_HAS_GLFW
