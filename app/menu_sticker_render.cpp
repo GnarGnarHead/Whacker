@@ -2,9 +2,7 @@
 
 #include <algorithm>
 #include <array>
-#include <cmath>
 #include <cstdint>
-#include <cstdio>
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -12,17 +10,11 @@
 
 #include <GL/gl.h>
 
-#if defined(WHACKER_HAS_PNG)
-#include <png.h>
-#endif
-
 #include "pixel_font.hpp"
+#include "png_rgba_loader.hpp"
 #include "rgba_texture.hpp"
+#include "runtime_asset_path.hpp"
 #include "story_pack.hpp"
-
-#ifndef WHACKER_SOURCE_DIR
-#define WHACKER_SOURCE_DIR "."
-#endif
 
 namespace whacker::app {
 
@@ -83,97 +75,8 @@ struct ScopedStickerScissor {
 };
 
 std::filesystem::path sticker_asset_path(const std::string_view filename) {
-    return std::filesystem::path(WHACKER_SOURCE_DIR) / "story" / "art" / "Stickers" / std::string(filename);
+    return runtime_asset_path(std::filesystem::path("story") / "art" / "Stickers" / std::string(filename));
 }
-
-#if defined(WHACKER_HAS_PNG)
-bool load_png_rgba(
-    const std::filesystem::path& asset_path,
-    int& out_width,
-    int& out_height,
-    std::vector<std::uint8_t>& out_rgba) {
-    out_width = 0;
-    out_height = 0;
-    out_rgba.clear();
-
-    std::FILE* file = std::fopen(asset_path.string().c_str(), "rb");
-    if (file == nullptr) {
-        return false;
-    }
-
-    png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-    if (png == nullptr) {
-        std::fclose(file);
-        return false;
-    }
-
-    png_infop info = png_create_info_struct(png);
-    if (info == nullptr) {
-        png_destroy_read_struct(&png, nullptr, nullptr);
-        std::fclose(file);
-        return false;
-    }
-
-    if (setjmp(png_jmpbuf(png)) != 0) {
-        png_destroy_read_struct(&png, &info, nullptr);
-        std::fclose(file);
-        return false;
-    }
-
-    png_init_io(png, file);
-    png_read_info(png, info);
-
-    png_uint_32 width = png_get_image_width(png, info);
-    png_uint_32 height = png_get_image_height(png, info);
-    int bit_depth = png_get_bit_depth(png, info);
-    int color_type = png_get_color_type(png, info);
-
-    if (bit_depth == 16) {
-        png_set_strip_16(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_palette_to_rgb(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) {
-        png_set_expand_gray_1_2_4_to_8(png);
-    }
-    if (png_get_valid(png, info, PNG_INFO_tRNS) != 0) {
-        png_set_tRNS_to_alpha(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
-        png_set_gray_to_rgb(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_RGB ||
-        color_type == PNG_COLOR_TYPE_GRAY ||
-        color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
-    }
-
-    png_read_update_info(png, info);
-
-    if (width == 0 || height == 0 || width > 8192u || height > 8192u) {
-        png_destroy_read_struct(&png, &info, nullptr);
-        std::fclose(file);
-        return false;
-    }
-
-    out_width = static_cast<int>(width);
-    out_height = static_cast<int>(height);
-    out_rgba.assign(static_cast<std::size_t>(out_width * out_height * 4), 0);
-
-    std::vector<png_bytep> row_ptrs(static_cast<std::size_t>(out_height));
-    for (int y = 0; y < out_height; ++y) {
-        row_ptrs[static_cast<std::size_t>(y)] = reinterpret_cast<png_bytep>(
-            out_rgba.data() + static_cast<std::size_t>(y * out_width * 4));
-    }
-    png_read_image(png, row_ptrs.data());
-    png_read_end(png, nullptr);
-
-    png_destroy_read_struct(&png, &info, nullptr);
-    std::fclose(file);
-    return true;
-}
-#endif
 
 void ensure_sticker_loaded(StickerTexture& texture, const std::filesystem::path& asset_path) {
     if (texture.load_attempted) {
@@ -181,22 +84,15 @@ void ensure_sticker_loaded(StickerTexture& texture, const std::filesystem::path&
     }
     texture.load_attempted = true;
 
-#if defined(WHACKER_HAS_PNG)
-    int width = 0;
-    int height = 0;
-    std::vector<std::uint8_t> rgba {};
-    if (!load_png_rgba(asset_path, width, height, rgba)) {
+    PngRgbaImage image {};
+    if (!load_png_rgba_image(asset_path, image, "menu sticker")) {
         texture.loaded = false;
         return;
     }
-    texture.width = width;
-    texture.height = height;
-    texture.rgba = std::move(rgba);
+    texture.width = image.width;
+    texture.height = image.height;
+    texture.rgba = std::move(image.rgba);
     texture.loaded = true;
-#else
-    (void)asset_path;
-    texture.loaded = false;
-#endif
 }
 
 bool ensure_sticker_uploaded(StickerTexture& texture) {
@@ -219,67 +115,6 @@ bool ensure_sticker_uploaded(StickerTexture& texture) {
     texture.texture = result.texture;
     std::vector<std::uint8_t> {}.swap(texture.rgba);
     return texture.texture.texture_id != 0;
-}
-
-void draw_sticker_quad(
-    const int fb_width,
-    const int fb_height,
-    const StickerTexture& texture,
-    const MenuStickerRect& rect,
-    const float rotation_deg) {
-    if (texture.texture.texture_id == 0 || rect.w <= 0.0f || rect.h <= 0.0f || fb_width <= 0 || fb_height <= 0) {
-        return;
-    }
-
-    const float center_x = rect.x + 0.5f * rect.w;
-    const float center_y = rect.y + 0.5f * rect.h;
-    const float half_w = 0.5f * rect.w;
-    const float half_h = 0.5f * rect.h;
-    const float radians = rotation_deg * (3.1415926535f / 180.0f);
-    const float cos_a = std::cos(radians);
-    const float sin_a = std::sin(radians);
-    const auto rotate_pixel_point = [center_x, center_y, cos_a, sin_a](const float local_x, const float local_y) {
-        return std::array<float, 2> {
-            center_x + (local_x * cos_a) - (local_y * sin_a),
-            center_y + (local_x * sin_a) + (local_y * cos_a),
-        };
-    };
-    const std::array<std::array<float, 2>, 4> corners_px {{
-        rotate_pixel_point(-half_w, -half_h),
-        rotate_pixel_point(half_w, -half_h),
-        rotate_pixel_point(half_w, half_h),
-        rotate_pixel_point(-half_w, half_h),
-    }};
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0.0, static_cast<double>(fb_width), static_cast<double>(fb_height), 0.0, -1.0, 1.0);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture.texture.texture_id);
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(corners_px[0][0], corners_px[0][1]);
-    glTexCoord2f(texture.texture.u_max, 0.0f);
-    glVertex2f(corners_px[1][0], corners_px[1][1]);
-    glTexCoord2f(texture.texture.u_max, texture.texture.v_max);
-    glVertex2f(corners_px[2][0], corners_px[2][1]);
-    glTexCoord2f(0.0f, texture.texture.v_max);
-    glVertex2f(corners_px[3][0], corners_px[3][1]);
-    glEnd();
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
 }
 
 MenuStickerRect anchored_sticker_rect(
@@ -487,7 +322,18 @@ void render_menu_stickers(
             continue;
         }
 
-        draw_sticker_quad(fb_width, fb_height, texture, sticker_rect, slot.rotation_deg);
+        draw_rgba_texture_quad_pixels(
+            fb_width,
+            fb_height,
+            texture.texture,
+            sticker_rect.x,
+            sticker_rect.y,
+            sticker_rect.w,
+            sticker_rect.h,
+            1.0f,
+            1.0f,
+            false,
+            slot.rotation_deg);
         placed_rects.push_back(sticker_rect);
     }
 }

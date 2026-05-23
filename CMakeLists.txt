@@ -14,6 +14,7 @@ option(WHACKER_BUILD_APP "Build the SDL2 app executable." ON)
 option(WHACKER_BUILD_TESTS "Build smoke tests." ON)
 option(WHACKER_STRICT_WARNINGS "Enable stricter warning flags for local audits." OFF)
 option(WHACKER_STORY_STRICT_CONTENT "Enable strict story authoring integrity checks (for CI/release gates)." OFF)
+option(WHACKER_R36_GLES2_TEXTURES "Use the GLES2 triangle backend for RGBA texture rendering." OFF)
 
 # Enforce clean-slate AI ownership: no legacy ai/ stack is allowed.
 file(GLOB WHACKER_LEGACY_AI_FILES
@@ -181,9 +182,11 @@ if(WHACKER_BUILD_APP)
         app/play_control_human.cpp
         app/platform_sdl.cpp
         app/pixel_font.cpp
+        app/png_rgba_loader.cpp
         app/quick_menu_actions.cpp
         app/quick_menu_render.cpp
         app/rgba_texture.cpp
+        app/runtime_asset_path.cpp
         app/runtime_story_scene.cpp
         app/runtime_transitions.cpp
         app/runtime_visual_transition.cpp
@@ -266,6 +269,10 @@ if(WHACKER_BUILD_APP)
             WHACKER_PLATFORM_SDL2=1
             WHACKER_HAS_SDL2_AUDIO=1
     )
+    if(WHACKER_R36_GLES2_TEXTURES)
+        target_compile_definitions(whacker PRIVATE WHACKER_R36_GLES2_TEXTURES=1)
+        target_link_libraries(whacker PRIVATE ${CMAKE_DL_LIBS})
+    endif()
 
     find_package(OpenGL QUIET)
     if(TARGET OpenGL::GL)
@@ -763,6 +770,16 @@ if(WHACKER_BUILD_TESTS)
         target_include_directories(rgba_texture_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
         whacker_configure_smoke_test(rgba_texture_smoke)
         add_test(NAME rgba_texture_smoke COMMAND rgba_texture_smoke)
+
+        add_executable(runtime_asset_path_smoke
+            tests/runtime_asset_path_smoke.cpp
+            app/runtime_asset_path.cpp
+        )
+        target_link_libraries(runtime_asset_path_smoke PRIVATE whacker_core)
+        target_include_directories(runtime_asset_path_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        target_compile_definitions(runtime_asset_path_smoke PRIVATE WHACKER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+        whacker_configure_smoke_test(runtime_asset_path_smoke)
+        add_test(NAME runtime_asset_path_smoke COMMAND runtime_asset_path_smoke)
 
         add_executable(input_binding_codec_smoke
             tests/input_binding_codec_smoke.cpp

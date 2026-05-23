@@ -4,7 +4,6 @@
 #include <array>
 #include <cstdint>
 #include <cmath>
-#include <cstdio>
 #include <filesystem>
 #include <utility>
 #include <vector>
@@ -12,15 +11,9 @@
 #include <GL/gl.h>
 
 #include "pixel_font.hpp"
+#include "png_rgba_loader.hpp"
 #include "rgba_texture.hpp"
-
-#if defined(WHACKER_HAS_PNG)
-#include <png.h>
-#endif
-
-#ifndef WHACKER_SOURCE_DIR
-#define WHACKER_SOURCE_DIR "."
-#endif
+#include "runtime_asset_path.hpp"
 
 namespace whacker::app {
 
@@ -65,7 +58,7 @@ float aperture_open_ratio_for_progress(const float progress) {
 }
 
 std::filesystem::path star_frame_source_path() {
-    return std::filesystem::path(WHACKER_SOURCE_DIR) / "story" / "art" / kStarFrameSourceFilename;
+    return runtime_asset_path(std::filesystem::path("story") / "art" / kStarFrameSourceFilename);
 }
 
 void begin_pixel_projection(const int fb_width, const int fb_height) {
@@ -185,116 +178,21 @@ bool draw_black_outside_star_aperture(
     return true;
 }
 
-#if defined(WHACKER_HAS_PNG)
-bool load_png_rgba(
-    const std::filesystem::path& asset_path,
-    int& out_width,
-    int& out_height,
-    std::vector<std::uint8_t>& out_rgba) {
-    out_width = 0;
-    out_height = 0;
-    out_rgba.clear();
-
-    std::FILE* file = std::fopen(asset_path.string().c_str(), "rb");
-    if (file == nullptr) {
-        return false;
-    }
-
-    png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-    if (png == nullptr) {
-        std::fclose(file);
-        return false;
-    }
-
-    png_infop info = png_create_info_struct(png);
-    if (info == nullptr) {
-        png_destroy_read_struct(&png, nullptr, nullptr);
-        std::fclose(file);
-        return false;
-    }
-
-    if (setjmp(png_jmpbuf(png)) != 0) {
-        png_destroy_read_struct(&png, &info, nullptr);
-        std::fclose(file);
-        return false;
-    }
-
-    png_init_io(png, file);
-    png_read_info(png, info);
-
-    png_uint_32 width = png_get_image_width(png, info);
-    png_uint_32 height = png_get_image_height(png, info);
-    int bit_depth = png_get_bit_depth(png, info);
-    int color_type = png_get_color_type(png, info);
-
-    if (bit_depth == 16) {
-        png_set_strip_16(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_palette_to_rgb(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) {
-        png_set_expand_gray_1_2_4_to_8(png);
-    }
-    if (png_get_valid(png, info, PNG_INFO_tRNS) != 0) {
-        png_set_tRNS_to_alpha(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
-        png_set_gray_to_rgb(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_RGB ||
-        color_type == PNG_COLOR_TYPE_GRAY ||
-        color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
-    }
-
-    png_read_update_info(png, info);
-
-    if (width == 0 || height == 0 || width > 8192u || height > 8192u) {
-        png_destroy_read_struct(&png, &info, nullptr);
-        std::fclose(file);
-        return false;
-    }
-
-    out_width = static_cast<int>(width);
-    out_height = static_cast<int>(height);
-    out_rgba.assign(static_cast<std::size_t>(out_width * out_height * 4), 0);
-
-    std::vector<png_bytep> row_ptrs(static_cast<std::size_t>(out_height));
-    for (int y = 0; y < out_height; ++y) {
-        row_ptrs[static_cast<std::size_t>(y)] = reinterpret_cast<png_bytep>(
-            out_rgba.data() + static_cast<std::size_t>(y * out_width * 4));
-    }
-    png_read_image(png, row_ptrs.data());
-    png_read_end(png, nullptr);
-
-    png_destroy_read_struct(&png, &info, nullptr);
-    std::fclose(file);
-    return true;
-}
-#endif
-
 void ensure_wipe_frame_loaded(WipeFrameTexture& frame_texture) {
     if (frame_texture.load_attempted) {
         return;
     }
     frame_texture.load_attempted = true;
 
-#if defined(WHACKER_HAS_PNG)
-    int width = 0;
-    int height = 0;
-    std::vector<std::uint8_t> rgba {};
-    if (!load_png_rgba(star_frame_source_path(), width, height, rgba)) {
+    PngRgbaImage image {};
+    if (!load_png_rgba_image(star_frame_source_path(), image, "star wipe frame")) {
         frame_texture.loaded = false;
         return;
     }
-    frame_texture.width = width;
-    frame_texture.height = height;
-    frame_texture.rgba = std::move(rgba);
+    frame_texture.width = image.width;
+    frame_texture.height = image.height;
+    frame_texture.rgba = std::move(image.rgba);
     frame_texture.loaded = true;
-#else
-    frame_texture.loaded = false;
-#endif
 }
 
 bool ensure_wipe_frame_uploaded(WipeFrameTexture& frame_texture) {

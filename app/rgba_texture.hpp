@@ -52,6 +52,7 @@ void draw_rgba_texture_quad_pixels(
     float h,
     float alpha = 1.0f,
     float brightness = 1.0f,
-    bool mirror_x = false);
+    bool mirror_x = false,
+    float rotation_deg = 0.0f);
 
 }  // namespace whacker::app

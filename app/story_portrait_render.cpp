@@ -4,20 +4,13 @@
 #include <array>
 #include <cassert>
 #include <cmath>
-#include <cstdio>
 #include <filesystem>
 #include <utility>
 #include <vector>
 
+#include "png_rgba_loader.hpp"
 #include "rgba_texture.hpp"
-
-#if defined(WHACKER_HAS_PNG)
-#include <png.h>
-#endif
-
-#ifndef WHACKER_SOURCE_DIR
-#define WHACKER_SOURCE_DIR "."
-#endif
+#include "runtime_asset_path.hpp"
 
 namespace whacker::app {
 
@@ -51,7 +44,7 @@ std::filesystem::path portrait_path_for_id(const StoryPortraitId portrait_id) {
     if (filename == nullptr) {
         return {};
     }
-    return std::filesystem::path(WHACKER_SOURCE_DIR) / "story" / "characters" / "art" / filename;
+    return runtime_asset_path(std::filesystem::path("story") / "characters" / "art" / filename);
 }
 
 struct AlphaBounds {
@@ -211,95 +204,6 @@ bool build_placeholder_portrait_rgba(
     return true;
 }
 
-#if defined(WHACKER_HAS_PNG)
-bool load_png_rgba(
-    const std::filesystem::path& asset_path,
-    int& out_width,
-    int& out_height,
-    std::vector<std::uint8_t>& out_rgba) {
-    out_width = 0;
-    out_height = 0;
-    out_rgba.clear();
-
-    std::FILE* file = std::fopen(asset_path.string().c_str(), "rb");
-    if (file == nullptr) {
-        return false;
-    }
-
-    png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-    if (png == nullptr) {
-        std::fclose(file);
-        return false;
-    }
-
-    png_infop info = png_create_info_struct(png);
-    if (info == nullptr) {
-        png_destroy_read_struct(&png, nullptr, nullptr);
-        std::fclose(file);
-        return false;
-    }
-
-    if (setjmp(png_jmpbuf(png)) != 0) {
-        png_destroy_read_struct(&png, &info, nullptr);
-        std::fclose(file);
-        return false;
-    }
-
-    png_init_io(png, file);
-    png_read_info(png, info);
-
-    png_uint_32 width = png_get_image_width(png, info);
-    png_uint_32 height = png_get_image_height(png, info);
-    int bit_depth = png_get_bit_depth(png, info);
-    int color_type = png_get_color_type(png, info);
-
-    if (bit_depth == 16) {
-        png_set_strip_16(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_palette_to_rgb(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) {
-        png_set_expand_gray_1_2_4_to_8(png);
-    }
-    if (png_get_valid(png, info, PNG_INFO_tRNS) != 0) {
-        png_set_tRNS_to_alpha(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
-        png_set_gray_to_rgb(png);
-    }
-    if (color_type == PNG_COLOR_TYPE_RGB ||
-        color_type == PNG_COLOR_TYPE_GRAY ||
-        color_type == PNG_COLOR_TYPE_PALETTE) {
-        png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
-    }
-
-    png_read_update_info(png, info);
-
-    if (width == 0 || height == 0 || width > 8192u || height > 8192u) {
-        png_destroy_read_struct(&png, &info, nullptr);
-        std::fclose(file);
-        return false;
-    }
-
-    out_width = static_cast<int>(width);
-    out_height = static_cast<int>(height);
-    out_rgba.assign(static_cast<std::size_t>(out_width * out_height * 4), 0);
-
-    std::vector<png_bytep> row_ptrs(static_cast<std::size_t>(out_height));
-    for (int y = 0; y < out_height; ++y) {
-        row_ptrs[static_cast<std::size_t>(y)] = reinterpret_cast<png_bytep>(
-            out_rgba.data() + static_cast<std::size_t>(y * out_width * 4));
-    }
-    png_read_image(png, row_ptrs.data());
-    png_read_end(png, nullptr);
-
-    png_destroy_read_struct(&png, &info, nullptr);
-    std::fclose(file);
-    return true;
-}
-#endif
-
 bool try_load_portrait_raster(const StoryPortraitId portrait_id, PortraitRaster& out_raster) {
     out_raster.loaded = false;
     out_raster.upload_attempted = false;
@@ -313,11 +217,8 @@ bool try_load_portrait_raster(const StoryPortraitId portrait_id, PortraitRaster&
         return false;
     }
 
-#if defined(WHACKER_HAS_PNG)
-    int src_w = 0;
-    int src_h = 0;
-    std::vector<std::uint8_t> src_rgba {};
-    if (!load_png_rgba(asset_path, src_w, src_h, src_rgba)) {
+    PngRgbaImage src_image {};
+    if (!load_png_rgba_image(asset_path, src_image, "story portrait")) {
         int placeholder_w = 0;
         int placeholder_h = 0;
         std::vector<std::uint8_t> placeholder_rgba {};
@@ -331,17 +232,19 @@ bool try_load_portrait_raster(const StoryPortraitId portrait_id, PortraitRaster&
         return true;
     }
 
-    int crop_w = src_w;
-    int crop_h = src_h;
-    std::vector<std::uint8_t> cropped_rgba = src_rgba;
-    const AlphaBounds alpha_bounds = compute_alpha_bounds(src_rgba, src_w, src_h, kPortraitAlphaBoundsThreshold);
+    int crop_w = src_image.width;
+    int crop_h = src_image.height;
+    std::vector<std::uint8_t> cropped_rgba = src_image.rgba;
+    const AlphaBounds alpha_bounds =
+        compute_alpha_bounds(src_image.rgba, src_image.width, src_image.height, kPortraitAlphaBoundsThreshold);
     if (alpha_bounds.valid) {
-        std::vector<std::uint8_t> candidate = crop_rgba_to_bounds(src_rgba, src_w, src_h, alpha_bounds, crop_w, crop_h);
+        std::vector<std::uint8_t> candidate =
+            crop_rgba_to_bounds(src_image.rgba, src_image.width, src_image.height, alpha_bounds, crop_w, crop_h);
         if (!candidate.empty() && crop_w > 0 && crop_h > 0) {
             cropped_rgba = std::move(candidate);
         } else {
-            crop_w = src_w;
-            crop_h = src_h;
+            crop_w = src_image.width;
+            crop_h = src_image.height;
         }
     }
 
@@ -354,20 +257,6 @@ bool try_load_portrait_raster(const StoryPortraitId portrait_id, PortraitRaster&
     out_raster.rgba = std::move(cropped_rgba);
     out_raster.loaded = true;
     return true;
-#else
-    (void)asset_path;
-    int placeholder_w = 0;
-    int placeholder_h = 0;
-    std::vector<std::uint8_t> placeholder_rgba {};
-    if (!build_placeholder_portrait_rgba(portrait_id, placeholder_w, placeholder_h, placeholder_rgba)) {
-        return false;
-    }
-    out_raster.width = placeholder_w;
-    out_raster.height = placeholder_h;
-    out_raster.rgba = std::move(placeholder_rgba);
-    out_raster.loaded = true;
-    return true;
-#endif
 }
 
 bool ensure_portrait_texture_uploaded(PortraitRaster& raster) {
