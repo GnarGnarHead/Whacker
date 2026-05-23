@@ -122,7 +122,10 @@ bool controller_instance_open(
 }  // namespace
 
 SdlInput::SdlInput()
-    : SdlInput(default_action_input_bindings()) {}
+    : SdlInput(configured_input_profile()) {}
+
+SdlInput::SdlInput(const InputProfile profile)
+    : SdlInput(action_input_bindings_for_profile(profile)) {}
 
 SdlInput::SdlInput(ActionInputBindings bindings)
     : bindings_(bindings) {

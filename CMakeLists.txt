@@ -15,6 +15,13 @@ option(WHACKER_BUILD_TESTS "Build smoke tests." ON)
 option(WHACKER_STRICT_WARNINGS "Enable stricter warning flags for local audits." OFF)
 option(WHACKER_STORY_STRICT_CONTENT "Enable strict story authoring integrity checks (for CI/release gates)." OFF)
 option(WHACKER_R36_GLES2_TEXTURES "Use the GLES2 triangle backend for RGBA texture rendering." OFF)
+set(WHACKER_INPUT_PROFILE "desktop" CACHE STRING "Default SDL app input profile: desktop or handheld.")
+set_property(CACHE WHACKER_INPUT_PROFILE PROPERTY STRINGS desktop handheld)
+set(WHACKER_HOST_STORY_PACK_COMPILER "" CACHE FILEPATH "Path to a native story_pack_compiler executable for cross builds.")
+
+if(NOT WHACKER_INPUT_PROFILE MATCHES "^(desktop|handheld)$")
+    message(FATAL_ERROR "WHACKER_INPUT_PROFILE must be 'desktop' or 'handheld'.")
+endif()
 
 # Enforce clean-slate AI ownership: no legacy ai/ stack is allowed.
 file(GLOB WHACKER_LEGACY_AI_FILES
@@ -49,21 +56,54 @@ function(whacker_configure_smoke_test target_name)
     target_compile_definitions(${target_name} PRIVATE WHACKER_TEST_ASSERTIONS_ACTIVE=1)
 endfunction()
 
+function(whacker_add_story_pack_compiler_test test_name)
+    add_test(
+        NAME ${test_name}
+        COMMAND
+            ${WHACKER_STORY_PACK_COMPILER_COMMAND}
+            --validate-only
+            ${ARGN}
+    )
+endfunction()
+
 set(WHACKER_STORY_WEEK01_TEXT_PACK "${CMAKE_CURRENT_SOURCE_DIR}/story/content/season1/week01.toml")
 set(WHACKER_STORY_SEASON1_GRAPH_PACK "${CMAKE_CURRENT_SOURCE_DIR}/story/content/season1/season1_graph.toml")
 set(WHACKER_UI_MENU_STICKER_PACK "${CMAKE_CURRENT_SOURCE_DIR}/story/content/ui/menu_stickers.toml")
 
-add_executable(story_pack_compiler
-    tools/story_pack_compiler.cpp
-)
-target_include_directories(
-    story_pack_compiler
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/app
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-target_compile_features(story_pack_compiler PRIVATE cxx_std_20)
-whacker_apply_warnings(story_pack_compiler)
+if(CMAKE_CROSSCOMPILING AND NOT WHACKER_HOST_STORY_PACK_COMPILER)
+    message(FATAL_ERROR "Cross builds must set WHACKER_HOST_STORY_PACK_COMPILER to a native story_pack_compiler executable.")
+endif()
+
+set(WHACKER_STORY_PACK_COMPILER_COMMAND "")
+set(WHACKER_STORY_PACK_COMPILER_DEPENDS "")
+if(WHACKER_HOST_STORY_PACK_COMPILER)
+    get_filename_component(
+        WHACKER_HOST_STORY_PACK_COMPILER_ABS
+        "${WHACKER_HOST_STORY_PACK_COMPILER}"
+        ABSOLUTE
+        BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    if(NOT EXISTS "${WHACKER_HOST_STORY_PACK_COMPILER_ABS}")
+        message(FATAL_ERROR "WHACKER_HOST_STORY_PACK_COMPILER does not exist: ${WHACKER_HOST_STORY_PACK_COMPILER_ABS}")
+    endif()
+    set(WHACKER_STORY_PACK_COMPILER_COMMAND "${WHACKER_HOST_STORY_PACK_COMPILER_ABS}")
+    set(WHACKER_STORY_PACK_COMPILER_DEPENDS "${WHACKER_HOST_STORY_PACK_COMPILER_ABS}")
+    message(STATUS "Using host story pack compiler: ${WHACKER_HOST_STORY_PACK_COMPILER_ABS}")
+else()
+    add_executable(story_pack_compiler
+        tools/story_pack_compiler.cpp
+    )
+    target_include_directories(
+        story_pack_compiler
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/app
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_features(story_pack_compiler PRIVATE cxx_std_20)
+    whacker_apply_warnings(story_pack_compiler)
+    set(WHACKER_STORY_PACK_COMPILER_COMMAND "$<TARGET_FILE:story_pack_compiler>")
+    set(WHACKER_STORY_PACK_COMPILER_DEPENDS story_pack_compiler)
+endif()
 
 set(WHACKER_STORY_PACK_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/story")
 set(WHACKER_STORY_PACK_GEN_CPP "${WHACKER_STORY_PACK_GEN_DIR}/story_pack_gen.cpp")
@@ -73,13 +113,13 @@ add_custom_command(
     COMMAND
         ${CMAKE_COMMAND} -E make_directory ${WHACKER_STORY_PACK_GEN_DIR}
     COMMAND
-        $<TARGET_FILE:story_pack_compiler>
+        ${WHACKER_STORY_PACK_COMPILER_COMMAND}
             --input ${WHACKER_STORY_WEEK01_TEXT_PACK}
             --input ${WHACKER_STORY_SEASON1_GRAPH_PACK}
             --input ${WHACKER_UI_MENU_STICKER_PACK}
             --out-cpp ${WHACKER_STORY_PACK_GEN_CPP}
     DEPENDS
-        story_pack_compiler
+        ${WHACKER_STORY_PACK_COMPILER_DEPENDS}
         ${WHACKER_STORY_WEEK01_TEXT_PACK}
         ${WHACKER_STORY_SEASON1_GRAPH_PACK}
         ${WHACKER_UI_MENU_STICKER_PACK}
@@ -269,6 +309,9 @@ if(WHACKER_BUILD_APP)
             WHACKER_PLATFORM_SDL2=1
             WHACKER_HAS_SDL2_AUDIO=1
     )
+    if(WHACKER_INPUT_PROFILE STREQUAL "handheld")
+        target_compile_definitions(whacker PRIVATE WHACKER_INPUT_PROFILE_HANDHELD=1)
+    endif()
     if(WHACKER_R36_GLES2_TEXTURES)
         target_compile_definitions(whacker PRIVATE WHACKER_R36_GLES2_TEXTURES=1)
         target_link_libraries(whacker PRIVATE ${CMAKE_DL_LIBS})
@@ -332,50 +375,66 @@ if(WHACKER_BUILD_TESTS)
         whacker_configure_smoke_test(story_flow_smoke)
         add_test(NAME story_flow_smoke COMMAND story_flow_smoke)
 
-        add_test(
-            NAME story_pack_compiler_smoke
-            COMMAND story_pack_compiler --validate-only --input ${WHACKER_STORY_WEEK01_TEXT_PACK} --input ${WHACKER_STORY_SEASON1_GRAPH_PACK} --input ${WHACKER_UI_MENU_STICKER_PACK}
+        whacker_add_story_pack_compiler_test(
+            story_pack_compiler_smoke
+            --input ${WHACKER_STORY_WEEK01_TEXT_PACK}
+            --input ${WHACKER_STORY_SEASON1_GRAPH_PACK}
+            --input ${WHACKER_UI_MENU_STICKER_PACK}
         )
 
-        add_test(
-            NAME story_pack_compiler_invalid_missing_keys_smoke
-            COMMAND story_pack_compiler --validate-only --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_week01_missing_keys.toml --input ${WHACKER_STORY_SEASON1_GRAPH_PACK} --input ${WHACKER_UI_MENU_STICKER_PACK}
+        whacker_add_story_pack_compiler_test(
+            story_pack_compiler_invalid_missing_keys_smoke
+            --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_week01_missing_keys.toml
+            --input ${WHACKER_STORY_SEASON1_GRAPH_PACK}
+            --input ${WHACKER_UI_MENU_STICKER_PACK}
         )
         set_tests_properties(story_pack_compiler_invalid_missing_keys_smoke PROPERTIES WILL_FAIL TRUE)
 
-        add_test(
-            NAME story_pack_compiler_invalid_dangling_graph_edge_smoke
-            COMMAND story_pack_compiler --validate-only --input ${WHACKER_STORY_WEEK01_TEXT_PACK} --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_season1_graph_dangling_next_node.toml --input ${WHACKER_UI_MENU_STICKER_PACK}
+        whacker_add_story_pack_compiler_test(
+            story_pack_compiler_invalid_dangling_graph_edge_smoke
+            --input ${WHACKER_STORY_WEEK01_TEXT_PACK}
+            --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_season1_graph_dangling_next_node.toml
+            --input ${WHACKER_UI_MENU_STICKER_PACK}
         )
         set_tests_properties(story_pack_compiler_invalid_dangling_graph_edge_smoke PROPERTIES WILL_FAIL TRUE)
 
-        add_test(
-            NAME story_pack_compiler_invalid_menu_sticker_anchor_smoke
-            COMMAND story_pack_compiler --validate-only --input ${WHACKER_STORY_WEEK01_TEXT_PACK} --input ${WHACKER_STORY_SEASON1_GRAPH_PACK} --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_bad_anchor.toml
+        whacker_add_story_pack_compiler_test(
+            story_pack_compiler_invalid_menu_sticker_anchor_smoke
+            --input ${WHACKER_STORY_WEEK01_TEXT_PACK}
+            --input ${WHACKER_STORY_SEASON1_GRAPH_PACK}
+            --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_bad_anchor.toml
         )
         set_tests_properties(story_pack_compiler_invalid_menu_sticker_anchor_smoke PROPERTIES WILL_FAIL TRUE)
 
-        add_test(
-            NAME story_pack_compiler_invalid_menu_sticker_inside_missing_xy_smoke
-            COMMAND story_pack_compiler --validate-only --input ${WHACKER_STORY_WEEK01_TEXT_PACK} --input ${WHACKER_STORY_SEASON1_GRAPH_PACK} --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_inside_missing_xy.toml
+        whacker_add_story_pack_compiler_test(
+            story_pack_compiler_invalid_menu_sticker_inside_missing_xy_smoke
+            --input ${WHACKER_STORY_WEEK01_TEXT_PACK}
+            --input ${WHACKER_STORY_SEASON1_GRAPH_PACK}
+            --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_inside_missing_xy.toml
         )
         set_tests_properties(story_pack_compiler_invalid_menu_sticker_inside_missing_xy_smoke PROPERTIES WILL_FAIL TRUE)
 
-        add_test(
-            NAME story_pack_compiler_invalid_menu_sticker_height_missing_height_smoke
-            COMMAND story_pack_compiler --validate-only --input ${WHACKER_STORY_WEEK01_TEXT_PACK} --input ${WHACKER_STORY_SEASON1_GRAPH_PACK} --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_height_missing_height.toml
+        whacker_add_story_pack_compiler_test(
+            story_pack_compiler_invalid_menu_sticker_height_missing_height_smoke
+            --input ${WHACKER_STORY_WEEK01_TEXT_PACK}
+            --input ${WHACKER_STORY_SEASON1_GRAPH_PACK}
+            --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_height_missing_height.toml
         )
         set_tests_properties(story_pack_compiler_invalid_menu_sticker_height_missing_height_smoke PROPERTIES WILL_FAIL TRUE)
 
-        add_test(
-            NAME story_pack_compiler_invalid_menu_sticker_bad_norm_smoke
-            COMMAND story_pack_compiler --validate-only --input ${WHACKER_STORY_WEEK01_TEXT_PACK} --input ${WHACKER_STORY_SEASON1_GRAPH_PACK} --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_bad_norm.toml
+        whacker_add_story_pack_compiler_test(
+            story_pack_compiler_invalid_menu_sticker_bad_norm_smoke
+            --input ${WHACKER_STORY_WEEK01_TEXT_PACK}
+            --input ${WHACKER_STORY_SEASON1_GRAPH_PACK}
+            --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_bad_norm.toml
         )
         set_tests_properties(story_pack_compiler_invalid_menu_sticker_bad_norm_smoke PROPERTIES WILL_FAIL TRUE)
 
-        add_test(
-            NAME story_pack_compiler_invalid_menu_sticker_bad_height_px_smoke
-            COMMAND story_pack_compiler --validate-only --input ${WHACKER_STORY_WEEK01_TEXT_PACK} --input ${WHACKER_STORY_SEASON1_GRAPH_PACK} --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_bad_height_px.toml
+        whacker_add_story_pack_compiler_test(
+            story_pack_compiler_invalid_menu_sticker_bad_height_px_smoke
+            --input ${WHACKER_STORY_WEEK01_TEXT_PACK}
+            --input ${WHACKER_STORY_SEASON1_GRAPH_PACK}
+            --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/story_packs/invalid_menu_stickers_bad_height_px.toml
         )
         set_tests_properties(story_pack_compiler_invalid_menu_sticker_bad_height_px_smoke PROPERTIES WILL_FAIL TRUE)
 

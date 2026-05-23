@@ -1,12 +1,14 @@
 #pragma once
 
 #include "action_input.hpp"
+#include "input_profiles.hpp"
 
 namespace whacker::app {
 
 class SdlInput {
 public:
     SdlInput();
+    explicit SdlInput(InputProfile profile);
     explicit SdlInput(ActionInputBindings bindings);
     ~SdlInput();
 

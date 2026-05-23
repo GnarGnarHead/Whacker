@@ -3,6 +3,7 @@
 #include "test_assert.hpp"
 
 #include <cstddef>
+#include <string>
 
 namespace {
 
@@ -55,6 +56,26 @@ void test_handheld_controller_zero_drives_menu_actions() {
     TEST_CHECK(whacker::app::input_pressed(frame, whacker::app::InputAction::Confirm));
     TEST_CHECK(whacker::app::input_pressed(frame, whacker::app::InputAction::Back));
     TEST_CHECK(whacker::app::input_pressed(frame, whacker::app::InputAction::Pause));
+}
+
+void test_handheld_select_button_is_not_ui_back() {
+    const whacker::app::ActionInputBindings bindings = whacker::app::handheld_action_input_bindings();
+
+    whacker::app::InputPhysicalState select_current {};
+    set_controller_button(select_current, 0, whacker::app::ControllerButton::Back);
+
+    const whacker::app::ActionInputFrame select_frame =
+        whacker::app::derive_action_input_frame({}, select_current, bindings);
+
+    TEST_CHECK(!whacker::app::input_pressed(select_frame, whacker::app::InputAction::Back));
+
+    whacker::app::InputPhysicalState face_current {};
+    set_controller_button(face_current, 0, whacker::app::ControllerButton::B);
+
+    const whacker::app::ActionInputFrame face_frame =
+        whacker::app::derive_action_input_frame({}, face_current, bindings);
+
+    TEST_CHECK(whacker::app::input_pressed(face_frame, whacker::app::InputAction::Back));
 }
 
 void test_handheld_controller_zero_drives_story_player_slot() {
@@ -116,12 +137,36 @@ void test_handheld_preset_replaces_previous_controller_indices() {
     TEST_CHECK(frame.p1_move_y == -1.0f);
 }
 
+void test_profile_helpers_select_expected_bindings() {
+    TEST_CHECK(whacker::app::input_profile_name(whacker::app::InputProfile::Desktop) == std::string("desktop"));
+    TEST_CHECK(whacker::app::input_profile_name(whacker::app::InputProfile::Handheld) == std::string("handheld"));
+
+    whacker::app::InputPhysicalState current {};
+    set_controller_axis(current, 1, whacker::app::ControllerAxis::LeftY, 0.5f);
+
+    const whacker::app::ActionInputFrame desktop_frame =
+        whacker::app::derive_action_input_frame(
+            {},
+            current,
+            whacker::app::action_input_bindings_for_profile(whacker::app::InputProfile::Desktop));
+    const whacker::app::ActionInputFrame handheld_frame =
+        whacker::app::derive_action_input_frame(
+            {},
+            current,
+            whacker::app::action_input_bindings_for_profile(whacker::app::InputProfile::Handheld));
+
+    TEST_CHECK(desktop_frame.p2_move_y == 0.5f);
+    TEST_CHECK(handheld_frame.p2_move_y == 0.5f);
+}
+
 }  // namespace
 
 int main() {
     test_desktop_defaults_stay_two_controller_ready();
     test_handheld_controller_zero_drives_menu_actions();
+    test_handheld_select_button_is_not_ui_back();
     test_handheld_controller_zero_drives_story_player_slot();
     test_handheld_preset_replaces_previous_controller_indices();
+    test_profile_helpers_select_expected_bindings();
     return 0;
 }

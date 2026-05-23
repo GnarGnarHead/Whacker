@@ -105,6 +105,38 @@ void replace_controller_move_bindings_for_slot(
 
 }  // namespace
 
+const char* input_profile_name(const InputProfile profile) {
+    switch (profile) {
+        case InputProfile::Desktop:
+            return "desktop";
+        case InputProfile::Handheld:
+            return "handheld";
+    }
+    return "desktop";
+}
+
+InputProfile configured_input_profile() {
+#ifdef WHACKER_INPUT_PROFILE_HANDHELD
+    return InputProfile::Handheld;
+#else
+    return InputProfile::Desktop;
+#endif
+}
+
+ActionInputBindings action_input_bindings_for_profile(const InputProfile profile) {
+    switch (profile) {
+        case InputProfile::Desktop:
+            return default_action_input_bindings();
+        case InputProfile::Handheld:
+            return handheld_action_input_bindings();
+    }
+    return default_action_input_bindings();
+}
+
+ActionInputBindings configured_action_input_bindings() {
+    return action_input_bindings_for_profile(configured_input_profile());
+}
+
 ActionInputBindings handheld_action_input_bindings() {
     ActionInputBindings bindings = default_action_input_bindings();
     apply_handheld_action_input_preset(bindings);
@@ -141,7 +173,7 @@ void apply_handheld_action_input_preset(ActionInputBindings& bindings) {
         AxisDirection::Positive);
 
     replace_controller_buttons_for_action(bindings, InputAction::Confirm, {ControllerButton::A});
-    replace_controller_buttons_for_action(bindings, InputAction::Back, {ControllerButton::B, ControllerButton::Back});
+    replace_controller_buttons_for_action(bindings, InputAction::Back, {ControllerButton::B});
     replace_controller_buttons_for_action(bindings, InputAction::Pause, {ControllerButton::Start});
 
     replace_controller_move_bindings_for_slot(
