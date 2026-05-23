@@ -24,42 +24,17 @@
 #include "story_intro_text_layout.hpp"
 #include "story_match.hpp"
 #include "story_menu_controller.hpp"
+#include "story_name_entry.hpp"
 #include "story_play_session.hpp"
 #include "story_runtime_invariants.hpp"
 #include "story_save.hpp"
 #include "story_scene_text_layout.hpp"
 #include "story_script_catalog.hpp"
 #include "story_skill_limits.hpp"
-#include "text_utils.hpp"
 
 namespace whacker::app {
 
 namespace {
-
-void append_story_name_text(StoryIntroState& story_intro, const std::string& text_input) {
-    for (const char raw_ch : text_input) {
-        if (story_intro.entered_name.size() >= 16u) {
-            return;
-        }
-        char ch = raw_ch;
-        if (ch >= 'a' && ch <= 'z') {
-            ch = static_cast<char>(ch - 'a' + 'A');
-        }
-        const bool allowed =
-            (ch >= 'A' && ch <= 'Z') ||
-            (ch >= '0' && ch <= '9') ||
-            ch == ' ' ||
-            ch == '-' ||
-            ch == '_';
-        if (!allowed) {
-            continue;
-        }
-        if (ch == ' ' && (story_intro.entered_name.empty() || story_intro.entered_name.back() == ' ')) {
-            continue;
-        }
-        story_intro.entered_name.push_back(ch);
-    }
-}
 
 void apply_replace_route(const ScreenRoute route, SdlRuntimeState& runtime) {
     if (route.changed) {
@@ -306,6 +281,11 @@ void update_story_intro_dialogue_input(
     const RenderContext& render_context,
     SdlRuntimeState& runtime,
     whacker::sim::Simulation& simulation) {
+    const bool editing_name = runtime.story_intro.phase == StoryIntroPhase::NameEntry;
+    if (editing_name) {
+        prepare_story_name_entry(runtime.story_intro);
+    }
+
     const StoryIntroBodyLayout body_layout = compute_story_intro_body_layout_for_framebuffer(
         render_context.framebuffer_width,
         render_context.framebuffer_height,
@@ -314,7 +294,7 @@ void update_story_intro_dialogue_input(
         sdl_key_name,
         sanitize_player_name);
 
-    if (!runtime.story_intro.dialogue_writing && body_layout.max_scroll_rows > 0) {
+    if (!editing_name && !runtime.story_intro.dialogue_writing && body_layout.max_scroll_rows > 0) {
         int scroll_delta = 0;
         if (input_pressed(input, InputAction::MenuUp)) {
             scroll_delta += 1;
@@ -351,17 +331,22 @@ void update_story_intro_dialogue_input(
         }
     }
 
-    if (runtime.story_intro.phase == StoryIntroPhase::NameEntry && !runtime.story_intro.dialogue_writing) {
-        const bool had_text_edit =
-            !events.text_input.empty() || events.backspace_pressed;
-        if (events.backspace_pressed && !runtime.story_intro.entered_name.empty()) {
-            runtime.story_intro.entered_name.pop_back();
+    if (editing_name && !runtime.story_intro.dialogue_writing) {
+        const MenuIntent intent = derive_menu_intent(input);
+        const StoryNameEntryEditResult edit_result = apply_story_name_entry_input(
+            runtime.story_intro,
+            intent,
+            StoryNameTextInput {
+                .text = events.text_input,
+                .backspace_pressed = events.backspace_pressed,
+            });
+        const bool controller_edit =
+            intent.left || intent.right || intent.up || intent.down || intent.back || events.backspace_pressed;
+        if (edit_result.changed && controller_edit) {
+            play_menu_move_sound(runtime);
         }
-        append_story_name_text(runtime.story_intro, events.text_input);
-        if (had_text_edit && (runtime.story_intro.name_accept_pending || runtime.story_intro.name_missing_prompt)) {
-            runtime.story_intro.name_accept_pending = false;
-            runtime.story_intro.name_missing_prompt = false;
-            reset_story_intro_typewriter(runtime.story_intro);
+        if (edit_result.consumed_back) {
+            return;
         }
     }
 
@@ -430,26 +415,7 @@ void update_story_intro_dialogue_input(
     }
 
     if (runtime.story_intro.phase == StoryIntroPhase::NameEntry) {
-        if (trim_copy(runtime.story_intro.entered_name).empty()) {
-            if (!runtime.story_intro.name_missing_prompt) {
-                runtime.story_intro.name_missing_prompt = true;
-                runtime.story_intro.name_accept_pending = false;
-                reset_story_intro_typewriter(runtime.story_intro);
-            }
-            return;
-        }
-        if (!runtime.story_intro.name_accept_pending) {
-            runtime.story_intro.name_accept_pending = true;
-            runtime.story_intro.name_missing_prompt = false;
-            reset_story_intro_typewriter(runtime.story_intro);
-            return;
-        }
-        runtime.story_intro.entered_name = sanitize_player_name(runtime.story_intro.entered_name);
-        runtime.story_intro.name_accept_pending = false;
-        runtime.story_intro.name_missing_prompt = false;
-        runtime.story_intro.phase = StoryIntroPhase::PlayMatch;
-        runtime.story_intro.phase_timer = 0.0f;
-        runtime.story_intro.dialogue_writing = false;
+        (void)confirm_story_name_entry(runtime.story_intro, sanitize_player_name);
         return;
     }
 
@@ -755,6 +721,8 @@ void step_match_simulation(
                     runtime.story_intro.name_missing_prompt = false;
                     runtime.story_intro.phase = StoryIntroPhase::NameEntry;
                     runtime.story_intro.phase_timer = 0.0f;
+                    reset_story_name_entry_editor(runtime.story_intro);
+                    prepare_story_name_entry(runtime.story_intro);
                     reset_story_intro_typewriter(runtime.story_intro);
                 } else if (!runtime.story_intro.rules_hint_shown && runtime.story_intro.points_played == 5) {
                     runtime.story_intro.rules_hint_shown = true;

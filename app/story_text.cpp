@@ -163,7 +163,7 @@ std::string intro_name_confirm_line_1() {
 }
 
 std::string intro_name_confirm_line_2() {
-    return "Enter accept  Backspace edit";
+    return "Confirm accept  Back edit";
 }
 
 std::string intro_name_prompt_line_1() {
@@ -173,7 +173,7 @@ std::string intro_name_prompt_line_1() {
 std::string intro_name_prompt_line_2(const bool missing_prompt) {
     return missing_prompt
         ? "Enter a name first."
-        : "Type, Backspace delete, Enter ready";
+        : "Edit name. Back deletes. Confirm ready";
 }
 
 std::string intro_name_placeholder_line_3() {

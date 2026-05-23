@@ -11,6 +11,7 @@
 #include "story_intro.hpp"
 #include "story_match.hpp"
 #include "story_menu_controller.hpp"
+#include "story_name_entry.hpp"
 #include "story_play_session.hpp"
 #include "story_rivals.hpp"
 #include "story_runtime.hpp"
@@ -234,12 +235,6 @@ void apply_story_hub_route_to_fixture(
     }
 }
 
-std::string sanitize_name_or_passthrough(
-    const whacker::app::StorySanitizeNameFn sanitize_name_fn,
-    const std::string& value) {
-    return sanitize_name_fn != nullptr ? sanitize_name_fn(value) : value;
-}
-
 void apply_story_intro_confirm(
     whacker::app::StoryRuntimeState& runtime,
     whacker::app::StoryHubState& hub,
@@ -314,26 +309,7 @@ void apply_story_intro_confirm(
     }
 
     if (intro.phase == whacker::app::StoryIntroPhase::NameEntry) {
-        if (whacker::app::trim_copy(intro.entered_name).empty()) {
-            if (!intro.name_missing_prompt) {
-                intro.name_missing_prompt = true;
-                intro.name_accept_pending = false;
-                whacker::app::reset_story_intro_typewriter(intro);
-            }
-            return;
-        }
-        if (!intro.name_accept_pending) {
-            intro.name_accept_pending = true;
-            intro.name_missing_prompt = false;
-            whacker::app::reset_story_intro_typewriter(intro);
-            return;
-        }
-        intro.entered_name = sanitize_name_or_passthrough(sanitize_name_fn, intro.entered_name);
-        intro.name_accept_pending = false;
-        intro.name_missing_prompt = false;
-        intro.phase = whacker::app::StoryIntroPhase::PlayMatch;
-        intro.phase_timer = 0.0f;
-        intro.dialogue_writing = false;
+        (void)whacker::app::confirm_story_name_entry(intro, sanitize_name_fn);
         return;
     }
 
@@ -1386,7 +1362,7 @@ void test_story_intro_invite_confirm_bootstrap_matches_onboarding_friendly_match
     TEST_CHECK(intro_after.ball.speed_scalar == match_after.ball.speed_scalar);
 }
 
-void test_story_intro_name_entry_empty_confirm_sets_missing_prompt() {
+void test_story_intro_name_entry_empty_confirm_defaults_to_player_confirmation() {
     reset_story_integration_test_state();
 
     StoryIntroInputFixture fixture(0xABCDEF02ULL);
@@ -1400,8 +1376,9 @@ void test_story_intro_name_entry_empty_confirm_sets_missing_prompt() {
     fixture.run();
 
     TEST_CHECK(fixture.intro.phase == whacker::app::StoryIntroPhase::NameEntry);
-    TEST_CHECK(!fixture.intro.name_accept_pending);
-    TEST_CHECK(fixture.intro.name_missing_prompt);
+    TEST_CHECK(fixture.intro.name_accept_pending);
+    TEST_CHECK(!fixture.intro.name_missing_prompt);
+    TEST_CHECK(fixture.intro.entered_name == "PLAYER");
     TEST_CHECK(fixture.intro.dialogue_writing);
     TEST_CHECK(fixture.screen == whacker::app::Screen::StoryIntro);
     TEST_CHECK(g_save_call_count == 0);
@@ -1913,7 +1890,7 @@ int main() {
     test_story_intro_rival_confirm_when_scrolled_snaps_before_advancing();
     test_story_intro_invite_confirm_starts_play_match_with_reset_state();
     test_story_intro_invite_confirm_bootstrap_matches_onboarding_friendly_match_bootstrap();
-    test_story_intro_name_entry_empty_confirm_sets_missing_prompt();
+    test_story_intro_name_entry_empty_confirm_defaults_to_player_confirmation();
     test_story_intro_name_entry_two_confirms_accepts_sanitized_name();
     test_story_intro_rival_confirm_completes_to_story_scene_and_saves_once();
     test_begin_new_story_intro_applies_canonical_reset_defaults();

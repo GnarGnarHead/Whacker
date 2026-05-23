@@ -62,6 +62,7 @@ void apply_story_intro_invite_defaults(whacker::app::StoryIntroState& story_intr
     story_intro_state.typed_phase = whacker::app::StoryIntroPhase::Invite;
     story_intro_state.typed_break = whacker::app::StoryIntroBreak::None;
     story_intro_state.entered_name.clear();
+    story_intro_state.name_entry = whacker::app::StoryNameEntryState {};
     whacker::app::reset_story_intro_typewriter(story_intro_state);
 }
 

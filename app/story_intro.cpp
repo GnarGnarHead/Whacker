@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 
+#include "story_name_entry.hpp"
 #include "story_text.hpp"
 
 namespace whacker::app {
@@ -73,9 +74,7 @@ StoryIntroDialogue compose_story_intro_dialogue(
         } else {
             dialogue.line_1 = story_text::intro_name_prompt_line_1();
             dialogue.line_2 = story_text::intro_name_prompt_line_2(story_intro_state.name_missing_prompt);
-            dialogue.line_3 = story_intro_state.entered_name.empty()
-                ? story_text::intro_name_placeholder_line_3()
-                : story_intro_state.entered_name;
+            dialogue.line_3 = story_name_entry_display_text(story_intro_state);
         }
     } else if (story_intro_state.phase == StoryIntroPhase::RivalIntro) {
         dialogue.line_1 = story_text::intro_rival_intro_line_1(

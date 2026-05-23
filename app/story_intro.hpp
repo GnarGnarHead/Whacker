@@ -28,6 +28,12 @@ enum class StoryIntroBreak : std::uint8_t {
     Rules = 3
 };
 
+struct StoryNameEntryState {
+    bool initialized = false;
+    bool default_seed_active = false;
+    std::size_t selected_index = 0;
+};
+
 struct StoryIntroState {
     StoryIntroPhase phase = StoryIntroPhase::Invite;
     StoryIntroBreak break_kind = StoryIntroBreak::None;
@@ -52,6 +58,7 @@ struct StoryIntroState {
     StoryIntroPhase typed_phase = StoryIntroPhase::Invite;
     StoryIntroBreak typed_break = StoryIntroBreak::None;
     std::string entered_name;
+    StoryNameEntryState name_entry {};
     StoryRivalId rival_id = StoryRivalId::Kai;
     std::string rival_name = "KAI";
     AiStyle rival_style = AiStyle::Balanced;

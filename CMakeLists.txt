@@ -249,6 +249,7 @@ if(WHACKER_BUILD_APP)
         app/story_continue_resume.cpp
         app/story_hub_controller.cpp
         app/story_intro.cpp
+        app/story_name_entry.cpp
         app/story_intro_overlay.cpp
         app/story_intro_text_layout.cpp
         app/story_match.cpp
@@ -493,6 +494,7 @@ if(WHACKER_BUILD_TESTS)
         add_executable(story_intro_text_layout_smoke
             tests/story_intro_text_layout_smoke.cpp
             app/story_intro.cpp
+            app/story_name_entry.cpp
             app/story_intro_text_layout.cpp
             app/story_chat_layout.cpp
             app/text_wrap.cpp
@@ -500,12 +502,29 @@ if(WHACKER_BUILD_TESTS)
             app/story_text_feedback.cpp
             app/story_text_week.cpp
             app/story_text_week_01.cpp
+            app/text_utils.cpp
         )
         target_link_libraries(story_intro_text_layout_smoke PRIVATE whacker_core)
         target_link_libraries(story_intro_text_layout_smoke PRIVATE story_pack_gen)
         target_include_directories(story_intro_text_layout_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
         whacker_configure_smoke_test(story_intro_text_layout_smoke)
         add_test(NAME story_intro_text_layout_smoke COMMAND story_intro_text_layout_smoke)
+
+        add_executable(story_name_entry_smoke
+            tests/story_name_entry_smoke.cpp
+            app/story_intro.cpp
+            app/story_name_entry.cpp
+            app/story_text.cpp
+            app/story_text_feedback.cpp
+            app/story_text_week.cpp
+            app/story_text_week_01.cpp
+            app/text_utils.cpp
+        )
+        target_link_libraries(story_name_entry_smoke PRIVATE whacker_core)
+        target_link_libraries(story_name_entry_smoke PRIVATE story_pack_gen)
+        target_include_directories(story_name_entry_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(story_name_entry_smoke)
+        add_test(NAME story_name_entry_smoke COMMAND story_name_entry_smoke)
 
         add_executable(overlay_layout_math_smoke
             tests/overlay_layout_math_smoke.cpp
@@ -616,6 +635,7 @@ if(WHACKER_BUILD_TESTS)
             app/story_scene.cpp
             app/story_classification.cpp
             app/story_intro.cpp
+            app/story_name_entry.cpp
             app/story_match.cpp
             app/story_onboarding_sync.cpp
             app/story_play_session.cpp
@@ -626,6 +646,7 @@ if(WHACKER_BUILD_TESTS)
             app/story_text_feedback.cpp
             app/story_text_week.cpp
             app/story_text_week_01.cpp
+            app/text_utils.cpp
         )
         target_link_libraries(story_progression_policy_smoke PRIVATE whacker_core)
         target_link_libraries(story_progression_policy_smoke PRIVATE story_pack_gen)
@@ -692,6 +713,7 @@ if(WHACKER_BUILD_TESTS)
             app/story_hub_controller.cpp
             app/paddle_tuning.cpp
             app/paddle_tuning_actions.cpp
+            app/story_name_entry.cpp
             app/story_play_session.cpp
             app/story_onboarding_flow.cpp
             app/story_onboarding_sync.cpp
