@@ -57,6 +57,10 @@ cmake --build build -j1
 cmake -S . -B build -DWHACKER_BUILD_APP=OFF
 ```
 
+### R36 Handheld
+
+The project does not ship R36 binaries. To install on an R36-style EmuELEC handheld, build the AArch64 port locally and copy it to the ROM SD card. See [`docs/r36_from_source.md`](docs/r36_from_source.md).
+
 ## Run
 
 ```bash
