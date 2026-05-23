@@ -35,6 +35,8 @@ const char* options_menu_row_name(const OptionsMenuSection section, const int ro
             }
         case OptionsMenuSection::Controls:
             switch (row) {
+                case OptionsControlsRowPreset:
+                    return "CONTROL PRESET";
                 case OptionsControlsRowP1Up:
                     return "P1 UP";
                 case OptionsControlsRowP1Down:

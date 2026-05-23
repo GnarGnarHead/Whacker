@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "options_menu_actions.hpp"
+#include "player_control_presets.hpp"
 #include "sdl_input.hpp"
 #include "sdl_options_binding_access.hpp"
 #include "sdl_runtime_labels.hpp"
@@ -16,6 +17,12 @@ std::string sdl_options_value_label(
     const auto* context = static_cast<const SdlOptionsValueLabelContext*>(raw_context);
     if (context == nullptr) {
         return {};
+    }
+    if (options_row_is_control_preset(menu_state.section, row)) {
+        const ActionInputBindings fallback = default_action_input_bindings();
+        const ActionInputBindings& bindings =
+            context->bindings != nullptr ? *context->bindings : fallback;
+        return player_control_preset_label(detect_player_control_preset(bindings));
     }
     if (options_row_is_binding(menu_state.section, row)) {
         const ActionInputBindings fallback = default_action_input_bindings();

@@ -394,6 +394,15 @@ void test_options_menu_audio_and_binding_flow() {
         whacker::app::OptionsMenuActionResult::SectionChanged);
     TEST_CHECK(options.section == whacker::app::OptionsMenuSection::Controls);
 
+    options.selected_row = whacker::app::OptionsControlsRowPreset;
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::ControlPresetChanged);
+    TEST_CHECK(
+        whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==
+        whacker::app::OptionsMenuActionResult::ControlPresetChanged);
+    TEST_CHECK(!options.waiting_for_input);
+
     options.selected_row = whacker::app::OptionsControlsRowP1Up;
     TEST_CHECK(
         whacker::app::apply_options_menu_action(options, audio, menu_intent(false, false, false, false, true)) ==

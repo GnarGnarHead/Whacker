@@ -218,6 +218,7 @@ if(WHACKER_BUILD_APP)
         app/paddle_tuning_actions.cpp
         app/paddle_tuning_overlay.cpp
         app/pause_menu_actions.cpp
+        app/player_control_presets.cpp
         app/play_control.cpp
         app/play_control_human.cpp
         app/platform_sdl.cpp
@@ -866,6 +867,15 @@ if(WHACKER_BUILD_TESTS)
         target_include_directories(input_profiles_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
         whacker_configure_smoke_test(input_profiles_smoke)
         add_test(NAME input_profiles_smoke COMMAND input_profiles_smoke)
+
+        add_executable(player_control_presets_smoke
+            tests/player_control_presets_smoke.cpp
+            app/action_input.cpp
+            app/player_control_presets.cpp
+        )
+        target_include_directories(player_control_presets_smoke PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/app)
+        whacker_configure_smoke_test(player_control_presets_smoke)
+        add_test(NAME player_control_presets_smoke COMMAND player_control_presets_smoke)
 
         add_executable(story_runtime_invariants_smoke
             tests/story_runtime_invariants_smoke.cpp

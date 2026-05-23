@@ -1,6 +1,7 @@
 #include "sdl_options_controller.hpp"
 
 #include "options_menu_actions.hpp"
+#include "player_control_presets.hpp"
 #include "sdl_options_capture.hpp"
 
 namespace whacker::app {
@@ -57,6 +58,15 @@ SdlOptionsUpdateEffects update_sdl_options_menu(
         }
         effects.persist_requested = effects.binding_changed;
         effects.play_move_sound = true;
+    } else if (result == OptionsMenuActionResult::ControlPresetChanged) {
+        const int direction = intent.left ? -1 : 1;
+        effects.binding_changed = cycle_player_control_preset(runtime.input.bindings(), direction);
+        if (effects.binding_changed) {
+            sync_controls_from_action_bindings(runtime);
+        }
+        effects.persist_requested = effects.binding_changed;
+        effects.play_move_sound = intent.left || intent.right;
+        effects.play_confirm_sound = intent.confirm;
     } else if (result == OptionsMenuActionResult::AudioChanged) {
         runtime.audio_settings = clamp_audio_settings(runtime.audio_settings);
         effects.audio_changed = true;

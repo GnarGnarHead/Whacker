@@ -45,6 +45,9 @@ OptionsMenuActionResult apply_root_action(OptionsMenuState& state, const MenuInt
 
 OptionsMenuActionResult apply_controls_action(OptionsMenuState& state, const MenuIntent& intent) {
     if (intent.left || intent.right) {
+        if (options_row_is_control_preset(state.section, state.selected_row)) {
+            return OptionsMenuActionResult::ControlPresetChanged;
+        }
         if (options_row_is_binding(state.section, state.selected_row) ||
             options_row_is_axis_invert(state.section, state.selected_row)) {
             return OptionsMenuActionResult::BindingChanged;
@@ -57,6 +60,9 @@ OptionsMenuActionResult apply_controls_action(OptionsMenuState& state, const Men
     if (state.selected_row == OptionsControlsRowBack) {
         enter_options_section(state, OptionsMenuSection::Root);
         return OptionsMenuActionResult::SectionChanged;
+    }
+    if (options_row_is_control_preset(state.section, state.selected_row)) {
+        return OptionsMenuActionResult::ControlPresetChanged;
     }
     if (options_row_is_binding(state.section, state.selected_row)) {
         state.waiting_for_input = true;
@@ -131,6 +137,10 @@ bool options_row_is_back(const OptionsMenuSection section, const int row) {
             return row == OptionsAudioRowBack;
     }
     return false;
+}
+
+bool options_row_is_control_preset(const OptionsMenuSection section, const int row) {
+    return section == OptionsMenuSection::Controls && row == OptionsControlsRowPreset;
 }
 
 bool options_row_is_binding(const OptionsMenuSection section, const int row) {

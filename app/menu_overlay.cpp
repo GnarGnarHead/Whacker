@@ -307,9 +307,10 @@ void render_options_menu_overlay(
         const bool is_back_row = options_row_is_back(menu_state.section, row);
         const bool binding_row = options_row_is_binding(menu_state.section, row);
         const bool axis_invert_row = options_row_is_axis_invert(menu_state.section, row);
+        const bool control_preset_row = options_row_is_control_preset(menu_state.section, row);
         const bool volume_row = options_row_is_volume(menu_state.section, row);
         const bool mute_row = options_row_is_mute(menu_state.section, row);
-        const bool has_value = binding_row || axis_invert_row || volume_row || mute_row;
+        const bool has_value = control_preset_row || binding_row || axis_invert_row || volume_row || mute_row;
         const float label_w = (is_back_row || !has_value) ? (row_w - 34.0f) : (row_w - value_w - 48.0f);
         const std::string label = fit_for_width(safe_row_name(row), label_w, label_scale);
         draw_text_pixels(
@@ -342,7 +343,7 @@ void render_options_menu_overlay(
         std::string value_label;
         if (waiting_on_row) {
             value_label = ui_text::options_waiting_value();
-        } else if (binding_row || axis_invert_row || volume_row || mute_row) {
+        } else if (control_preset_row || binding_row || axis_invert_row || volume_row || mute_row) {
             value_label = safe_value_label(row);
         }
         const float desired_value_scale = value_h < 40.0f ? 2.75f : 3.15f;

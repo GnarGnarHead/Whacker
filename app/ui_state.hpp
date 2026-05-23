@@ -64,16 +64,17 @@ enum OptionsRootMenuRow : std::uint8_t {
 };
 
 enum OptionsControlsMenuRow : std::uint8_t {
-    OptionsControlsRowP1Up = 0,
-    OptionsControlsRowP1Down = 1,
-    OptionsControlsRowP1Axis = 2,
-    OptionsControlsRowP1AxisInvert = 3,
-    OptionsControlsRowP2Up = 4,
-    OptionsControlsRowP2Down = 5,
-    OptionsControlsRowP2Axis = 6,
-    OptionsControlsRowP2AxisInvert = 7,
-    OptionsControlsRowBack = 8,
-    OptionsControlsRowCount = 9
+    OptionsControlsRowPreset = 0,
+    OptionsControlsRowP1Up = 1,
+    OptionsControlsRowP1Down = 2,
+    OptionsControlsRowP1Axis = 3,
+    OptionsControlsRowP1AxisInvert = 4,
+    OptionsControlsRowP2Up = 5,
+    OptionsControlsRowP2Down = 6,
+    OptionsControlsRowP2Axis = 7,
+    OptionsControlsRowP2AxisInvert = 8,
+    OptionsControlsRowBack = 9,
+    OptionsControlsRowCount = 10
 };
 
 enum OptionsAudioMenuRow : std::uint8_t {
